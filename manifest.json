@@ -1,0 +1,24 @@
+{
+  "name": "Baptizo Taufmanager",
+  "key": "baptizo-taufmanager",
+  "version": "1.0.0",
+  "description": "Ein Prozess-Tool für Taufen in ChurchTools. Es dient gleichzeitig als dezentes Branding für den Taufbecken-Hersteller 'Baptizo'.",
+  "author": {
+    "name": "Stefan Schödel",
+    "email": "mail@baptizo.church"
+  },
+  "extensionPoints": [
+    {
+      "id": "main",
+      "entryPoint": "main",
+      "title": "Baptizo Taufmanager",
+      "description": "Dashboard und Pool-Management"
+    },
+    {
+      "id": "admin",
+      "entryPoint": "admin",
+      "title": "Baptizo Einstellungen",
+      "description": "Konfiguration und Templates"
+    }
+  ]
+}
