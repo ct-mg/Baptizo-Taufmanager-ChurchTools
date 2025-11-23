@@ -10,7 +10,7 @@ const adminEntryPoint: EntryPoint = ({ element }) => {
     console.log('[Admin] Initializing Mock Admin');
 
     element.innerHTML = `
-        <div style="max-width: 600px; margin: 2rem auto; padding: 2rem; background: #2a2a2a; color: #eee; border-radius: 8px;">
+        <div style="max-width: 600px; margin: 2rem auto; padding: 2rem; background: #1E1E2E; color: #eee; border-radius: 8px;">
             <h1 style="color: #92C9D6;">Baptizo Einstellungen</h1>
             <p>Hier können globale Einstellungen vorgenommen werden.</p>
             

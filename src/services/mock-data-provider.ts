@@ -1,5 +1,5 @@
 import type { DataProvider } from './data-provider.interface.ts';
-import type { BaptizoGroup, BaptizoFields } from '../types/baptizo-types.ts';
+import type { BaptizoGroup, BaptizoFields, BaptizoEvent } from '../types/baptizo-types.ts';
 
 export class MockDataProvider implements DataProvider {
     private groups: BaptizoGroup[] = [
@@ -73,6 +73,23 @@ export class MockDataProvider implements DataProvider {
         },
     ];
 
+    private events: BaptizoEvent[] = [
+        {
+            id: 1,
+            title: 'Taufseminar März',
+            date: '2025-03-15',
+            type: 'seminar',
+            leader: 'Pastor Peter',
+        },
+        {
+            id: 2,
+            title: 'Oster-Taufe',
+            date: '2025-04-20',
+            type: 'baptism',
+            leader: 'Pastor Paul',
+        },
+    ];
+
     async getGroups(): Promise<BaptizoGroup[]> {
         // Simulate network delay
         await new Promise((resolve) => setTimeout(resolve, 500));
@@ -98,5 +115,18 @@ export class MockDataProvider implements DataProvider {
         }
 
         console.warn(`[MockDB] Person ${personId} not found.`);
+        console.warn(`[MockDB] Person ${personId} not found.`);
+    }
+
+    async getEvents(): Promise<BaptizoEvent[]> {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        return [...this.events];
+    }
+
+    async createEvent(event: Omit<BaptizoEvent, 'id'>): Promise<BaptizoEvent> {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        const newEvent = { ...event, id: Math.max(0, ...this.events.map(e => e.id)) + 1 };
+        this.events.push(newEvent);
+        return newEvent;
     }
 }

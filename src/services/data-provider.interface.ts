@@ -1,4 +1,4 @@
-import type { BaptizoGroup, BaptizoFields } from '../types/baptizo-types.ts';
+import type { BaptizoGroup, BaptizoFields, BaptizoEvent } from '../types/baptizo-types.ts';
 
 export interface DataProvider {
     /**
@@ -17,4 +17,14 @@ export interface DataProvider {
      * @param fields The fields to update
      */
     updatePersonFields(personId: number, fields: Partial<BaptizoFields>): Promise<void>;
+
+    /**
+     * Retrieves all events.
+     */
+    getEvents(): Promise<BaptizoEvent[]>;
+
+    /**
+     * Creates a new event.
+     */
+    createEvent(event: Omit<BaptizoEvent, 'id'>): Promise<BaptizoEvent>;
 }

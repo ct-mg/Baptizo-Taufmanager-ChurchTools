@@ -23,3 +23,11 @@ export interface BaptizoGroup {
     title: string;
     members: BaptizoPerson[];
 }
+
+export interface BaptizoEvent {
+    id: number;
+    title: string;
+    date: string; // ISO Date YYYY-MM-DD
+    type: 'seminar' | 'baptism';
+    leader: string;
+}

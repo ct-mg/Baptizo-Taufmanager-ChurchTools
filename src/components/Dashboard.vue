@@ -3,7 +3,6 @@
     <!-- Header -->
     <header class="dashboard-header">
       <div class="logo-area">
-        <!-- Logo Placeholder -->
         <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect width="40" height="40" rx="8" fill="#92C9D6"/>
           <path d="M10 20L18 28L30 12" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -12,10 +11,13 @@
       </div>
       <div class="actions">
         <select class="location-filter">
-          <option>Gesamtkirche</option>
+          <option>Alle Standorte</option>
           <option>Campus A</option>
           <option>Campus B</option>
         </select>
+        <button @click="generateReport" class="ct-button ct-button--secondary">
+          <span class="icon">📄</span> Report erstellen
+        </button>
         <button @click="refreshData" class="ct-button ct-button--primary">
           <span class="icon">↻</span> Refresh
         </button>
@@ -33,6 +35,13 @@
       </button>
       <button 
         class="tab-btn" 
+        :class="{ active: currentTab === 'events' }"
+        @click="currentTab = 'events'"
+      >
+        Termine
+      </button>
+      <button 
+        class="tab-btn" 
         :class="{ active: currentTab === 'about' }"
         @click="currentTab = 'about'"
       >
@@ -46,21 +55,25 @@
 
     <!-- Dashboard Content -->
     <div v-else-if="currentTab === 'dashboard'" class="dashboard-content">
-      <!-- Intro Text -->
-      <section class="intro-text">
-        <p class="lead"><strong>Der BAPTIZO Taufmanager organisiert den gesamten Taufprozess deiner Gemeinde - vom ersten Interesse bis zur Integration in eure Gemeindefamilie.</strong></p>
-        <p>Unser Plugin führt deine Leiter smart durch alle Schritte: Anmeldung, Taufseminar, Taufe, Follow-up. Alles läuft strukturiert, automatisiert und nachvollziehbar. Es erinnert, begleitet, informiert - und denkt für euch mit.</p>
-        <p><strong>Deine Vorteile:</strong></p>
-        <ul>
-          <li><strong>Klarheit:</strong> Du siehst jederzeit, wo sich eine Person im Prozess befindet - und wo es hakt.</li>
-          <li><strong>Struktur:</strong> Ein durchdachtes Gruppenkonzept und integriertes Event-Management halten alles zusammen - vom Seminar bis zur Taufe.</li>
-          <li><strong>Automatisierung:</strong> E-Mails, Gruppenwechsel und Erinnerungen orientieren sich automatisch an euren Terminen.</li>
-          <li><strong>Entlastung:</strong> Deine Leiter werden eigenständig an Tasks erinnern - damit niemand vergessen wird und die Daten immer aktuell sind</li>
-          <li><strong>Smartes Reporting:</strong> Drop-offs, Integrationsstatus und Urkundenstatus auf einen Blick - inklusive konkreter Handlungstipps.</li>
-          <li><strong>Multisite-fähig:</strong> Auch für Gemeinden mit mehreren Standorten - dank Standortfilterung jederzeit auswertbar.</li>
-        </ul>
-        <p>Ideal für Gemeinden, die den powervollen Schritt der Taufe strukturiert begleiten wollen.<br>Mit minimalem Verwaltungsaufwand. Und maximaler Wirkung.</p>
-        <p><em>Weil jeder Mensch zählt.</em></p>
+      
+      <!-- KPI Cards -->
+      <section class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">Taufen (Gesamt)</span>
+          <span class="kpi-value">{{ kpiTotalBaptisms }}</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Interessenten (Pool)</span>
+          <span class="kpi-value">{{ kpiInterested }}</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Seminar-Absolventen</span>
+          <span class="kpi-value">{{ kpiSeminarGrads }}</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Offene Urkunden</span>
+          <span class="kpi-value warning">{{ kpiMissingCerts }}</span>
+        </div>
       </section>
 
       <!-- Master Chart -->
@@ -68,9 +81,21 @@
         <div class="chart-header">
           <h3>Tauf-Entwicklung</h3>
           <div class="chart-controls">
-            <button class="chart-btn active">12 Mon</button>
-            <button class="chart-btn">24 Mon</button>
-            <button class="chart-btn">36 Mon</button>
+            <button 
+              class="chart-btn" 
+              :class="{ active: chartTimeRange === 12 }"
+              @click="chartTimeRange = 12"
+            >12 Mon</button>
+            <button 
+              class="chart-btn" 
+              :class="{ active: chartTimeRange === 24 }"
+              @click="chartTimeRange = 24"
+            >24 Mon</button>
+            <button 
+              class="chart-btn" 
+              :class="{ active: chartTimeRange === 36 }"
+              @click="chartTimeRange = 36"
+            >36 Mon</button>
           </div>
         </div>
         <div class="chart-container-large">
@@ -99,8 +124,33 @@
       </section>
     </div>
 
+    <!-- Events Content -->
+    <div v-else-if="currentTab === 'events'" class="events-content">
+      <EventList :events="events" @create="handleCreateEvent" />
+    </div>
+
     <!-- About Content -->
     <div v-else-if="currentTab === 'about'" class="about-content">
+      
+      <!-- Intro Text (Moved here) -->
+      <section class="intro-text">
+        <p class="lead"><strong>Der BAPTIZO Taufmanager organisiert den gesamten Taufprozess deiner Gemeinde - vom ersten Interesse bis zur Integration in eure Gemeindefamilie.</strong></p>
+        <p>Unser Plugin führt deine Leiter smart durch alle Schritte: Anmeldung, Taufseminar, Taufe, Follow-up. Alles läuft strukturiert, automatisiert und nachvollziehbar. Es erinnert, begleitet, informiert - und denkt für euch mit.</p>
+        <p><strong>Deine Vorteile:</strong></p>
+        <ul>
+          <li><strong>Klarheit:</strong> Du siehst jederzeit, wo sich eine Person im Prozess befindet - und wo es hakt.</li>
+          <li><strong>Struktur:</strong> Ein durchdachtes Gruppenkonzept und integriertes Event-Management halten alles zusammen - vom Seminar bis zur Taufe.</li>
+          <li><strong>Automatisierung:</strong> E-Mails, Gruppenwechsel und Erinnerungen orientieren sich automatisch an euren Terminen.</li>
+          <li><strong>Entlastung:</strong> Deine Leiter werden eigenständig an Tasks erinnern - damit niemand vergessen wird und die Daten immer aktuell sind</li>
+          <li><strong>Smartes Reporting:</strong> Drop-offs, Integrationsstatus und Urkundenstatus auf einen Blick - inklusive konkreter Handlungstipps.</li>
+          <li><strong>Multisite-fähig:</strong> Auch für Gemeinden mit mehreren Standorten - dank Standortfilterung jederzeit auswertbar.</li>
+        </ul>
+        <p>Ideal für Gemeinden, die den powervollen Schritt der Taufe strukturiert begleiten wollen.<br>Mit minimalem Verwaltungsaufwand. Und maximaler Wirkung.</p>
+        <p><em>Weil jeder Mensch zählt.</em></p>
+      </section>
+
+      <hr class="divider">
+
       <h2>Über Baptizo Baptistries</h2>
       
       <h3>UNSERE VISION</h3>
@@ -136,19 +186,23 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { MockDataProvider } from '../services/mock-data-provider';
-import type { BaptizoGroup, BaptizoPerson } from '../types/baptizo-types';
+import type { BaptizoGroup, BaptizoPerson, BaptizoEvent } from '../types/baptizo-types';
 import BaptismChart from './BaptismChart.vue';
 import PersonList from './PersonList.vue';
+import EventList from './EventList.vue';
 
 const provider = new MockDataProvider();
 const loading = ref(true);
 const groups = ref<BaptizoGroup[]>([]);
+const events = ref<BaptizoEvent[]>([]);
 const currentTab = ref('dashboard');
+const chartTimeRange = ref(12);
 
 const refreshData = async () => {
   loading.value = true;
   try {
     groups.value = await provider.getGroups();
+    events.value = await provider.getEvents();
   } catch (e) {
     console.error('Failed to load data', e);
   } finally {
@@ -156,28 +210,64 @@ const refreshData = async () => {
   }
 };
 
+const generateReport = () => {
+  console.log("PDF Export started");
+  alert("PDF Report wird generiert (Simulation)");
+};
+
+const handleCreateEvent = async (event: Omit<BaptizoEvent, 'id'>) => {
+  await provider.createEvent(event);
+  await refreshData();
+};
+
 onMounted(() => {
   refreshData();
 });
 
+// KPIs
+const kpiTotalBaptisms = computed(() => groups.value.find(g => g.id === 101)?.members.length || 0);
+const kpiInterested = computed(() => groups.value.find(g => g.id === 100)?.members.length || 0);
+const kpiSeminarGrads = computed(() => {
+  const interested = groups.value.find(g => g.id === 100)?.members || [];
+  return interested.filter(p => p.fields.seminar_besucht_am).length;
+});
+const kpiMissingCerts = computed(() => {
+  const baptized = groups.value.find(g => g.id === 101)?.members || [];
+  return baptized.filter(p => !p.fields.urkunde_ueberreicht).length;
+});
+
 // Computed Data
 const baptismData = computed(() => {
+  const months = chartTimeRange.value;
+  const labels = Array.from({length: months}, (_, i) => `M${i+1}`);
+  
+  // Generate dummy data based on time range
+  const generateData = (base: number) => Array.from({length: months}, () => Math.floor(Math.random() * 5) + base);
+
   return {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    labels: labels,
     datasets: [
       { 
         label: 'Taufen',
-        data: [1, 2, 1, 3, 2, 4, 2, 5, 3, 4, 6, 5],
+        data: generateData(1),
         borderColor: '#92C9D6',
         backgroundColor: '#92C9D6',
         tension: 0.4
       },
       { 
         label: 'Interessenten',
-        data: [3, 4, 2, 5, 4, 6, 5, 7, 5, 6, 8, 7],
+        data: generateData(2),
         borderColor: '#7383B2',
         backgroundColor: '#7383B2',
         tension: 0.4
+      },
+      { 
+        label: 'Seminar-Besucher',
+        data: generateData(0),
+        borderColor: '#f59e0b',
+        backgroundColor: '#f59e0b',
+        tension: 0.4,
+        hidden: true // Hidden by default
       }
     ]
   };
@@ -187,7 +277,6 @@ const baptismData = computed(() => {
 const seminarHaenger = computed(() => {
   const interestedGroup = groups.value.find(g => g.id === 100);
   if (!interestedGroup) return [];
-  // Logic: Active, Has Seminar, but still in Interested group
   return interestedGroup.members.filter(p => p.fields.seminar_besucht_am && p.status === 'active');
 });
 
@@ -206,7 +295,6 @@ const integrationGap = computed(() => {
 const longTermSwimmers = computed(() => {
   const interestedGroup = groups.value.find(g => g.id === 100);
   if (!interestedGroup) return [];
-  // Logic: No Seminar, but in group (simulated "long term")
   return interestedGroup.members.filter(p => !p.fields.seminar_besucht_am && p.status === 'active');
 });
 </script>
@@ -258,16 +346,30 @@ const longTermSwimmers = computed(() => {
 .location-filter {
   padding: 0.5rem;
   border-radius: 4px;
-  background: rgba(255,255,255,0.1);
+  background: #2a2a2a;
   color: white;
   border: 1px solid rgba(255,255,255,0.2);
+}
+
+.ct-button {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .ct-button--primary {
   background-color: #92C9D6;
   color: #3C3C5B;
-  border: none;
-  font-weight: bold;
+}
+
+.ct-button--secondary {
+  background-color: #444;
+  color: #fff;
 }
 
 /* Tabs */
@@ -296,10 +398,46 @@ const longTermSwimmers = computed(() => {
 }
 
 /* Content */
-.dashboard-content, .about-content {
+.dashboard-content, .about-content, .events-content {
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+/* KPI Cards */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.kpi-card {
+  background: #2a2a2a;
+  padding: 1.5rem;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 4px solid #7383B2;
+}
+
+.kpi-label {
+  font-size: 0.9rem;
+  color: #aaa;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+}
+
+.kpi-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.kpi-value.warning {
+  color: #f59e0b;
 }
 
 /* Intro Text */
@@ -322,6 +460,12 @@ const longTermSwimmers = computed(() => {
 
 .intro-text li {
   margin-bottom: 0.5rem;
+}
+
+.divider {
+  border: 0;
+  border-top: 1px solid #444;
+  margin: 3rem 0;
 }
 
 /* Master Chart */
