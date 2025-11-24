@@ -9,20 +9,17 @@
 
     <!-- Event List -->
     <div class="event-list">
-      <div v-if="events.length === 0" class="empty-state">
-        Keine Termine geplant.
-      </div>
-      <div v-else v-for="event in events" :key="event.id" class="event-card">
+      <div v-for="event in events" :key="event.id" class="event-card">
         <div class="event-date">
-          <span class="day">{{ new Date(event.date).getDate() }}</span>
-          <span class="month">{{ new Date(event.date).toLocaleDateString('de-DE', { month: 'short' }) }}</span>
+          <span class="day">{{ getDay(event.date) }}</span>
+          <span class="month">{{ getMonth(event.date) }}</span>
         </div>
         <div class="event-details">
           <h4>{{ event.title }}</h4>
-          <p class="meta">
+          <div class="meta">
             <span class="type-badge" :class="event.type">{{ event.type === 'seminar' ? 'Seminar' : 'Taufe' }}</span>
-            <span class="leader">Leitung: {{ event.leader }}</span>
-          </p>
+            <span class="leader" v-if="event.leader">Leitung: {{ event.leader }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -92,38 +89,59 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { MockDataProvider } from '../services/mock-data-provider';
 import type { BaptizoEvent } from '../types/baptizo-types';
 
-const props = defineProps<{
-  events: BaptizoEvent[]
-}>();
-
-const emit = defineEmits<{
-  (e: 'create', event: Omit<BaptizoEvent, 'id'>): void
-}>();
-
+const dataProvider = new MockDataProvider();
+const events = ref<BaptizoEvent[]>([]);
 const showCreateModal = ref(false);
 const showManualEntry = ref(false);
 
 const newEvent = ref({
   title: '',
   date: '',
-  type: 'seminar' as 'seminar' | 'baptism',
+  type: 'seminar',
   leader: ''
 });
 
-const createEvent = () => {
-  emit('create', { ...newEvent.value });
+const loadEvents = async () => {
+  events.value = await dataProvider.getEvents();
+};
+
+const getDay = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return date.getDate();
+};
+
+const getMonth = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return date.toLocaleString('de-DE', { month: 'short' });
+};
+
+const createEvent = async () => {
+  if (!newEvent.value.title || !newEvent.value.date) return;
+  
+  await dataProvider.createEvent({
+    title: newEvent.value.title,
+    date: newEvent.value.date,
+    type: newEvent.value.type as 'seminar' | 'baptism',
+    leader: newEvent.value.leader
+  });
+  
+  await loadEvents();
   showCreateModal.value = false;
-  // Reset form
   newEvent.value = { title: '', date: '', type: 'seminar', leader: '' };
 };
 
 const saveManualEntry = () => {
-  alert('Person wurde manuell zu "Getaufte" hinzugefügt (Simulation).');
+  // Mock implementation
   showManualEntry.value = false;
 };
+
+onMounted(() => {
+  loadEvents();
+});
 </script>
 
 <style scoped>

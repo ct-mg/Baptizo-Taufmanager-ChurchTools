@@ -8,7 +8,7 @@ export default ({ mode }) => {
     process.env = { ...process.env, ...loadEnv(mode, process.cwd()) };
 
     const isDevelopment = mode === 'development';
-    const key = process.env.VITE_KEY || 'default';
+    const key = process.env.VITE_KEY || 'baptizo-taufmanager';
     const buildMode = process.env.VITE_BUILD_MODE || 'simple';
 
     // Create a unique global name for UMD based on the extension key

@@ -3,19 +3,17 @@
     <!-- Header -->
     <header class="dashboard-header">
       <div class="logo-area">
-        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="40" height="40" rx="8" fill="#92C9D6"/>
-          <path d="M10 20L18 28L30 12" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <img src="/bildmarke.svg" alt="Baptizo Logo" width="40" height="40" />
         <h1>Baptizo Taufmanager</h1>
       </div>
       <div class="actions">
-        <select class="location-filter">
-          <option>Alle Standorte</option>
-          <option>Campus A</option>
-          <option>Campus B</option>
+        <select v-if="settings.multiSiteMode" class="location-filter">
+          <option value="">Alle Standorte</option>
+          <option v-for="campus in settings.campuses" :key="campus.id" :value="campus.id">
+            {{ campus.name }}
+          </option>
         </select>
-        <button @click="generateReport" class="ct-button ct-button--secondary">
+        <button @click="openReportModal" class="ct-button ct-button--report">
           <span class="icon">📄</span> Report erstellen
         </button>
         <button @click="refreshData" class="ct-button ct-button--primary">
@@ -27,25 +25,13 @@
     <!-- Tabs -->
     <div class="tabs">
       <button 
+        v-for="tab in tabs" 
+        :key="tab.id" 
         class="tab-btn" 
-        :class="{ active: currentTab === 'dashboard' }"
-        @click="currentTab = 'dashboard'"
+        :class="{ active: currentTab === tab.id }"
+        @click="currentTab = tab.id"
       >
-        Dashboard
-      </button>
-      <button 
-        class="tab-btn" 
-        :class="{ active: currentTab === 'events' }"
-        @click="currentTab = 'events'"
-      >
-        Termine
-      </button>
-      <button 
-        class="tab-btn" 
-        :class="{ active: currentTab === 'about' }"
-        @click="currentTab = 'about'"
-      >
-        Über Baptizo
+        {{ tab.label }}
       </button>
     </div>
 
@@ -53,141 +39,293 @@
       <p>Lade Daten...</p>
     </div>
 
-    <!-- Dashboard Content -->
+    <!-- DASHBOARD TAB -->
     <div v-else-if="currentTab === 'dashboard'" class="dashboard-content">
       
-      <!-- KPI Cards (3 Items) -->
+      <!-- KPI Widgets (Dynamic) -->
       <section class="kpi-grid">
         <div class="kpi-card">
-          <span class="kpi-label">Interessenten</span>
-          <span class="kpi-value">{{ kpiInterested }}</span>
+          <span class="kpi-label">INTERESSENTEN</span>
+          <span class="kpi-value text-interessenten">{{ kpiInterested }}</span>
         </div>
         <div class="kpi-card">
-          <span class="kpi-label">Seminar-Absolventen</span>
-          <span class="kpi-value">{{ kpiSeminarGrads }}</span>
+          <span class="kpi-label">SEMINARE</span>
+          <span class="kpi-value text-seminare">{{ kpiSeminars }}</span>
         </div>
         <div class="kpi-card">
-          <span class="kpi-label">Taufen</span>
-          <span class="kpi-value">{{ kpiBaptisms }}</span>
+          <span class="kpi-label">TAUFEN</span>
+          <span class="kpi-value text-taufen">{{ kpiBaptisms }}</span>
         </div>
       </section>
 
-      <!-- Master Chart -->
+      <!-- Chart Section -->
       <section class="master-chart-section">
         <div class="chart-header">
-          <h3>Tauf-Entwicklung</h3>
+          <h3>Übersicht</h3>
           <div class="chart-controls">
-            <button 
-              class="chart-btn" 
-              :class="{ active: chartTimeRange === 12 }"
-              @click="chartTimeRange = 12"
-            >12 Mon</button>
-            <button 
-              class="chart-btn" 
-              :class="{ active: chartTimeRange === 24 }"
-              @click="chartTimeRange = 24"
-            >24 Mon</button>
-            <button 
-              class="chart-btn" 
-              :class="{ active: chartTimeRange === 36 }"
-              @click="chartTimeRange = 36"
-            >36 Mon</button>
+            <!-- Rolling Months -->
+            <div class="btn-group">
+              <button 
+                v-for="months in [12, 24, 36]" 
+                :key="months"
+                class="chart-btn"
+                :class="{ active: chartMode === 'rolling' && rollingMonths === months }"
+                @click="setRollingMode(months)"
+              >
+                {{ months }} Mon
+              </button>
+            </div>
+            <!-- Years (chronological 2023-2025) -->
+            <div class="btn-group">
+              <button 
+                v-for="year in [2023, 2024, 2025]" 
+                :key="year"
+                class="chart-btn"
+                :class="{ active: chartMode === 'years' && selectedYears.includes(year) }"
+                @click="toggleYear(year)"
+              >
+                {{ year }}
+              </button>
+            </div>
           </div>
         </div>
         <div class="chart-container-large">
-          <BaptismChart :data="baptismData" />
+          <BaptismChart :data="chartData" />
+        </div>
+        <!-- Custom Legend -->
+        <div class="chart-legend">
+          <button 
+            class="legend-btn"
+            :class="{ active: visibleSeries.interessenten }"
+            @click="toggleSeries('interessenten')"
+          >
+            <span class="legend-color" style="background: #92C9D6"></span>
+            Interessenten
+          </button>
+          <button 
+            class="legend-btn"
+            :class="{ active: visibleSeries.seminare }"
+            @click="toggleSeries('seminare')"
+          >
+            <span class="legend-color" style="background: #7383B2"></span>
+            Seminare
+          </button>
+          <button 
+            class="legend-btn"
+            :class="{ active: visibleSeries.taufen }"
+            @click="toggleSeries('taufen')"
+          >
+            <span class="legend-color" style="background: #FF9F43"></span>
+            Taufen
+          </button>
         </div>
       </section>
 
-      <!-- Lists Grid (4 Categories) -->
-      <section class="widgets-grid">
-        <div class="widget-card">
-          <div class="widget-header">
-            <h3>Ausstehendes Seminar</h3>
-            <span class="count-badge warning">{{ pendingSeminar.length }}</span>
-          </div>
-          <PersonList :persons="pendingSeminar" type="warning" />
+      <!-- Global Filters -->
+      <div class="global-filters">
+        <span class="filter-label">Wartezeit:</span>
+        <div class="filter-buttons">
+          <button 
+            v-for="filter in ['all', '>2w', '>6w', '>12w']" 
+            :key="filter"
+            class="filter-btn"
+            :class="{ active: timeFilter === filter }"
+            @click="timeFilter = filter"
+          >
+            {{ filter === 'all' ? 'Alle' : filter.toUpperCase() }}
+          </button>
         </div>
-        <div class="widget-card">
-          <div class="widget-header">
-            <h3>Ausstehende Taufe</h3>
-            <span class="count-badge info">{{ pendingBaptism.length }}</span>
+      </div>
+
+      <!-- 4 Lists Grid -->
+      <section class="lists-grid">
+        <!-- List 1 -->
+        <div class="list-card">
+          <div class="list-header">
+            <h4>Ausstehendes Seminar</h4>
+            <span class="badge badge-count">{{ listSeminarPending.length }}</span>
           </div>
-          <PersonList :persons="pendingBaptism" type="info" />
+          <div v-if="listSeminarPending.length === 0" class="empty-state">
+            <span class="trophy">🏆</span>
+          </div>
+          <PersonList v-else :persons="listSeminarPending" @click="openPersonModal" />
         </div>
-        <div class="widget-card">
-          <div class="widget-header">
-            <h3>Offene Urkunden</h3>
-            <span class="count-badge warning">{{ missingCertificates.length }}</span>
+
+        <!-- List 2 -->
+        <div class="list-card">
+          <div class="list-header">
+            <h4>Ausstehende Taufe</h4>
+            <span class="badge badge-count">{{ listBaptismPending.length }}</span>
           </div>
-          <PersonList :persons="missingCertificates" type="warning" />
+          <div v-if="listBaptismPending.length === 0" class="empty-state">
+            <span class="trophy">🏆</span>
+          </div>
+          <PersonList v-else :persons="listBaptismPending" @click="openPersonModal" />
         </div>
-        <div class="widget-card">
-          <div class="widget-header">
-            <h3>Fehlende Integration</h3>
-            <span class="count-badge info">{{ missingIntegration.length }}</span>
+
+        <!-- List 3 -->
+        <div class="list-card">
+          <div class="list-header">
+            <h4>Offene Urkunden</h4>
+            <span class="badge badge-count">{{ listCertificatePending.length }}</span>
           </div>
-          <PersonList :persons="missingIntegration" type="info" />
+          <div v-if="listCertificatePending.length === 0" class="empty-state">
+            <span class="trophy">🏆</span>
+          </div>
+          <PersonList v-else :persons="listCertificatePending" @click="openPersonModal" />
+        </div>
+
+        <!-- List 4 -->
+        <div class="list-card">
+          <div class="list-header">
+            <h4>Fehlende Integration</h4>
+            <span class="badge badge-count">{{ listIntegrationPending.length }}</span>
+          </div>
+          <div v-if="listIntegrationPending.length === 0" class="empty-state">
+            <span class="trophy">🏆</span>
+          </div>
+          <PersonList v-else :persons="listIntegrationPending" @click="openPersonModal" />
         </div>
       </section>
     </div>
 
-    <!-- Events Content -->
+    <!-- PERSONEN TAB -->
+    <div v-else-if="currentTab === 'people'" class="people-content">
+      <!-- Single row: Filters left, Buttons right (No title) -->
+      <div class="people-header">
+        <div class="filter-bar">
+          <button @click="peopleFilter = 'all'" :class="{ active: peopleFilter === 'all' }">Alle</button>
+          <button @click="peopleFilter = 'interested'" :class="{ active: peopleFilter === 'interested' }">Interessenten</button>
+          <button @click="peopleFilter = 'baptized'" :class="{ active: peopleFilter === 'baptized' }">Getaufte</button>
+          <button @click="peopleFilter = 'problems'" :class="{ active: peopleFilter === 'problems' }">Fokus</button>
+        </div>
+        <div class="management-buttons">
+          <button @click="handleOnboarding" class="ct-button ct-button--primary">
+            <span class="icon">➕</span> Onboarding
+          </button>
+          <button @click="handleOffboarding" class="ct-button ct-button--secondary">
+            <span class="icon">📦</span> Offboarding
+          </button>
+        </div>
+      </div>
+      <table class="people-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Onboarding</th>
+            <th>Seminar</th>
+            <th>Taufe</th>
+            <th>Urkunde</th>
+            <th>Integriert</th>
+            <th>Aktion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="person in filteredPersons" :key="person.id" :class="{ inactive: person.status === 'inactive' }">
+            <td>
+              <div class="person-cell">
+                <img :src="person.imageUrl" class="avatar-small">
+                {{ person.firstName }} {{ person.lastName }}
+              </div>
+            </td>
+            <td>{{ person.status === 'active' ? 'Aktiv' : 'Inaktiv' }}</td>
+            <td>{{ formatDate(person.entry_date) }}</td>
+            <td>
+              <span v-if="person.fields.seminar_besucht_am" class="badge success">Ja</span>
+              <span v-else class="badge pending">Nein</span>
+            </td>
+            <td>
+              <span v-if="person.fields.getauft_am" class="badge success">Ja</span>
+              <span v-else class="badge pending">Nein</span>
+            </td>
+            <td>
+              <span v-if="person.fields.urkunde_ueberreicht" class="badge success">Ja</span>
+              <span v-else class="badge pending">Nein</span>
+            </td>
+            <td>
+              <span v-if="person.fields.in_gemeinde_integriert" class="badge success">Ja</span>
+              <span v-else class="badge pending">Nein</span>
+            </td>
+            <td>
+              <button class="ct-button ct-button--secondary small" @click="openPersonModal(person)">Bearbeiten</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- EVENTS TAB -->
     <div v-else-if="currentTab === 'events'" class="events-content">
       <EventList :events="events" @create="handleCreateEvent" />
     </div>
 
-    <!-- About Content -->
-    <div v-else-if="currentTab === 'about'" class="about-content">
-      
-      <!-- Intro Text (Moved here) -->
+    <!-- SETTINGS TAB -->
+    <div v-else-if="currentTab === 'settings'" class="settings-content">
+      <SettingsTab :settings="settings" @update="updateSettings" />
+    </div>
+
+    <!-- FUNKTIONEN TAB -->
+    <div v-else-if="currentTab === 'intro'" class="about-content">
+      <h2>Funktionen des Baptist Taufmanagers</h2>
       <section class="intro-text">
         <p class="lead"><strong>Der BAPTIZO Taufmanager organisiert den gesamten Taufprozess deiner Gemeinde - vom ersten Interesse bis zur Integration in eure Gemeindefamilie.</strong></p>
-        <p>Unser Plugin führt deine Leiter smart durch alle Schritte: Anmeldung, Taufseminar, Taufe, Follow-up. Alles läuft strukturiert, automatisiert und nachvollziehbar. Es erinnert, begleitet, informiert - und denkt für euch mit.</p>
-        <p><strong>Deine Vorteile:</strong></p>
+        
+        <p>Unser Plugin führt deine Leiter smart durch alle Schritte: Anmeldung, Taufseminar, Taufe, Follow-up. Alles läuft strukturiert, automatisiert und nachvollziehbar.</p>
+        
+        <h3>Deine Vorteile:</h3>
         <ul>
-          <li><strong>Klarheit:</strong> Du siehst jederzeit, wo sich eine Person im Prozess befindet - und wo es hakt.</li>
-          <li><strong>Struktur:</strong> Ein durchdachtes Gruppenkonzept und integriertes Event-Management halten alles zusammen - vom Seminar bis zur Taufe.</li>
-          <li><strong>Automatisierung:</strong> E-Mails, Gruppenwechsel und Erinnerungen orientieren sich automatisch an euren Terminen.</li>
-          <li><strong>Entlastung:</strong> Deine Leiter werden eigenständig an Tasks erinnern - damit niemand vergessen wird und die Daten immer aktuell sind</li>
-          <li><strong>Smartes Reporting:</strong> Drop-offs, Integrationsstatus und Urkundenstatus auf einen Blick - inklusive konkreter Handlungstipps.</li>
-          <li><strong>Multisite-fähig:</strong> Auch für Gemeinden mit mehreren Standorten - dank Standortfilterung jederzeit auswertbar.</li>
+          <li><strong>Klarheit:</strong> Du siehst jederzeit, wo sich eine Person im Prozess befindet.</li>
+          <li><strong>Struktur:</strong> Durchdachtes Gruppenkonzept und Event-Management.</li>
+          <li><strong>Automatisierung:</strong> E-Mails und Erinnerungen laufen automatisch.</li>
+          <li><strong>Entlastung:</strong> Leiter werden eigenständig an Tasks erinnert.</li>
+          <li><strong>Reporting:</strong> Drop-offs und Status auf einen Blick.</li>
+          <li><strong>Multisite-fähig:</strong> Für Gemeinden mit mehreren Standorten.</li>
         </ul>
-        <p>Ideal für Gemeinden, die den powervollen Schritt der Taufe strukturiert begleiten wollen.<br>Mit minimalem Verwaltungsaufwand. Und maximaler Wirkung.</p>
+        
+        <p>Ideal für Gemeinden, die Taufe strukturiert begleiten wollen.<br>Mit minimalem Aufwand. Maximaler Wirkung.</p>
         <p><em>Weil jeder Mensch zählt.</em></p>
       </section>
+    </div>
 
-      <hr class="divider">
-
-      <h2>Über Baptizo Baptistries</h2>
+    <!-- ÜBER UNS TAB -->
+    <div v-else-if="currentTab === 'about'" class="about-content">
+      <h2>Über uns</h2>
       
       <h3>UNSERE VISION</h3>
-      <p>Wir existieren, um Gemeinden dabei zu unterstützen, ihren Missionsauftrag kraftvoll und effektiv zu erfüllen - für eine Kirche, die bereit ist, wenn es die Menschen sind. Mit Taufbecken die einfach, mobil, schön und sicher sind!<br>
-      Wir glauben fest daran, dass Gott uns die richtige Idee zur richtigen Zeit geschenkt hat! Unser Anliegen ist es, das kraftvolle Zeichen der Wassertaufe noch sichtbarer zu machen und so nah wie möglich am Herzen jeder Gemeinde zu integrieren - regelmäßig und ohne großen Aufwand.</p>
+      <p>Wir existieren, um Gemeinden dabei zu unterstützen, ihren Missionsauftrag kraftvoll zu erfüllen.</p>
+      <p>Unser Anliegen: Das kraftvolle Zeichen der Wassertaufe sichtbarer machen - regelmäßig und ohne großen Aufwand.</p>
+      
       <ul>
-        <li>15 Minuten Aufbau - spontan und überall einsetzbar.</li>
-        <li>10 000+ Taufen - vom Gemeindesaal bis ins Kino ein absolut sicheres Konzept.</li>
-        <li>150+ zufriedene Kunden in acht verschiedenen Ländern.</li>
+        <li>15 Minuten Aufbau - spontan einsetzbar</li>
+        <li>10.000+ Taufen - absolut sicheres Konzept</li>
+        <li>150+ zufriedene Kunden in 8 Ländern</li>
       </ul>
 
       <h3>UNSER HERZ</h3>
-      <p>Mit unserer einfachen und flexiblen Lösung ist Kirche sofort bereit, wenn es die Menschen sind. Das ist neutestamentliche Gemeindekultur.<br>
+      <p>Mit unserer Lösung ist Kirche bereit, wenn es die Menschen sind.<br>
       Mehr Taufen. Mehr Zeugnisse. Mehr Wachstum.</p>
 
       <h3>UNSERE MISSION</h3>
-      <p>Zu Gottes Ehre träumen wir davon, ganz Europa mit 1000 mobilen Taufbecken zu fluten - denn die Art der Durchführung der Taufe kann eine komplette Veränderung für eine Gemeinde in Bezug auf Wachstum und Dynamik bedeuten.</p>
+      <p>Zu Gottes Ehre träumen wir davon, ganz Europa mit 1000 mobilen Taufbecken zu fluten.</p>
 
       <p><strong>Baptizo mobile Taufbecken - wir lieben Taufe!</strong><br>
-      Alle Infos auf unserer Webseite: <a href="https://www.baptizo.church" target="_blank">www.baptizo.church</a><br>
-      Kontakt: <a href="mailto:mail@baptizo.church">mail@baptizo.church</a> | Mobil: 016098687610</p>
+      <a href="https://www.baptizo.church" target="_blank">www.baptizo.church</a> | 
+      <a href="mailto:mail@baptizo.church">mail@baptizo.church</a> | 016098687610</p>
     </div>
 
     <!-- Footer -->
     <footer class="baptizo-footer">
-      <p>
-        Powered by <a href="https://www.baptizo.church" target="_blank">Baptizo – Mobile Taufbecken</a>
-      </p>
+      <p>Powered by <a href="https://www.baptizo.church" target="_blank">Baptizo – Mobile Taufbecken</a></p>
     </footer>
+
+    <!-- Person Modal -->
+    <PersonDetailModal 
+      v-if="selectedPerson" 
+      :person="selectedPerson" 
+      @close="selectedPerson = null" 
+      @save="handleSavePerson"
+    />
   </div>
 </template>
 
@@ -198,19 +336,50 @@ import type { BaptizoGroup, BaptizoPerson, BaptizoEvent } from '../types/baptizo
 import BaptismChart from './BaptismChart.vue';
 import PersonList from './PersonList.vue';
 import EventList from './EventList.vue';
+import PersonDetailModal from './PersonDetailModal.vue';
+import SettingsTab from './SettingsTab.vue';
+import { DEFAULT_SETTINGS } from '../types/baptizo-settings';
+import type { BaptizoSettings } from '../types/baptizo-settings';
 
 const provider = new MockDataProvider();
 const loading = ref(true);
 const groups = ref<BaptizoGroup[]>([]);
 const events = ref<BaptizoEvent[]>([]);
+const settings = ref<BaptizoSettings>({ ...DEFAULT_SETTINGS });
 const currentTab = ref('dashboard');
-const chartTimeRange = ref(12);
+const selectedPerson = ref<BaptizoPerson | null>(null);
 
-const refreshData = async () => {
+const tabs = [
+  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'people', label: 'Personen' },
+  { id: 'events', label: 'Termine' },
+  { id: 'settings', label: 'Einstellungen' },
+  { id: 'intro', label: 'Funktionen' },
+  { id: 'about', label: 'Über uns' }
+];
+
+// Chart State
+const chartMode = ref<'rolling' | 'years'>('rolling');
+const rollingMonths = ref(12);
+const selectedYears = ref<number[]>([2025]);
+const visibleSeries = ref({ interessenten: true, seminare: true, taufen: true });
+
+// Filter State
+const timeFilter = ref('all');
+const peopleFilter = ref('all');
+
+// Data Loading
+const loadData = async () => {
   loading.value = true;
   try {
-    groups.value = await provider.getGroups();
-    events.value = await provider.getEvents();
+    const [groupsData, eventsData, settingsData] = await Promise.all([
+      provider.getGroups(),
+      provider.getEvents(),
+      provider.getSettings()
+    ]);
+    groups.value = groupsData;
+    events.value = eventsData;
+    settings.value = settingsData;
   } catch (e) {
     console.error('Failed to load data', e);
   } finally {
@@ -218,151 +387,348 @@ const refreshData = async () => {
   }
 };
 
-const generateReport = () => {
-  console.log("PDF Export started");
-  alert("PDF Report wird generiert (Simulation)");
+const refreshData = () => loadData();
+const updateSettings = (s: BaptizoSettings) => { settings.value = s; };
+const openReportModal = () => alert("Bericht konfigurieren\n\nEmpfänger hinzufügen:\n- Pastor@example.com\n- Team@example.com\n\n(Simulation)");
+const handleCreateEvent = async (e: any) => { await provider.createEvent(e); await loadData(); };
+const openPersonModal = (p: BaptizoPerson) => { selectedPerson.value = p; };
+const handleSavePerson = async (p: BaptizoPerson) => { 
+  await provider.updatePerson(p); 
+  selectedPerson.value = null; 
+  await loadData(); 
 };
+const handleOnboarding = () => alert("Onboarding:\n\nSimuliere Suche in ChurchTools-Datenbank...\n(Feature in Entwicklung)");
+const handleOffboarding = () => alert("Offboarding:\n\nPerson archivieren.\n(Feature in Entwicklung)");
 
-const handleCreateEvent = async (event: Omit<BaptizoEvent, 'id'>) => {
-  await provider.createEvent(event);
-  await refreshData();
-};
-
-onMounted(() => {
-  refreshData();
-});
-
-// Helper to check if a date is within the last N months
-const isInRange = (dateStr: string | null | undefined, months: number) => {
-  if (!dateStr) return false;
+// Helper Functions
+const getDaysSince = (dateStr: string | undefined | null) => {
+  if (!dateStr) return 0;
   const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return 0;
   const now = new Date();
-  const past = new Date();
-  past.setMonth(now.getMonth() - months);
-  return date >= past && date <= now;
+  const diffTime = Math.abs(now.getTime() - date.getTime());
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
 };
 
-// KPIs (Dynamic based on chartTimeRange)
-const kpiInterested = computed(() => {
-  const interestedGroup = groups.value.find(g => g.id === 100);
-  if (!interestedGroup) return 0;
-  return interestedGroup.members.filter(p => isInRange(p.entry_date, chartTimeRange.value)).length;
+const filterByTime = (person: BaptizoPerson, dateField: string) => {
+  if (timeFilter.value === 'all') return true;
+  const dateStr = dateField === 'entry' ? person.entry_date : person.fields.getauft_am;
+  if (!dateStr) return false;
+  const days = getDaysSince(dateStr);
+  if (timeFilter.value === '>2w') return days > 14;
+  if (timeFilter.value === '>6w') return days > 42;
+  if (timeFilter.value === '>12w') return days > 84;
+  return true;
+};
+
+const formatDate = (dateStr: string | null | undefined) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+};
+
+// Chart Logic
+const setRollingMode = (months: number) => {
+  chartMode.value = 'rolling';
+  rollingMonths.value = months;
+  selectedYears.value = [];
+};
+
+const toggleYear = (year: number) => {
+  if (chartMode.value === 'rolling') {
+    chartMode.value = 'years';
+    selectedYears.value = [year];
+  } else {
+    const index = selectedYears.value.indexOf(year);
+    if (index === -1) {
+      if (selectedYears.value.length < 3) {
+        selectedYears.value.push(year);
+      }
+    } else {
+      if (selectedYears.value.length > 1) {
+        selectedYears.value.splice(index, 1);
+      }
+    }
+  }
+};
+
+const toggleSeries = (series: 'interessenten' | 'seminare' | 'taufen') => {
+  visibleSeries.value[series] = !visibleSeries.value[series];
+};
+
+// Chart Data
+const chartData = computed(() => {
+  const datasets: any[] = [];
+  
+  if (chartMode.value === 'rolling') {
+    const labels: string[] = [];
+    const intData: number[] = [];
+    const semData: number[] = [];
+    const baptData: number[] = [];
+    
+    const now = new Date();
+    for (let i = rollingMonths.value - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      labels.push(d.toLocaleString('de-DE', { month: 'short', year: '2-digit' }));
+      
+      let intCount = 0, semCount = 0, baptCount = 0;
+      
+      const intGroup = groups.value.find(g => g.id === 100);
+      if (intGroup) {
+        intGroup.members.forEach(m => {
+          if (m.entry_date) {
+            const ed = new Date(m.entry_date);
+            if (ed.getMonth() === d.getMonth() && ed.getFullYear() === d.getFullYear()) {
+              intCount++;
+              if (m.fields.seminar_besucht_am) {
+                const sd = new Date(m.fields.seminar_besucht_am);
+                if (sd.getMonth() === d.getMonth() && sd.getFullYear() === d.getFullYear()) semCount++;
+              }
+            }
+          }
+        });
+      }
+      
+      const baptGroup = groups.value.find(g => g.id === 101);
+      if (baptGroup) {
+        baptGroup.members.forEach(m => {
+          if (m.fields.getauft_am) {
+            const bd = new Date(m.fields.getauft_am);
+            if (bd.getMonth() === d.getMonth() && bd.getFullYear() === d.getFullYear()) baptCount++;
+          }
+        });
+      }
+      
+      intData.push(intCount);
+      semData.push(semCount);
+      baptData.push(baptCount);
+    }
+    
+    if (visibleSeries.value.interessenten) {
+      datasets.push({
+        label: 'Interessenten',
+        data: intData,
+        borderColor: '#92C9D6',
+        backgroundColor: 'rgba(146, 201, 214, 0.1)',
+        tension: 0.4
+      });
+    }
+    if (visibleSeries.value.seminare) {
+      datasets.push({
+        label: 'Seminare',
+        data: semData,
+        borderColor: '#7383B2',
+        backgroundColor: 'rgba(115, 131, 178, 0.1)',
+        tension: 0.4
+      });
+    }
+    if (visibleSeries.value.taufen) {
+      datasets.push({
+        label: 'Taufen',
+        data: baptData,
+        borderColor: '#FF9F43',
+        backgroundColor: 'rgba(255, 159, 67, 0.1)',
+        tension: 0.4
+      });
+    }
+    
+    return { labels, datasets };
+    
+  } else {
+    const months = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+    const sortedYears = [...selectedYears.value].sort((a, b) => b - a);
+    
+    sortedYears.forEach((year, idx) => {
+      const opacity = idx === 0 ? 1.0 : (1.0 - (idx * 0.12));
+      
+      const intData = new Array(12).fill(0);
+      const semData = new Array(12).fill(0);
+      const baptData = new Array(12).fill(0);
+      
+      const intGroup = groups.value.find(g => g.id === 100);
+      if (intGroup) {
+        intGroup.members.forEach(m => {
+          if (m.entry_date) {
+            const d = new Date(m.entry_date);
+            if (d.getFullYear() === year) {
+              intData[d.getMonth()]++;
+              if (m.fields.seminar_besucht_am) {
+                const sd = new Date(m.fields.seminar_besucht_am);
+                if (sd.getFullYear() === year) semData[sd.getMonth()]++;
+              }
+            }
+          }
+        });
+      }
+      
+      const baptGroup =groups.value.find(g => g.id === 101);
+      if (baptGroup) {
+        baptGroup.members.forEach(m => {
+          if (m.fields.getauft_am) {
+            const d = new Date(m.fields.getauft_am);
+            if (d.getFullYear() === year) baptData[d.getMonth()]++;
+          }
+        });
+      }
+      
+      if (visibleSeries.value.interessenten) {
+        datasets.push({
+          label: `Interessenten ${year}`,
+          data: intData,
+          borderColor: `rgba(146, 201, 214, ${opacity})`,
+          backgroundColor: `rgba(146, 201, 214, ${opacity * 0.1})`,
+          tension: 0.4
+        });
+      }
+      if (visibleSeries.value.seminare) {
+        datasets.push({
+          label: `Seminare ${year}`,
+          data: semData,
+          borderColor: `rgba(115, 131, 178, ${opacity})`,
+          backgroundColor: `rgba(115, 131, 178, ${opacity * 0.1})`,
+          tension: 0.4
+        });
+      }
+      if (visibleSeries.value.taufen) {
+        datasets.push({
+          label: `Taufen ${year}`,
+          data: baptData,
+          borderColor: `rgba(255, 159, 67, ${opacity})`,
+          backgroundColor: `rgba(255, 159, 67, ${opacity * 0.1})`,
+          tension: 0.4
+        });
+      }
+    });
+    
+    return { labels: months, datasets };
+  }
 });
 
-const kpiSeminarGrads = computed(() => {
-  const allMembers = groups.value.flatMap(g => g.members);
-  return allMembers.filter(p => isInRange(p.fields.seminar_besucht_am, chartTimeRange.value)).length;
+// Dynamic KPIs
+const kpiInterested = computed(() => {
+  let count = 0;
+  const intGroup = groups.value.find(g => g.id === 100);
+  if (!intGroup) return 0;
+  
+  if (chartMode.value === 'rolling') {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth() - rollingMonths.value + 1, 1);
+    intGroup.members.forEach(m => {
+      if (m.entry_date && new Date(m.entry_date) >= startDate) count++;
+    });
+  } else {
+    intGroup.members.forEach(m => {
+      if (m.entry_date) {
+        const year = new Date(m.entry_date).getFullYear();
+        if (selectedYears.value.includes(year)) count++;
+      }
+    });
+  }
+  return count;
+});
+
+const kpiSeminars = computed(() => {
+  let count = 0;
+  const intGroup = groups.value.find(g => g.id === 100);
+  if (!intGroup) return 0;
+  
+  if (chartMode.value === 'rolling') {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth() - rollingMonths.value + 1, 1);
+    intGroup.members.forEach(m => {
+      if (m.fields.seminar_besucht_am && new Date(m.fields.seminar_besucht_am) >= startDate) count++;
+    });
+  } else {
+    intGroup.members.forEach(m => {
+      if (m.fields.seminar_besucht_am) {
+        const year = new Date(m.fields.seminar_besucht_am).getFullYear();
+        if (selectedYears.value.includes(year)) count++;
+      }
+    });
+  }
+  return count;
 });
 
 const kpiBaptisms = computed(() => {
-  const baptizedGroup = groups.value.find(g => g.id === 101);
-  if (!baptizedGroup) return 0;
-  return baptizedGroup.members.filter(p => isInRange(p.fields.getauft_am, chartTimeRange.value)).length;
-});
-
-// Computed Data for Chart
-const baptismData = computed(() => {
-  const months = chartTimeRange.value;
-  const labels: string[] = [];
-  const dataInterested: number[] = [];
-  const dataSeminar: number[] = [];
-  const dataBaptism: number[] = [];
-
-  const now = new Date();
+  let count = 0;
+  const baptGroup = groups.value.find(g => g.id === 101);
+  if (!baptGroup) return 0;
   
-  // Generate labels and data buckets for the last N months (Current month on right)
-  for (let i = months - 1; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const monthLabel = d.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
-    labels.push(monthLabel);
-
-    // Filter logic for this specific month
-    const startOfMonth = new Date(d.getFullYear(), d.getMonth(), 1);
-    const endOfMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-
-    const isInMonth = (dateStr: string | null | undefined) => {
-      if (!dateStr) return false;
-      const date = new Date(dateStr);
-      return date >= startOfMonth && date <= endOfMonth;
-    };
-
-    const allMembers = groups.value.flatMap(g => g.members);
-    
-    dataInterested.push(allMembers.filter(p => isInMonth(p.entry_date)).length);
-    dataSeminar.push(allMembers.filter(p => isInMonth(p.fields.seminar_besucht_am)).length);
-    dataBaptism.push(allMembers.filter(p => isInMonth(p.fields.getauft_am)).length);
-  }
-
-  return {
-    labels: labels,
-    datasets: [
-      { 
-        label: 'Interessenten',
-        data: dataInterested,
-        borderColor: '#7383B2',
-        backgroundColor: '#7383B2',
-        tension: 0.4
-      },
-      { 
-        label: 'Seminar-Absolventen',
-        data: dataSeminar,
-        borderColor: '#f59e0b',
-        backgroundColor: '#f59e0b',
-        tension: 0.4,
-        hidden: true
-      },
-      { 
-        label: 'Taufen',
-        data: dataBaptism,
-        borderColor: '#92C9D6',
-        backgroundColor: '#92C9D6',
-        tension: 0.4
+  if (chartMode.value === 'rolling') {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth() - rollingMonths.value + 1, 1);
+    baptGroup.members.forEach(m => {
+      if (m.fields.getauft_am && new Date(m.fields.getauft_am) >= startDate) count++;
+    });
+  } else {
+    baptGroup.members.forEach(m => {
+      if (m.fields.getauft_am) {
+        const year = new Date(m.fields.getauft_am).getFullYear();
+        if (selectedYears.value.includes(year)) count++;
       }
-    ]
-  };
+    });
+  }
+  return count;
 });
 
-// Widget Logic (4 Specific Categories)
-
-// 1. Ausstehendes Seminar: Active in Pool (100), No Seminar
-const pendingSeminar = computed(() => {
-  const interestedGroup = groups.value.find(g => g.id === 100);
-  if (!interestedGroup) return [];
-  return interestedGroup.members
-    .filter(p => p.status === 'active' && !p.fields.seminar_besucht_am)
-    .map(p => ({ ...p, subtitle: `Interesse: ${p.entry_date || 'N/A'}` }));
+// Lists
+const listSeminarPending = computed(() => {
+  const g = groups.value.find(g => g.id === 100);
+  if (!g) return [];
+  return g.members
+    .filter(m => !m.fields.seminar_besucht_am && filterByTime(m, 'entry'))
+    .map(p => ({ ...p, subtitle: `Interesse: ${formatDate(p.entry_date)}` }));
 });
 
-// 2. Ausstehende Taufe: Active in Pool (100), Has Seminar, No Baptism (implicitly if in Pool)
-const pendingBaptism = computed(() => {
-  const interestedGroup = groups.value.find(g => g.id === 100);
-  if (!interestedGroup) return [];
-  return interestedGroup.members
-    .filter(p => p.status === 'active' && p.fields.seminar_besucht_am)
-    .map(p => ({ ...p, subtitle: `Seminar: ${p.fields.seminar_besucht_am}` }));
+const listBaptismPending = computed(() => {
+  const g = groups.value.find(g => g.id === 100);
+  if (!g) return [];
+  return g.members
+    .filter(m => m.fields.seminar_besucht_am && !m.fields.getauft_am && filterByTime(m, 'entry'))
+    .map(p => ({ ...p, subtitle: `Seminar: ${formatDate(p.fields.seminar_besucht_am)}` }));
 });
 
-// 3. Offene Urkunden: In Baptized (101), No Certificate
-const missingCertificates = computed(() => {
-  const baptizedGroup = groups.value.find(g => g.id === 101);
-  if (!baptizedGroup) return [];
-  return baptizedGroup.members
-    .filter(p => !p.fields.urkunde_ueberreicht)
-    .map(p => ({ ...p, subtitle: `Taufe: ${p.fields.getauft_am}` }));
+const listCertificatePending = computed(() => {
+  const g = groups.value.find(g => g.id === 101);
+  if (!g) return [];
+  return g.members
+    .filter(m => !m.fields.urkunde_ueberreicht && filterByTime(m, 'baptism'))
+    .map(p => ({ ...p, subtitle: `Taufe: ${formatDate(p.fields.getauft_am)}` }));
 });
 
-// 4. Fehlende Integration: In Baptized (101), No Integration
-const missingIntegration = computed(() => {
-  const baptizedGroup = groups.value.find(g => g.id === 101);
-  if (!baptizedGroup) return [];
-  return baptizedGroup.members
-    .filter(p => !p.fields.in_gemeinde_integriert)
-    .map(p => ({ ...p, subtitle: `Taufe: ${p.fields.getauft_am}` }));
+const listIntegrationPending = computed(() => {
+  const g = groups.value.find(g => g.id === 101);
+  if (!g) return [];
+  return g.members
+    .filter(m => !m.fields.in_gemeinde_integriert && filterByTime(m, 'baptism'))
+    .map(p => ({ ...p, subtitle: `Taufe: ${formatDate(p.fields.getauft_am)}` }));
 });
+
+// People Tab Filter (SORTED BY ONBOARDING DATE - FIFO)
+const filteredPersons = computed(() => {
+  let list = groups.value.flatMap(g => g.members);
+  if (peopleFilter.value === 'interested') list = list.filter(p => !p.fields.getauft_am);
+  else if (peopleFilter.value === 'baptized') list = list.filter(p => p.fields.getauft_am);
+  else if (peopleFilter.value === 'problems') {
+    list = list.filter(p => {
+      if (p.status !== 'active') return false;
+      if (p.fields.getauft_am && (!p.fields.urkunde_ueberreicht || !p.fields.in_gemeinde_integriert)) return true;
+      if (!p.fields.seminar_besucht_am && p.entry_date && getDaysSince(p.entry_date) > 180) return true;
+      return false;
+    });
+  }
+  // Sort by onboarding date ascending (FIFO - oldest first)
+  return list.sort((a, b) => {
+    const dateA = a.entry_date ? new Date(a.entry_date).getTime() : 0;
+    const dateB = b.entry_date ? new Date(b.entry_date).getTime() : 0;
+    return dateA - dateB;
+  });
+});
+
+onMounted(() => loadData());
 </script>
 
 <style scoped>
-/* Colors */
 :root {
   --baptizo-accent: #92C9D6;
   --baptizo-secondary: #7383B2;
@@ -370,9 +736,8 @@ const missingIntegration = computed(() => {
 }
 
 .baptizo-dashboard {
-  padding: 0;
-  color: var(--ct-text-color, #eee);
-  background-color: var(--ct-bg-color, #1a1a1a);
+  color: #eee;
+  background-color: #1a1a1a;
   min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
@@ -387,22 +752,22 @@ const missingIntegration = computed(() => {
   color: white;
 }
 
-.logo-area {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.logo-area { 
+  display: flex; 
+  align-items: center; 
+  gap: 1rem; 
 }
 
-.logo-area h1 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
+.logo-area h1 { 
+  margin: 0; 
+  font-size: 1.5rem; 
+  font-weight: 600; 
 }
 
-.actions {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
+.actions { 
+  display: flex; 
+  gap: 1rem; 
+  align-items: center; 
 }
 
 .location-filter {
@@ -434,44 +799,62 @@ const missingIntegration = computed(() => {
   color: #fff;
 }
 
+.ct-button--report {
+  background-color: transparent;
+  border: 2px solid #92C9D6;
+  color: #92C9D6;
+}
+
+.ct-button--report:hover {
+  background-color: rgba(146, 201, 214, 0.1);
+}
+
+.ct-button.small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+}
+
 /* Tabs */
 .tabs {
   background-color: #2a2a2a;
   padding: 0 2rem;
   border-bottom: 1px solid #444;
   display: flex;
-  gap: 2rem;
+  gap: 1rem;
 }
 
 .tab-btn {
   background: none;
   border: none;
   color: #aaa;
-  padding: 1rem 0;
+  padding: 1rem 1.5rem;
   font-size: 1rem;
   cursor: pointer;
+  transition: all 0.2s;
   border-bottom: 3px solid transparent;
 }
 
 .tab-btn.active {
   color: #92C9D6;
-  border-bottom-color: #92C9D6;
   font-weight: bold;
+  border-bottom-color: #92C9D6;
 }
 
-/* Content */
-.dashboard-content, .about-content, .events-content {
+/* Dashboard Content */
+.dashboard-content {
   padding: 2rem;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
-/* KPI Cards */
+/* KPI Grid */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  gap: 2rem;
 }
 
 .kpi-card {
@@ -481,141 +864,315 @@ const missingIntegration = computed(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  border-bottom: 4px solid #7383B2;
+  border-bottom: 4px solid #444;
 }
 
 .kpi-label {
   font-size: 0.9rem;
-  color: #aaa;
+  color: #888;
   margin-bottom: 0.5rem;
-  text-transform: uppercase;
+  font-weight: bold;
+  letter-spacing: 1px;
 }
 
 .kpi-value {
-  font-size: 2.5rem;
+  font-size: 3rem;
   font-weight: bold;
-  color: #fff;
 }
 
-.kpi-value.warning {
-  color: #f59e0b;
-}
+.text-interessenten { color: #92C9D6; }
+.text-seminare { color: #7383B2; }
+.text-taufen { color: #FF9F43; }
 
-/* Intro Text */
-.intro-text {
-  margin-bottom: 3rem;
-  line-height: 1.6;
-  color: #ddd;
-}
-
-.intro-text .lead {
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
-  color: #fff;
-}
-
-.intro-text ul {
-  margin: 1rem 0;
-  padding-left: 1.5rem;
-}
-
-.intro-text li {
-  margin-bottom: 0.5rem;
-}
-
-.divider {
-  border: 0;
-  border-top: 1px solid #444;
-  margin: 3rem 0;
-}
-
-/* Master Chart */
+/* Chart Section */
 .master-chart-section {
   background: #2a2a2a;
   padding: 1.5rem;
   border-radius: 8px;
-  margin-bottom: 2rem;
 }
 
 .chart-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .chart-controls {
   display: flex;
-  gap: 0.5rem;
+  gap: 10px;
+}
+
+.btn-group {
+  display: flex;
+  gap: 2px;
+  background: #333;
+  padding: 2px;
+  border-radius: 4px;
 }
 
 .chart-btn {
-  background: #444;
+  background: transparent;
   border: none;
   color: #aaa;
-  padding: 0.25rem 0.75rem;
-  border-radius: 4px;
+  padding: 0.5rem 1rem;
   cursor: pointer;
-  font-size: 0.8rem;
+  border-radius: 2px;
+  transition: all 0.2s;
 }
 
 .chart-btn.active {
   background: #92C9D6;
   color: #3C3C5B;
+  font-weight: bold;
 }
 
-.chart-container-large {
-  height: 300px;
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #444;
 }
 
-/* Widgets */
-.widgets-grid {
+.legend-btn {
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.legend-btn.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+}
+
+/* Global Filters */
+.global-filters {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #2a2a2a;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.filter-label {
+  font-weight: bold;
+  color: #aaa;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-btn {
+  background: #444;
+  border: none;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-btn.active {
+  background: #92C9D6;
+  color: #3C3C5B;
+  font-weight: bold;
+}
+
+/* Lists Grid */
+.lists-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 1.5rem;
 }
 
-.widget-card {
+.list-card {
   background: #2a2a2a;
-  padding: 1.5rem;
+  padding: 1rem;
   border-radius: 8px;
-  border-top: 4px solid #7383B2;
+  border-top: 4px solid #555;
 }
 
-.widget-header {
+.list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #444;
 }
 
-.widget-card h3 {
+.list-header h4 {
   margin: 0;
-  font-size: 1.1rem;
-  color: #fff;
+  font-size: 1rem;
+  color: #ddd;
 }
 
-.count-badge {
-  background: #444;
-  color: #fff;
+.badge {
   padding: 0.2rem 0.6rem;
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: bold;
 }
 
-.count-badge.warning {
-  background: #f59e0b;
-  color: #000;
+.badge-count {
+  background: #555;
+  color: #fff;
 }
 
-.count-badge.info {
-  background: #92C9D6;
-  color: #3C3C5B;
+.badge.success {
+  background: #10b981;
+  color: white;
 }
 
-/* About Tab */
+.badge.pending {
+  background: #6b7280;
+  color: white;
+}
+
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.trophy {
+  font-size: 3rem;
+  opacity: 0.3;
+}
+
+/* People Content */
+.people-content {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.people-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.management-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 0.5rem;
+  background: #1a1a1a;
+  padding: 0.25rem;
+  border-radius: 6px;
+}
+
+.filter-bar button {
+  background: none;
+  border: none;
+  color: #aaa;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.filter-bar button.active {
+  background: #3C3C5B;
+  color: white;
+  font-weight: bold;
+}
+
+.people-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #2a2a2a;
+  border-radius: 8px;
+  overflow: hidden;
+  table-layout: fixed;
+}
+
+.people-table th,
+.people-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #444;
+}
+
+/* Fixed column widths for stability */
+.people-table th:nth-child(1),
+.people-table td:nth-child(1) { width: 25%; }
+.people-table th:nth-child(2),
+.people-table td:nth-child(2) { width: 10%; }
+.people-table th:nth-child(3),
+.people-table td:nth-child(3) { width: 12%; }
+.people-table th:nth-child(4),
+.people-table td:nth-child(4) { width: 10%; }
+.people-table th:nth-child(5),
+.people-table td:nth-child(5) { width: 10%; }
+.people-table th:nth-child(6),
+.people-table td:nth-child(6) { width: 10%; }
+.people-table th:nth-child(7),
+.people-table td:nth-child(7) { width: 10%; }
+.people-table th:nth-child(8),
+.people-table td:nth-child(8) { width: 13%; }
+
+.people-table th {
+  background: #3C3C5B;
+  color: white;
+}
+
+.people-table tr.inactive {
+  opacity: 0.5;
+}
+
+.person-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.avatar-small {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+/* Events & Settings */
+.events-content,
+.settings-content {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* About Content */
+.about-content {
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
 .about-content h2 {
   color: #92C9D6;
   margin-bottom: 2rem;
@@ -630,14 +1187,31 @@ const missingIntegration = computed(() => {
   letter-spacing: 1px;
 }
 
-.about-content p, .about-content li {
+.about-content p,
+.about-content li {
   line-height: 1.6;
   color: #ddd;
+  margin-bottom: 1rem;
 }
 
 .about-content a {
   color: #92C9D6;
   text-decoration: none;
+}
+
+.intro-text .lead {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  color: #fff;
+}
+
+.intro-text ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.intro-text li {
+  margin-bottom: 0.5rem;
 }
 
 /* Footer */
@@ -655,5 +1229,13 @@ const missingIntegration = computed(() => {
   color: #92C9D6;
   text-decoration: none;
   font-weight: bold;
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  color: #aaa;
 }
 </style>
