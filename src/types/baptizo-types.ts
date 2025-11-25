@@ -30,5 +30,6 @@ export interface BaptizoEvent {
     title: string;
     date: string; // ISO Date YYYY-MM-DD
     type: 'seminar' | 'baptism';
-    leader: string;
+    leader?: string;
+    time?: string;
 }

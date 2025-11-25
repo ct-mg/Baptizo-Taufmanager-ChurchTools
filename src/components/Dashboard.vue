@@ -1242,7 +1242,13 @@ onMounted(() => loadData());
 }
 
 /* Events & Settings */
-.events-content,
+/* Events & Settings */
+.events-content {
+  padding: 0 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
 .settings-content {
   padding: 2rem;
   max-width: 1200px;
@@ -1303,7 +1309,7 @@ onMounted(() => loadData());
   text-align: center;
   font-size: 0.9rem;
   opacity: 0.7;
-  border-top: 1px solid #444;
+  border-top: none;
   padding: 2rem;
   background: #1a1a1a;
 }

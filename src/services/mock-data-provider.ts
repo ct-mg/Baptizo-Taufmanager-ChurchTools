@@ -17,9 +17,7 @@ export class MockDataProvider implements DataProvider {
         },
     ];
 
-    constructor() {
-        this.generateDeterministicData();
-    }
+
 
     async updatePerson(updatedPerson: BaptizoPerson): Promise<void> {
         // Find person in groups and update
@@ -228,22 +226,84 @@ export class MockDataProvider implements DataProvider {
         });
     }
 
-    private events: BaptizoEvent[] = [
-        {
-            id: 1,
-            title: 'Taufseminar März',
-            date: '2025-03-15',
+    private events: BaptizoEvent[] = [];
+
+    constructor() {
+        this.generateDeterministicData();
+        this.generateFutureEvents();
+    }
+
+    private generateFutureEvents() {
+        const today = new Date();
+        const events: BaptizoEvent[] = [];
+        let idCounter = 1;
+
+        // Generate events for current month + next 3 months
+        for (let i = 0; i < 4; i++) {
+            const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+            const monthName = date.toLocaleString('de-DE', { month: 'long' });
+
+            // 1. Baptism: First Sunday of the month
+            const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+            const dayOfWeek = firstDay.getDay(); // 0 = Sunday
+            const daysUntilSunday = (7 - dayOfWeek) % 7;
+            const baptismDate = new Date(firstDay.getFullYear(), firstDay.getMonth(), 1 + daysUntilSunday);
+
+            // Only add if in future (or today)
+            if (baptismDate >= today) {
+                events.push({
+                    id: idCounter++,
+                    title: `Taufe ${monthName}`,
+                    date: baptismDate.toISOString().split('T')[0],
+                    type: 'baptism',
+                    leader: 'Pastor Paul',
+                    time: '10:00'
+                });
+            }
+
+            // 2. Seminar: Last Sunday of the month
+            const nextMonth = new Date(date.getFullYear(), date.getMonth() + 1, 1);
+            const lastDay = new Date(nextMonth.getTime() - 86400000); // Last day of current month
+            const lastDayOfWeek = lastDay.getDay(); // 0 = Sunday
+            const daysToSubtract = lastDayOfWeek; // If Sunday (0), subtract 0. If Monday (1), subtract 1...
+            const seminarDate = new Date(lastDay.getFullYear(), lastDay.getMonth(), lastDay.getDate() - daysToSubtract);
+
+            // Only add if in future (or today)
+            if (seminarDate >= today) {
+                events.push({
+                    id: idCounter++,
+                    title: `Taufseminar ${monthName}`,
+                    date: seminarDate.toISOString().split('T')[0],
+                    type: 'seminar',
+                    leader: 'Pastor Peter',
+                    time: '14:00'
+                });
+            }
+        }
+
+        // Add some past events for testing archive logic
+        const pastDate1 = new Date(today.getTime() - 86400000 * 14); // 2 weeks ago
+        events.push({
+            id: idCounter++,
+            title: 'Vergangenes Seminar',
+            date: pastDate1.toISOString().split('T')[0],
             type: 'seminar',
             leader: 'Pastor Peter',
-        },
-        {
-            id: 2,
-            title: 'Oster-Taufe',
-            date: '2025-04-20',
+            time: '14:00'
+        });
+
+        const pastDate2 = new Date(today.getTime() - 86400000 * 40); // ~6 weeks ago
+        events.push({
+            id: idCounter++,
+            title: 'Vergangene Taufe',
+            date: pastDate2.toISOString().split('T')[0],
             type: 'baptism',
             leader: 'Pastor Paul',
-        },
-    ];
+            time: '10:00'
+        });
+
+        this.events = events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }
 
     async getGroups(): Promise<BaptizoGroup[]> {
         // Simulate network delay
