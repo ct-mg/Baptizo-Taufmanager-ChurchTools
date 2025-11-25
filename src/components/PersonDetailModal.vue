@@ -166,7 +166,7 @@ const showContact = () => {
 }
 
 .person-name {
-  font-size: 2rem;
+  font-size: 24px;
   font-weight: 700;
   margin: 0;
   color: #92C9D6;

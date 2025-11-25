@@ -837,7 +837,7 @@ onMounted(() => loadData());
 .tab-btn {
   background: none;
   border: none;
-  color: #aaa;
+  color: white;
   padding: 1rem 1.5rem;
   font-size: 1rem;
   cursor: pointer;
@@ -938,7 +938,7 @@ onMounted(() => loadData());
 .chart-btn {
   background: transparent;
   border: none;
-  color: #aaa;
+  color: white;
   padding: 0.5rem 1rem;
   cursor: pointer;
   border-radius: 2px;
@@ -1079,13 +1079,10 @@ onMounted(() => loadData());
   color: white;
 }
 
-.list-card .person-item {
-  font-weight: bold;
-}
-
-/* First list card (Ausstehendes Seminar) has normal weight names */
-.lists-grid .list-card:first-child .person-item {
-  font-weight: normal;
+/* Normale Schriftstärke für alle Namen in den 4 Listen-Boxen */
+.lists-grid :deep(.person-name),
+.lists-grid :deep(.name) {
+    font-weight: normal !important;
 }
 
 .empty-state {
