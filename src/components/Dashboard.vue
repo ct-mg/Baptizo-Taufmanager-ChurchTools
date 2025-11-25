@@ -49,11 +49,11 @@
           <span class="kpi-value text-interessenten">{{ kpiInterested }}</span>
         </div>
         <div class="kpi-card">
-          <span class="kpi-label">SEMINARE</span>
+          <span class="kpi-label">SEMINARTEILNEHMER</span>
           <span class="kpi-value text-seminare">{{ kpiSeminars }}</span>
         </div>
         <div class="kpi-card">
-          <span class="kpi-label">TAUFEN</span>
+          <span class="kpi-label">GETAUFTE</span>
           <span class="kpi-value text-taufen">{{ kpiBaptisms }}</span>
         </div>
       </section>
@@ -61,7 +61,7 @@
       <!-- Chart Section -->
       <section class="master-chart-section">
         <div class="chart-header">
-          <h3 class="chart-title">ÜBERSICHT</h3>
+          <h3 class="chart-title">CHART</h3>
           <div class="chart-controls">
             <!-- Rolling Months -->
             <div class="btn-group">
@@ -108,7 +108,7 @@
             @click="toggleSeries('seminare')"
           >
             <span class="legend-color" style="background: #7383B2"></span>
-            Seminare
+            Seminarteilnehmer
           </button>
           <button 
             class="legend-btn"
@@ -116,13 +116,14 @@
             @click="toggleSeries('taufen')"
           >
             <span class="legend-color" style="background: #FF9F43"></span>
-            Taufen
+            Getaufte
           </button>
         </div>
       </section>
 
       <!-- Global Filters -->
       <div class="global-filters">
+        <span class="filter-label">ÜBERSICHT</span>
         <div class="filter-buttons">
           <button 
             v-for="filter in ['all', '>2w', '>6w', '>12w']" 
@@ -736,6 +737,7 @@ onMounted(() => loadData());
   --baptizo-accent: #92C9D6;
   --baptizo-secondary: #7383B2;
   --baptizo-header-bg: #3C3C5B;
+  --master-gap: 60px;
 }
 
 .baptizo-dashboard {
@@ -762,7 +764,7 @@ onMounted(() => loadData());
 }
 
 .logo-img {
-  height: 1.5em;
+  height: 50px;
   width: auto;
 }
 
@@ -851,9 +853,10 @@ onMounted(() => loadData());
 
 /* Dashboard Content */
 .dashboard-content {
-  padding: 2rem 24px;
   max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
+  padding: 2rem 20px;
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -985,10 +988,19 @@ onMounted(() => loadData());
 .global-filters {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
   background: #2a2a2a;
   padding: 1rem;
   border-radius: 8px;
+}
+
+.filter-label {
+  font-size: 0.9rem;
+  color: #888;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 .filter-buttons {
@@ -1017,6 +1029,7 @@ onMounted(() => loadData());
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
+  margin-bottom: var(--master-gap);
 }
 
 .list-card {
@@ -1037,8 +1050,11 @@ onMounted(() => loadData());
 
 .list-header h4 {
   margin: 0;
-  font-size: 1rem;
-  color: #ddd;
+  font-size: 14px;
+  color: #888;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .badge {
@@ -1061,6 +1077,15 @@ onMounted(() => loadData());
 .badge.pending {
   background: #6b7280;
   color: white;
+}
+
+.list-card .person-item {
+  font-weight: bold;
+}
+
+/* First list card (Ausstehendes Seminar) has normal weight names */
+.lists-grid .list-card:first-child .person-item {
+  font-weight: normal;
 }
 
 .empty-state {
