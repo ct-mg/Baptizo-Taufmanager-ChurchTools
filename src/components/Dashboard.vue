@@ -248,7 +248,7 @@
               <span v-else class="badge pending">Nein</span>
             </td>
             <td>
-              <button class="ct-button ct-button--secondary small" @click="openPersonModal(person)">Bearbeiten</button>
+              <button class="edit-btn" @click="openPersonModal(person)">Bearbeiten</button>
             </td>
           </tr>
         </tbody>
@@ -354,7 +354,7 @@ const tabs = [
   { id: 'people', label: 'Personen' },
   { id: 'events', label: 'Termine' },
   { id: 'settings', label: 'Einstellungen' },
-  { id: 'intro', label: 'Funktionen' },
+  { id: 'intro', label: 'Hilfe' },
   { id: 'about', label: 'Über uns' }
 ];
 
@@ -1198,6 +1198,14 @@ onMounted(() => loadData());
   border-bottom: 1px solid #444;
 }
 
+.people-table th {
+  text-transform: uppercase;
+  color: #888;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  font-weight: bold;
+}
+
 .people-table tr:last-child td {
   border-bottom: none;
 }
@@ -1220,10 +1228,7 @@ onMounted(() => loadData());
 .people-table th:nth-child(8),
 .people-table td:nth-child(8) { width: 13%; }
 
-.people-table th {
-  background: #3C3C5B;
-  color: white;
-}
+
 
 .people-table tr.inactive {
   opacity: 0.5;
@@ -1265,25 +1270,6 @@ onMounted(() => loadData());
 .about-content h2 {
   color: #92C9D6;
   margin-bottom: 2rem;
-}
-
-.about-content h3 {
-  color: #7383B2;
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-  text-transform: uppercase;
-  font-size: 1rem;
-  letter-spacing: 1px;
-}
-
-.about-content p,
-.about-content li {
-  line-height: 1.6;
-  color: #ddd;
-  margin-bottom: 1rem;
-}
-
-.about-content a {
   color: #92C9D6;
   text-decoration: none;
 }
@@ -1326,5 +1312,22 @@ onMounted(() => loadData());
   align-items: center;
   min-height: 400px;
   color: #aaa;
+}
+/* Edit Button (Outline Style) */
+.edit-btn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.edit-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.4);
 }
 </style>

@@ -56,7 +56,7 @@
 
         <div class="event-actions">
           <button class="edit-btn" @click="editEvent(event)">
-            ✏️ Bearbeiten
+            Bearbeiten
           </button>
         </div>
       </div>
@@ -166,7 +166,7 @@ const getGermanMonth = (dateStr: string) => {
 
 const getYear = (dateStr: string) => {
   const date = new Date(dateStr);
-  return date.getFullYear();
+  return "'" + date.getFullYear().toString().slice(-2);
 };
 
 const isPast = (event: BaptizoEvent) => {
@@ -374,7 +374,7 @@ onMounted(() => {
 .edit-btn {
   background: none;
   border: 1px solid #444;
-  color: #aaa;
+  color: #ffffff;
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
