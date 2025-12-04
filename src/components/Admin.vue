@@ -9,7 +9,7 @@
       <button 
         v-for="tab in tabs" 
         :key="tab.id"
-        class="tab-btn"
+        class="admin-tab-btn"
         :class="{ active: currentTab === tab.id }"
         @click="currentTab = tab.id"
       >
@@ -191,7 +191,7 @@ body {
   padding-bottom: 1rem;
 }
 
-.tab-btn {
+.admin-tab-btn {
   background: none;
   border: none;
   color: #aaa;
@@ -202,7 +202,7 @@ body {
   transition: all 0.2s;
 }
 
-.tab-btn.active {
+.admin-tab-btn.active {
   background: var(--ct-secondary);
   color: #fff;
   font-weight: bold;
