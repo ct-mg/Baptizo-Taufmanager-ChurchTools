@@ -1,14 +1,21 @@
 <template>
   <div class="settings-container">
-    <div class="settings-tabs">
-      <button 
-        v-for="tab in tabs" 
-        :key="tab.id"
-        class="tab-btn"
-        :class="{ active: currentTab === tab.id }"
-        @click="currentTab = tab.id"
-      >
-        {{ tab.label }}
+    <!-- New Header: Sub-nav left, Save button right -->
+    <div class="settings-header">
+      <div class="settings-tabs">
+        <button 
+          v-for="tab in tabs" 
+          :key="tab.id"
+          class="tab-btn"
+          :class="{ active: currentTab === tab.id }"
+          @click="currentTab = tab.id"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
+      
+      <button @click="saveSettings" class="save-btn" :disabled="saving">
+        {{ saving ? 'Speichert...' : 'Einstellungen speichern' }}
       </button>
     </div>
 
@@ -18,25 +25,6 @@
         <section class="settings-section">
           <h3>Allgemeine Einstellungen</h3>
           
-          <div class="form-group toggle-group">
-            <label>Multi-Site Modus</label>
-            <div class="toggle-switch" @click="toggleMultiSite" :class="{ active: localSettings.multiSiteMode }">
-              <div class="knob"></div>
-            </div>
-            <span class="status-text">{{ localSettings.multiSiteMode ? 'Aktiv' : 'Inaktiv' }}</span>
-          </div>
-
-          <div class="form-group" v-if="localSettings.multiSiteMode">
-            <label>Standorte (Campus)</label>
-            <div class="campus-list">
-              <div v-for="(campus, index) in localSettings.campuses" :key="index" class="campus-item">
-                <input v-model="campus.name" type="text" />
-                <button @click="removeCampus(index)" class="icon-btn">🗑️</button>
-              </div>
-              <button @click="addCampus" class="add-btn">+ Standort hinzufügen</button>
-            </div>
-          </div>
-
           <div class="form-group">
             <label>Link zum Anmeldeformular</label>
             <input v-model="localSettings.registrationFormUrl" type="text" placeholder="https://..." />
@@ -86,13 +74,8 @@
         </section>
       </div>
     </div>
-
-    <div class="settings-actions">
-      <button @click="saveSettings" class="ct-button ct-button--primary" :disabled="saving">
-        {{ saving ? 'Speichert...' : 'Einstellungen speichern' }}
-      </button>
-      <span v-if="saveMessage" class="save-message">{{ saveMessage }}</span>
-    </div>
+    
+    <div v-if="saveMessage" class="save-toast">{{ saveMessage }}</div>
   </div>
 </template>
 
@@ -127,10 +110,6 @@ watch(() => props.settings, (newSettings) => {
   localSettings.value = { ...newSettings };
 }, { deep: true });
 
-const toggleMultiSite = () => {
-  localSettings.value.multiSiteMode = !localSettings.value.multiSiteMode;
-};
-
 const saveSettings = async () => {
   saving.value = true;
   await provider.updateSettings(localSettings.value);
@@ -140,14 +119,6 @@ const saveSettings = async () => {
   setTimeout(() => saveMessage.value = '', 3000);
 };
 
-const addCampus = () => {
-  localSettings.value.campuses.push({ id: Date.now().toString(), name: 'Neuer Campus' });
-};
-
-const removeCampus = (index: number) => {
-  localSettings.value.campuses.splice(index, 1);
-};
-
 const toggleTemplate = (id: string) => {
   expandedTemplate.value = expandedTemplate.value === id ? null : id;
 };
@@ -155,23 +126,33 @@ const toggleTemplate = (id: string) => {
 
 <style scoped>
 .settings-container {
-  max-width: 900px;
+  max-width: 1400px;
   margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* New Header Layout */
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .settings-tabs {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  border-bottom: 1px solid #444;
-  padding-bottom: 1rem;
+  gap: 0.5rem;
+  background: #1a1a1a;
+  padding: 0.25rem;
+  border-radius: 6px;
 }
 
 .tab-btn {
-  background: none;
+  background: #444;
   border: none;
-  color: #aaa;
-  font-size: 1rem;
+  color: #fff;
+  font-size: 0.9rem;
   cursor: pointer;
   padding: 0.5rem 1rem;
   border-radius: 4px;
@@ -180,8 +161,35 @@ const toggleTemplate = (id: string) => {
 
 .tab-btn.active {
   background: #3C3C5B;
-  color: #fff;
+  color: white;
   font-weight: bold;
+}
+
+/* Save Button */
+.save-btn {
+  background: #92C9D6;
+  color: #3C3C5B;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.save-btn:hover {
+  background: #7ab8c5;
+}
+
+.save-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Content Area */
+.settings-content {
+  margin-bottom: 2rem;
 }
 
 .settings-section {
@@ -196,6 +204,11 @@ const toggleTemplate = (id: string) => {
   color: #92C9D6;
   border-bottom: 1px solid #444;
   padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.intro-text {
+  color: #aaa;
   margin-bottom: 1.5rem;
 }
 
@@ -223,67 +236,6 @@ const toggleTemplate = (id: string) => {
 .help-text {
   font-size: 0.85rem;
   color: #888;
-  margin-top: 0.5rem;
-}
-
-/* Toggle Switch */
-.toggle-group {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.toggle-switch {
-  width: 50px;
-  height: 26px;
-  background: #444;
-  border-radius: 13px;
-  position: relative;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.toggle-switch.active {
-  background: #92C9D6;
-}
-
-.toggle-switch .knob {
-  width: 22px;
-  height: 22px;
-  background: #fff;
-  border-radius: 50%;
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  transition: left 0.3s;
-}
-
-.toggle-switch.active .knob {
-  left: 26px;
-}
-
-/* Campus List */
-.campus-item {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.2rem;
-}
-
-.add-btn {
-  background: none;
-  border: 1px dashed #444;
-  color: #92C9D6;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  width: 100%;
   margin-top: 0.5rem;
 }
 
@@ -322,36 +274,28 @@ const toggleTemplate = (id: string) => {
   border-top: 1px solid #444;
 }
 
-/* Actions */
-.settings-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.ct-button {
-  padding: 0.75rem 1.5rem;
+/* Save Toast */
+.save-toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: #10b981;
+  color: white;
+  padding: 1rem 1.5rem;
   border-radius: 4px;
-  cursor: pointer;
-  border: none;
   font-weight: bold;
-  font-size: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out;
 }
 
-.ct-button--primary {
-  background: #92C9D6;
-  color: #3C3C5B;
-}
-
-.ct-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.save-message {
-  color: #10b981;
-  font-weight: bold;
-  animation: fadeIn 0.3s;
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 </style>
