@@ -189,7 +189,7 @@ const baptismTemplates = computed(() =>
 // Format offset for display
 const formatOffset = (template: EmailTemplate) => {
   const prefix = template.offsetType === 'before' ? '-' : '+';
-  return `${prefix}${template.daysOffset}`;
+  return `${prefix}${template.daysOffset}d`; // Added 'd' suffix for clarity
 };
 
 // Add new template
@@ -238,15 +238,15 @@ const toggleTemplate = (id: string) => {
 .settings-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 20px;
+  /* padding removed - already in .settings-content from Dashboard.vue */
 }
 
 /* Header (Matching Personen/Termine) */
 .settings-header {
   display: flex;
   justify-content: space-between;
-  align-items: center; /* CRITICAL: vertical center alignment */
-  margin-top: 1.5rem;
+  align-items: center; /* ZWINGEND: Alle Buttons auf einer Linie */
+  margin-top: 1.5rem; /* Match Personen/Termine */
   margin-bottom: 1.5rem;
 }
 
@@ -277,13 +277,14 @@ const toggleTemplate = (id: string) => {
 
 /* Primary Button (Save) */
 .ct-button {
-  padding: 0.75rem 1.5rem;
+  padding: 0.5rem 1rem; /* Match filter-bar button height */
   border-radius: 4px;
   cursor: pointer;
   border: none;
   font-weight: bold;
-  font-size: 1rem;
+  font-size: 0.9rem; /* Match filter-bar font size */
   transition: all 0.2s;
+  margin: 0; /* Pflicht: Kein extra margin */
 }
 
 .ct-button--primary {
@@ -300,10 +301,7 @@ const toggleTemplate = (id: string) => {
   cursor: not-allowed;
 }
 
-/* Content Area */
-.settings-content {
-  margin-bottom: 2rem;
-}
+/* Content Area - no bottom margin needed, footer handles spacing */
 
 .tab-pane {
   animation: fadeIn 0.3s ease;
@@ -324,6 +322,9 @@ const toggleTemplate = (id: string) => {
 .template-column {
   display: flex;
   flex-direction: column;
+  background: #2a2a2a; /* Visual area background */
+  padding: 1.5rem;
+  border-radius: 8px;
 }
 
 .column-header {
@@ -456,20 +457,20 @@ const toggleTemplate = (id: string) => {
 
 /* Delete Button */
 .delete-btn {
-  width: 100%;
-  background: #dc2626;
+  width: auto; /* Not full-width, just fits content */
+  background: #7383B2; /* Purple/Lila to match app design */
   color: white;
   border: none;
-  padding: 0.75rem;
+  padding: 0.5rem 1.5rem; /* Smaller padding */
   border-radius: 4px;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: normal; /* Less bold */
   margin-top: 1rem;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .delete-btn:hover {
-  background: #b91c1c;
+  background: #5a6a99; /* Darker purple on hover */
 }
 
 /* Fields Content */

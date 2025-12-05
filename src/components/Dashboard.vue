@@ -790,7 +790,7 @@ onMounted(() => loadData());
 .baptizo-dashboard {
   color: #eee;
   background-color: #1a1a1a;
-  min-height: 100vh;
+  min-height: 100vh; /* Full viewport height to prevent white space */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -907,6 +907,7 @@ onMounted(() => loadData());
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  min-height: calc(100vh - 200px); /* Fill viewport minus header/tabs/footer for sticky footer */
 }
 
 /* KPI Grid */
@@ -1150,6 +1151,7 @@ onMounted(() => loadData());
   padding: 0 20px;
   max-width: 1400px;
   margin: 0 auto;
+  min-height: calc(100vh - 200px); /* Fill viewport minus header/tabs/footer for sticky footer */
 }
 
 .people-header {
@@ -1261,12 +1263,14 @@ onMounted(() => loadData());
   padding: 0 20px;
   max-width: 1400px;
   margin: 0 auto;
+  min-height: calc(100vh - 200px); /* Fill viewport minus header/tabs/footer for sticky footer */
 }
 
 .settings-content {
-  padding: 2rem;
-  max-width: 1200px;
+  padding: 0 20px; /* Match events-content */
+  max-width: 1400px;
   margin: 0 auto;
+  min-height: calc(100vh - 200px); /* Fill viewport minus header/tabs/footer for sticky footer */
 }
 
 /* About Content */
@@ -1300,7 +1304,7 @@ onMounted(() => loadData());
 
 /* Footer */
 .baptizo-footer {
-  margin-top: 4rem;
+  margin-top: 2rem; /* Reduced from 4rem to minimize gap on shorter pages */
   text-align: center;
   font-size: 0.9rem;
   opacity: 0.7;
