@@ -265,53 +265,148 @@
       <SettingsTab :settings="settings" @update="updateSettings" />
     </div>
 
-    <!-- FUNKTIONEN TAB -->
-    <div v-else-if="currentTab === 'intro'" class="about-content">
-      <h2>Funktionen des Baptist Taufmanagers</h2>
-      <section class="intro-text">
-        <p class="lead"><strong>Der BAPTIZO Taufmanager organisiert den gesamten Taufprozess deiner Gemeinde - vom ersten Interesse bis zur Integration in eure Gemeindefamilie.</strong></p>
-        
-        <p>Unser Plugin führt deine Leiter smart durch alle Schritte: Anmeldung, Taufseminar, Taufe, Follow-up. Alles läuft strukturiert, automatisiert und nachvollziehbar.</p>
-        
-        <h3>Deine Vorteile:</h3>
-        <ul>
-          <li><strong>Klarheit:</strong> Du siehst jederzeit, wo sich eine Person im Prozess befindet.</li>
-          <li><strong>Struktur:</strong> Durchdachtes Gruppenkonzept und Event-Management.</li>
-          <li><strong>Automatisierung:</strong> E-Mails und Erinnerungen laufen automatisch.</li>
-          <li><strong>Entlastung:</strong> Leiter werden eigenständig an Tasks erinnert.</li>
-          <li><strong>Reporting:</strong> Drop-offs und Status auf einen Blick.</li>
-          <li><strong>Multisite-fähig:</strong> Für Gemeinden mit mehreren Standorten.</li>
-        </ul>
-        
-        <p>Ideal für Gemeinden, die Taufe strukturiert begleiten wollen.<br>Mit minimalem Aufwand. Maximaler Wirkung.</p>
-        <p><em>Weil jeder Mensch zählt.</em></p>
+    <!-- HILFE TAB -->
+    <div v-else-if="currentTab === 'intro'" class="help-content">
+      <!-- Hero Section -->
+      <section class="help-hero">
+        <!-- Intro Card -->
+        <div class="intro-card">
+          <div class="title-badge">Baptizo Taufmanager</div>
+          <p class="intro-text">
+            Organisiert den gesamten Taufprozess deiner Gemeinde – vom ersten Interesse bis zur Integration. 
+            Unser Plugin führt deine Leiter smart durch alle Schritte: Anmeldung, Taufseminar, Taufe, Follow-up – strukturiert, automatisiert und nachvollziehbar.
+            <strong> Weil jeder Mensch zählt.</strong>
+          </p>
+        </div>
+
+        <!-- Benefits Grid -->
+        <div class="benefits-grid">
+          <div class="benefit-card">
+            <div class="benefit-icon">✔️</div>
+            <h3>Klarheit</h3>
+            <p>Du siehst jederzeit, wo sich eine Person im Prozess befindet.</p>
+          </div>
+          <div class="benefit-card">
+            <div class="benefit-icon">📋</div>
+            <h3>Struktur</h3>
+            <p>Durchdachtes Gruppenkonzept und Event-Management.</p>
+          </div>
+          <div class="benefit-card">
+            <div class="benefit-icon">⚡</div>
+            <h3>Automatisierung</h3>
+            <p>E-Mails und Erinnerungen laufen automatisch.</p>
+          </div>
+          <div class="benefit-card">
+            <div class="benefit-icon">🎯</div>
+            <h3>Entlastung</h3>
+            <p>Leiter werden eigenständig an Tasks erinnert.</p>
+          </div>
+          <div class="benefit-card">
+            <div class="benefit-icon">📊</div>
+            <h3>Reporting</h3>
+            <p>Drop-offs und Status auf einen Blick.</p>
+          </div>
+          <div class="benefit-card">
+            <div class="benefit-icon">🏢</div>
+            <h3>Multisite-fähig</h3>
+            <p>Für Gemeinden mit mehreren Standorten.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQ Section -->
+      <section class="faq-section">
+        <div class="faq-title-card">
+          <div class="title-badge">Häufige Fragen & Antworten (FAQs)</div>
+          <p class="faq-subtitle">
+            Schnelle Hilfe zu den wichtigsten Themen – von Onboarding bis Mailversand.<br>
+            Nicht gefunden, was du suchst? <a @click="currentTab = 'about'" class="faq-contact-link">Kontaktiere uns gerne</a>.
+          </p>
+        </div>
+        <div class="faq-list">
+          <div 
+            v-for="(faq, index) in faqs" 
+            :key="index" 
+            class="faq-item"
+            :class="{ active: faq.open }"
+          >
+            <div class="faq-question" @click="toggleFaq(index)">
+              <span>{{ faq.question }}</span>
+              <span class="faq-arrow">{{ faq.open ? '▼' : '▶' }}</span>
+            </div>
+            <div v-if="faq.open" class="faq-answer">
+              {{ faq.answer }}
+            </div>
+          </div>
+        </div>
       </section>
     </div>
 
     <!-- ÜBER UNS TAB -->
     <div v-else-if="currentTab === 'about'" class="about-content">
-      <h2>Über uns</h2>
-      
-      <h3>UNSERE VISION</h3>
-      <p>Wir existieren, um Gemeinden dabei zu unterstützen, ihren Missionsauftrag kraftvoll zu erfüllen.</p>
-      <p>Unser Anliegen: Das kraftvolle Zeichen der Wassertaufe sichtbarer machen - regelmäßig und ohne großen Aufwand.</p>
-      
-      <ul>
-        <li>15 Minuten Aufbau - spontan einsetzbar</li>
-        <li>10.000+ Taufen - absolut sicheres Konzept</li>
-        <li>150+ zufriedene Kunden in 8 Ländern</li>
-      </ul>
+      <!-- Section 1: UNSERE VISION -->
+      <div class="about-card">
+        <h2 class="about-headline vision">UNSERE VISION</h2>
+        <p class="about-text">
+          Wir existieren, um Gemeinden dabei zu unterstützen, ihren Missionsauftrag kraftvoll zu erfüllen. 
+          Unser Anliegen: Das kraftvolle Zeichen der Wassertaufe sichtbarer machen - regelmäßig und ohne großen Aufwand.
+        </p>
+        
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-icon">⏱️</div>
+            <div class="stat-value">15 Minuten</div>
+            <div class="stat-label">für den Aufbau</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-icon">🌊</div>
+            <div class="stat-value">10.000+</div>
+            <div class="stat-label">sichere Taufen</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-icon">🌍</div>
+            <div class="stat-value">250+</div>
+            <div class="stat-label">Kunden in acht Ländern</div>
+          </div>
+        </div>
+      </div>
 
-      <h3>UNSER HERZ</h3>
-      <p>Mit unserer Lösung ist Kirche bereit, wenn es die Menschen sind.<br>
-      Mehr Taufen. Mehr Zeugnisse. Mehr Wachstum.</p>
+      <!-- Section 2: UNSER HERZ -->
+      <div class="about-card">
+        <h2 class="about-headline heart">UNSER HERZ</h2>
+        <p class="about-text">Mit unserer Lösung ist Kirche bereit, wenn es die Menschen sind.</p>
+        <blockquote class="about-quote">
+          Mehr Taufen. Mehr Zeugnisse. Mehr Wachstum.
+        </blockquote>
+      </div>
 
-      <h3>UNSERE MISSION</h3>
-      <p>Zu Gottes Ehre träumen wir davon, ganz Europa mit 1000 mobilen Taufbecken zu fluten.</p>
-
-      <p><strong>Baptizo mobile Taufbecken - wir lieben Taufe!</strong><br>
-      <a href="https://www.baptizo.church" target="_blank">www.baptizo.church</a> | 
-      <a href="mailto:mail@baptizo.church">mail@baptizo.church</a> | 016098687610</p>
+      <!-- Section 3: MISSION & KONTAKT -->
+      <div class="about-card">
+        <h2 class="about-headline mission">UNSERE MISSION</h2>
+        <p class="about-text">
+          Zu Gottes Ehre träumen wir davon, ganz Europa mit 1000 mobilen Taufbecken zu fluten.
+        </p>
+        <blockquote class="about-quote">
+          Weil jede Taufe zählt!
+        </blockquote>
+        
+        <!-- Contact Info -->
+        <div class="contact-grid">
+          <div class="contact-item">
+            <span class="contact-label">WEB</span>
+            <a href="https://www.baptizo.church" target="_blank" class="contact-link">www.baptizo.church</a>
+          </div>
+          <div class="contact-item">
+            <span class="contact-label">EMAIL</span>
+            <a href="mailto:mail@baptizo.church" class="contact-link">mail@baptizo.church</a>
+          </div>
+          <div class="contact-item">
+            <span class="contact-label">TEL</span>
+            <span class="contact-text">0160 976 876 10</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Footer -->
@@ -367,6 +462,54 @@ const visibleSeries = ref({ interessenten: true, seminare: true, taufen: true })
 // Filter State
 const timeFilter = ref('all');
 const peopleFilter = ref('all');
+
+// FAQ Data for Help Tab
+const faqs = ref([
+  {
+    question: 'Wie starte ich den Prozess für eine neue Person?',
+    answer: 'Gehe in den Tab "Personen" und klicke auf "+ Onboarding". Wähle eine Person aus der ChurchTools-Datenbank.',
+    open: false
+  },
+  {
+    question: 'Wann werden E-Mails versendet?',
+    answer: 'Die E-Mails (Einladungen, Infos, Glückwünsche) werden vollautomatisch basierend auf den Einstellungen im Tab "Einstellungen" versendet.',
+    open: false
+  },
+  {
+    question: 'Wie trage ich eine Taufe ein?',
+    answer: 'Gehe zur Person, klicke auf "Bearbeiten" und setze den Haken bei "Taufe" inklusive Datum. Alternativ im Tab "Termine" das Event bearbeiten.',
+    open: false
+  },
+  {
+    question: 'Was bedeutet der Status "Fokus"?',
+    answer: 'Dieser Filter zeigt dir Personen, die Aufmerksamkeit brauchen (z.B. lange keine Aktivität oder fehlende Urkunde).',
+    open: false
+  },
+  {
+    question: 'Wie funktioniert das Dashboard-Chart?',
+    answer: 'Du kannst Zeiträume (12/24/36 Monate) wählen oder einzelne Jahre vergleichen. Klicke auf die Legende unten, um Datenreihen ein/auszublenden.',
+    open: false
+  },
+  {
+    question: 'Was passiert beim "Offboarding"?',
+    answer: 'Die Person wird aus den aktiven Listen entfernt und archiviert. Sie erhält keine automatischen Mails mehr.',
+    open: false
+  },
+  {
+    question: 'Kann ich die E-Mail-Texte ändern?',
+    answer: 'Ja, im Reiter "Einstellungen" unter "E-Mail Vorlagen" kannst du alle Texte anpassen.',
+    open: false
+  },
+  {
+    question: 'Wer sieht diese Daten?',
+    answer: 'Alle Nutzer mit Berechtigung für dieses Plugin. Die Daten werden sicher in ChurchTools gespeichert.',
+    open: false
+  }
+]);
+
+const toggleFaq = (index: number) => {
+  faqs.value[index].open = !faqs.value[index].open;
+};
 
 // Data Loading
 const loadData = async () => {
@@ -1273,33 +1416,201 @@ onMounted(() => loadData());
   min-height: calc(100vh - 200px); /* Fill viewport minus header/tabs/footer for sticky footer */
 }
 
-/* About Content */
-.about-content {
+/* Help Content (Hilfe Tab) */
+.help-content {
+  padding: 0 20px;
+  max-width: 1400px; /* Full page width like other tabs */
+  margin: 0 auto;
+  margin-top: 2rem; /* Increased spacing from tab bar to match Settings */
+  min-height: calc(100vh - 200px);
+}
+
+/* Hero Section */
+.help-hero {
+  margin-bottom: 0; /* No margin - spacing handled by child elements */
+}
+
+/* Intro Card */
+.intro-card {
+  background: #2d2d44; /* Dark widget-style background */
   padding: 2rem;
-  max-width: 900px;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* Title Badge (Button-Style) */
+.title-badge {
+  display: inline-block;
+  background: rgba(146, 201, 214, 0.15); /* Subtle turquoise background */
+  color: #92C9D6;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 0.5rem 1.5rem;
+  border-radius: 50px; /* Pill shape */
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+}
+
+/* Intro Text */
+.intro-text {
+  color: #cccccc;
+  line-height: 1.6;
+  max-width: 800px;
+  margin: 0 auto;
+  font-size: 0.95rem;
+}
+
+/* Benefits Grid */
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 0; /* No bottom margin - spacing from next section's margin-top */
+}
+
+.benefit-card {
+  background: #2a2a2a;
+  padding: 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.benefit-card:hover {
+  background: #2f2f2f;
+  transform: translateY(-4px);
+}
+
+.benefit-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.benefit-card h3 {
+  color: #92C9D6;
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+  font-weight: bold;
+}
+
+.benefit-card p {
+  color: #ccc;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* FAQ Section */
+.faq-section {
+  margin-top: 2rem; /* Match spacing between intro-card and benefits-grid */
+}
+
+.faq-title-card {
+  background: #2d2d44; /* Same as intro-card */
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.faq-subtitle {
+  color: #aaa;
+  font-size: 0.9rem;
+  margin: 0.5rem 0 0 0;
+  line-height: 1.4;
+}
+
+.faq-contact-link {
+  color: #92C9D6;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.faq-contact-link:hover {
+  color: #a8d9e5;
+  text-decoration: underline;
+}
+
+.faq-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 columns for FAQs */
+  gap: 1.5rem;
+  max-width: 1400px; /* Full page width */
   margin: 0 auto;
 }
 
-.about-content h2 {
-  color: #92C9D6;
-  margin-bottom: 2rem;
-  color: #92C9D6;
-  text-decoration: none;
+.faq-item {
+  margin-bottom: 0.5rem; /* Tighter spacing between questions */
+  border-radius: 6px;
+  overflow: hidden;
 }
 
-.intro-text .lead {
-  font-size: 1.2rem;
-  margin-bottom: 1.5rem;
+.faq-question {
+  background: #2a2a2a;
+  padding: 1.25rem 1.5rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s;
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.faq-question:hover {
+  background: #3C3C5B;
   color: #fff;
 }
 
-.intro-text ul {
-  margin: 1rem 0;
-  padding-left: 1.5rem;
+.faq-arrow {
+  color: #7383B2;
+  font-size: 0.9rem;
+  transition: transform 0.3s;
 }
 
-.intro-text li {
-  margin-bottom: 0.5rem;
+.faq-item.active .faq-arrow {
+  transform: rotate(90deg);
+}
+
+.faq-answer {
+  background: #2a2a2a; /* Gray box for answer */
+  padding: 1.25rem 1.5rem;
+  color: #ccc;
+  line-height: 1.6;
+  border-top: 1px solid #444;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+  .benefits-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .benefits-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .hero-title {
+    font-size: 2rem;
+  }
 }
 
 /* Footer */
@@ -1342,5 +1653,143 @@ onMounted(() => loadData());
   background: rgba(255, 255, 255, 0.1);
   color: white;
   border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* About Content (Über uns Tab) */
+.about-content {
+  max-width: 900px;
+  margin: 2rem auto 0;
+  padding: 0 20px;
+}
+
+.about-card {
+  background: #2d2d44;
+  padding: 2rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+}
+
+.about-headline {
+  font-size: 1.5rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin: 0 0 1.5rem 0;
+  letter-spacing: 0.05em;
+}
+
+.about-headline.vision {
+  color: #92C9D6; /* Turquoise */
+}
+
+.about-headline.heart {
+  color: #7383B2; /* Purple */
+}
+
+.about-headline.mission {
+  color: #FF9F43; /* Orange */
+}
+
+.about-text {
+  color: #ccc;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #92C9D6;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #aaa;
+  line-height: 1.4;
+}
+
+/* Quote */
+.about-quote {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-style: italic;
+  color: #fff;
+  text-align: center;
+  margin: 2rem 0 0 0;
+  padding: 0;
+  border-left: none;
+}
+
+.about-footer {
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 1.5rem;
+}
+
+/* Contact Grid */
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.contact-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #7383B2;
+  letter-spacing: 0.1em;
+  min-width: 50px;
+  flex-shrink: 0;
+}
+
+.contact-link {
+  color: #92C9D6;
+  text-decoration: none;
+  transition: all 0.2s;
+  font-size: 0.95rem;
+}
+
+.contact-link:hover {
+  color: #a8d9e5;
+  text-decoration: underline;
+}
+
+.contact-text {
+  color: #ccc;
+  font-size: 0.95rem;
+}
+
+/* Responsive for About section */
+@media (max-width: 768px) {
+  .stats-grid,
+  .contact-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 }
 </style>
