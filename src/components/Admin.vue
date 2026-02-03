@@ -146,7 +146,6 @@
                 type="text" 
                 placeholder="z.B. 105"
               />
-              <p class="help-text">Speichert ob Person im Taufmanager "Pausiert" ist</p>
             </div>
           </div>
 
