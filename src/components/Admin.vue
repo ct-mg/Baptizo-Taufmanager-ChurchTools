@@ -27,7 +27,7 @@
       <!-- Section A: CONTAINER (Gruppen) -->
       <div class="config-section">
         <div class="section-header">
-          <h3>A. Container (Gruppen)</h3>
+          <h3>A. Container</h3>
         </div>
         <div class="ids-grid">
           <div class="id-card">
@@ -35,7 +35,7 @@
               <h4>Interessenten</h4>
             </div>
             <div class="form-group">
-              <label>Gruppen-ID</label>
+              <label>Gruppen-ID: interestGroupId</label>
               <input 
                 v-model="localSettings.interestGroupId" 
                 type="text" 
@@ -49,7 +49,7 @@
               <h4>Getaufte</h4>
             </div>
             <div class="form-group">
-              <label>Gruppen-ID</label>
+              <label>Gruppen-ID: baptizedGroupId</label>
               <input 
                 v-model="localSettings.baptizedGroupId" 
                 type="text" 
@@ -63,7 +63,7 @@
       <!-- Section B: MEILENSTEINE (Alle Typ: Datum) -->
       <div class="config-section">
         <div class="section-header">
-          <h3>B. Meilensteine (Datumsfelder)</h3>
+          <h3>B. Meilensteine</h3>
         </div>
         <div class="ids-grid">
           <div class="id-card">
@@ -72,7 +72,7 @@
               <span class="field-type">Datum</span>
             </div>
             <div class="form-group">
-              <label>Feld-ID</label>
+              <label>Feld-ID: seminarDateId</label>
               <input 
                 v-model="localSettings.seminarDateId" 
                 type="text" 
@@ -87,7 +87,7 @@
               <span class="field-type">Datum</span>
             </div>
             <div class="form-group">
-              <label>Feld-ID</label>
+              <label>Feld-ID: baptismDateId</label>
               <input 
                 v-model="localSettings.baptismDateId" 
                 type="text" 
@@ -102,7 +102,7 @@
               <span class="field-type">Datum</span>
             </div>
             <div class="form-group">
-              <label>Feld-ID</label>
+              <label>Feld-ID: certificateDateId</label>
               <input 
                 v-model="localSettings.certificateDateId" 
                 type="text" 
@@ -117,7 +117,7 @@
               <span class="field-type">Datum</span>
             </div>
             <div class="form-group">
-              <label>Feld-ID</label>
+              <label>Feld-ID: integratedDateId</label>
               <input 
                 v-model="localSettings.integratedDateId" 
                 type="text" 
@@ -140,7 +140,7 @@
               <span class="field-type">Dropdown</span>
             </div>
             <div class="form-group">
-              <label>Feld-ID</label>
+              <label>Feld-ID: statusFieldId</label>
               <input 
                 v-model="localSettings.statusFieldId" 
                 type="text" 
@@ -156,7 +156,7 @@
               <span class="field-type">Kalender</span>
             </div>
             <div class="form-group">
-              <label>Kalender-ID</label>
+              <label>Kalender-ID: calendarId</label>
               <input 
                 v-model="localSettings.calendarId" 
                 type="text" 
