@@ -1,5 +1,12 @@
 <template>
   <div class="admin-panel">
+    <!-- Header with back button -->
+    <header class="admin-header">
+      <button @click="navigateBack" class="back-button">
+        ← ZURÜCK ZUM DASHBOARD
+      </button>
+    </header>
+
     <h2 class="admin-title">🔐 Admin-Einstellungen</h2>
     <p class="admin-description">
       Hier werden die technischen IDs für die ChurchTools-Integration konfiguriert.
@@ -83,6 +90,16 @@
 import { ref, onMounted } from 'vue';
 import { getAdminSettings, saveAdminSettings, getDefaultAdminSettings, type AdminSettings } from '../lib/kv-store';
 
+const props = defineProps<{
+  onNavigate?: (target: string) => void;
+}>();
+
+function navigateBack() {
+  if (props.onNavigate) {
+    props.onNavigate('main');
+  }
+}
+
 const localSettings = ref<AdminSettings>(getDefaultAdminSettings());
 const saving = ref(false);
 const saveMessage = ref('');
@@ -120,6 +137,26 @@ async function handleSave() {
 </script>
 
 <style scoped>
+.admin-header {
+  margin-bottom: 24px;
+}
+
+.back-button {
+  background: transparent;
+  border: 1px solid #ccc;
+  color: #333;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.back-button:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
 .admin-panel {
   max-width: 600px;
   margin: 0 auto;

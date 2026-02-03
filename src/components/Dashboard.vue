@@ -25,12 +25,12 @@
         <h1 class="app-title">Baptizo Taufmanager</h1>
       </div>
       <div class="actions">
-        <!-- ADMIN Button (FIRST - leftmost position) -->
+        <!-- ADMIN Button (FIRST - leftmost position, ghost style) -->
         <button 
-          v-if="user" 
-          @click="showAdminView = true" 
-          class="ct-button ct-button--primary"
-          style="background-color: #c00;"
+          v-if="props.user" 
+          @click="navigateToAdmin" 
+          class="ct-button"
+          style="background: transparent; border: 1px solid #ccc; color: #333;"
         >
           🔐 ADMIN
         </button>
@@ -491,10 +491,17 @@ import type { BaptizoSettings } from '../types/baptizo-settings';
 
 const props = defineProps<{
   user?: any;
+  onNavigate?: (target: string) => void;
 }>();
 
 // Debug: Log user object to find correct admin property
 console.log('[Baptizo] Current User:', props.user);
+
+function navigateToAdmin() {
+  if (props.onNavigate) {
+    props.onNavigate('admin');
+  }
+}
 
 const provider = new MockDataProvider();
 const loading = ref(true);
