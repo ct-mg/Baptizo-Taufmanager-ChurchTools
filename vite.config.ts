@@ -1,11 +1,11 @@
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig, loadEnv, type LibraryFormats } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { resolve } from 'path';
 import { copyFileSync } from 'fs';
 import manifest from './manifest.json';
 
 // https://vitejs.dev/config/
-export default ({ mode }) => {
+export default ({ mode }: { mode: string }) => {
     // Load env files properly
     const env = loadEnv(mode, process.cwd(), '');
     process.env = { ...process.env, ...env };
@@ -29,8 +29,8 @@ export default ({ mode }) => {
         lib: {
             entry: resolve(__dirname, 'src/index.ts'),
             name: globalName,
-            formats: ['es'],
-            fileName: (format) => `extension.${format}.js`,
+            formats: ['es'] as LibraryFormats[],
+            fileName: (format: string) => `extension.${format}.js`,
         },
         rollupOptions: {
             output: {
@@ -45,8 +45,8 @@ export default ({ mode }) => {
         lib: {
             entry: resolve(__dirname, 'src/index.ts'),
             name: globalName,
-            formats: ['es'],
-            fileName: (format) => `extension.${format}.js`,
+            formats: ['es'] as LibraryFormats[],
+            fileName: (format: string) => `extension.${format}.js`,
         },
         rollupOptions: {
             output: {

@@ -1,5 +1,23 @@
 <template>
   <div class="baptizo-dashboard">
+    <!-- ADMIN VIEW (full page replacement) -->
+    <div v-if="showAdminView" class="admin-fullscreen">
+      <header class="dashboard-header">
+        <div class="logo-area">
+          <img src="/logo.png" alt="Baptizo Logo" class="logo-img" />
+          <h1 class="app-title">Baptizo Taufmanager</h1>
+        </div>
+        <div class="actions">
+          <button @click="showAdminView = false" class="ct-button ct-button--primary">
+            <span class="icon">←</span> Zurück zum Dashboard
+          </button>
+        </div>
+      </header>
+      <Admin />
+    </div>
+
+    <!-- DASHBOARD VIEW (normal view) -->
+    <template v-else>
     <!-- Header -->
     <header class="dashboard-header">
       <div class="logo-area">
@@ -7,6 +25,16 @@
         <h1 class="app-title">Baptizo Taufmanager</h1>
       </div>
       <div class="actions">
+        <!-- ADMIN Button (FIRST - leftmost position) -->
+        <button 
+          v-if="user" 
+          @click="showAdminView = true" 
+          class="ct-button ct-button--primary"
+          style="background-color: #c00;"
+        >
+          🔐 ADMIN
+        </button>
+        
         <select v-if="settings.multiSiteMode" class="location-filter">
           <option value="">Alle Standorte</option>
           <option v-for="campus in settings.campuses" :key="campus.id" :value="campus.id">
@@ -35,14 +63,6 @@
           style="background-color: #333; color: white; margin-left: 8px;"
         >
           <span class="icon">⚙️</span> System-Einstellungen
-        </button>
-        <button 
-          v-if="user?.permissions?.admin === true" 
-          @click="currentTab = 'admin'" 
-          class="ct-button ct-button--admin"
-          style="background-color: #c00; color: white; margin-left: 8px;"
-        >
-          <span class="icon">🔐</span> ADMIN
         </button>
       </div>
     </header>
@@ -439,6 +459,8 @@
       <Admin />
     </div>
 
+    </template>
+
     <!-- Footer -->
     <footer class="baptizo-footer">
       <p>Powered by <a href="https://www.baptizo.church" target="_blank">Baptizo – Mobile Taufbecken</a></p>
@@ -467,9 +489,12 @@ import Admin from './Admin.vue';
 import { DEFAULT_SETTINGS } from '../types/baptizo-settings';
 import type { BaptizoSettings } from '../types/baptizo-settings';
 
-defineProps<{
+const props = defineProps<{
   user?: any;
 }>();
+
+// Debug: Log user object to find correct admin property
+console.log('[Baptizo] Current User:', props.user);
 
 const provider = new MockDataProvider();
 const loading = ref(true);
@@ -477,6 +502,7 @@ const groups = ref<BaptizoGroup[]>([]);
 const events = ref<BaptizoEvent[]>([]);
 const settings = ref<BaptizoSettings>({ ...DEFAULT_SETTINGS });
 const currentTab = ref('dashboard');
+const showAdminView = ref(false);
 const selectedPerson = ref<BaptizoPerson | null>(null);
 
 const tabs = [
