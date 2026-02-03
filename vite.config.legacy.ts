@@ -2,13 +2,14 @@ import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { resolve } from 'path';
 import { copyFileSync } from "fs";
+import manifest from './manifest.json';
 
 // Configuration for legacy mode (index-legacy.html)
 // This serves the main entry point directly without the test environment
 export default ({ mode }: { mode: string }) => {
     process.env = { ...process.env, ...loadEnv(mode, process.cwd()) };
 
-    const key = process.env.VITE_KEY || 'baptizo-taufmanager';
+    const key = manifest.key;
 
     return defineConfig({
         // Use root path for legacy mode

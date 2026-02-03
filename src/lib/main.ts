@@ -20,6 +20,7 @@ declare const window: Window &
     };
 
 const KEY = manifest.key;
+export { KEY };
 
 // Track initialization state
 let isInitialized = false;
@@ -33,6 +34,14 @@ async function initializeChurchToolsClient(): Promise<void> {
     }
 
     const baseUrl = window.settings?.base_url ?? import.meta.env.VITE_BASE_URL;
+
+    // Safety check: Ensure base URL is defined
+    if (!baseUrl) {
+        const errorMsg = 'Error: VITE_BASE_URL is not defined in .env file. Please create a .env file in the root directory with: VITE_BASE_URL=https://baptizo.church.tools/';
+        console.error(errorMsg);
+        throw new Error(errorMsg);
+    }
+
     churchtoolsClient.setBaseUrl(baseUrl);
 
     // Auto-login in development mode

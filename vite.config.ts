@@ -2,13 +2,14 @@ import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { resolve } from 'path';
 import { copyFileSync } from 'fs';
+import manifest from './manifest.json';
 
 // https://vitejs.dev/config/
 export default ({ mode }) => {
     process.env = { ...process.env, ...loadEnv(mode, process.cwd()) };
 
     const isDevelopment = mode === 'development';
-    const key = process.env.VITE_KEY || 'baptizo-taufmanager';
+    const key = manifest.key;
     const buildMode = process.env.VITE_BUILD_MODE || 'simple';
 
     // Create a unique global name for UMD based on the extension key
