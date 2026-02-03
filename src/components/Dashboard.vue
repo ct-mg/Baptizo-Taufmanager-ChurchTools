@@ -36,6 +36,14 @@
         >
           <span class="icon">⚙️</span> System-Einstellungen
         </button>
+        <button 
+          v-if="user?.permissions?.admin === true" 
+          @click="currentTab = 'admin'" 
+          class="ct-button ct-button--admin"
+          style="background-color: #c00; color: white; margin-left: 8px;"
+        >
+          <span class="icon">🔐</span> ADMIN
+        </button>
       </div>
     </header>
 
@@ -426,6 +434,11 @@
       </div>
     </div>
 
+    <!-- ADMIN TAB (only for users with admin permissions) -->
+    <div v-else-if="currentTab === 'admin'" class="admin-content">
+      <Admin />
+    </div>
+
     <!-- Footer -->
     <footer class="baptizo-footer">
       <p>Powered by <a href="https://www.baptizo.church" target="_blank">Baptizo – Mobile Taufbecken</a></p>
@@ -450,6 +463,7 @@ import PersonList from './PersonList.vue';
 import EventList from './EventList.vue';
 import PersonDetailModal from './PersonDetailModal.vue';
 import SettingsTab from './SettingsTab.vue';
+import Admin from './Admin.vue';
 import { DEFAULT_SETTINGS } from '../types/baptizo-settings';
 import type { BaptizoSettings } from '../types/baptizo-settings';
 
