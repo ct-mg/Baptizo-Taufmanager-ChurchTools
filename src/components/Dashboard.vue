@@ -8,7 +8,7 @@
           <h1 class="app-title">Baptizo Taufmanager</h1>
         </div>
         <div class="actions">
-          <button @click="showAdminView = false" class="ct-button ct-button--primary">
+          <button @click="showAdminView = false" class="ct-button">
             <span class="icon">←</span> Zurück zum Dashboard
           </button>
         </div>
@@ -25,14 +25,12 @@
         <h1 class="app-title">Baptizo Taufmanager</h1>
       </div>
       <div class="actions">
-        <!-- ADMIN Button (FIRST - leftmost position, ghost style) -->
+        <!-- ADMIN Button (FIRST - leftmost position, same style as Report button with border) -->
         <button 
-          v-if="props.user" 
-          @click="navigateToAdmin" 
-          class="ct-button"
-          style="background: transparent; border: 1px solid #ccc; color: #333;"
+          @click="goToAdminEntryPoint" 
+          class="ct-button ct-button--report"
         >
-          🔐 ADMIN
+          <span class="icon">🔐</span> ADMIN
         </button>
         
         <select v-if="settings.multiSiteMode" class="location-filter">
@@ -497,9 +495,22 @@ const props = defineProps<{
 // Debug: Log user object to find correct admin property
 console.log('[Baptizo] Current User:', props.user);
 
-function navigateToAdmin() {
+function goToAdminEntryPoint() {
+  console.log('[Baptizo] Navigating to Admin Entry Point...');
+  // Find and click the admin menu item in the dev environment
+  const menuItems = document.querySelectorAll('.menu-item');
+  for (const item of menuItems) {
+    if (item.textContent?.includes('admin')) {
+      console.log('[Baptizo] Found admin menu item, clicking...');
+      (item as HTMLElement).click();
+      return;
+    }
+  }
+  // Fallback: use onNavigate if available
   if (props.onNavigate) {
     props.onNavigate('admin');
+  } else {
+    console.warn('[Baptizo] Could not find admin menu item');
   }
 }
 
