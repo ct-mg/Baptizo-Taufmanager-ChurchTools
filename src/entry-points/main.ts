@@ -6,10 +6,10 @@ import type { EntryPoint } from '../types/extension';
  * Main Entry Point
  * Renders the Baptizo Dashboard using Vue.js
  */
-const mainEntryPoint: EntryPoint = ({ element }) => {
+const mainEntryPoint: EntryPoint = ({ element, user }) => {
     console.log('[Baptizo] Initializing Main Dashboard');
 
-    const app = createApp(Dashboard);
+    const app = createApp(Dashboard, { user });
     app.mount(element);
 
     return () => {

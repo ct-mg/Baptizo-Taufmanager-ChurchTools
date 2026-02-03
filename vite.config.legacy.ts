@@ -1,13 +1,14 @@
 import { defineConfig, loadEnv } from 'vite';
+import vue from '@vitejs/plugin-vue';
 import { resolve } from 'path';
-import {copyFileSync} from "fs";
+import { copyFileSync } from "fs";
 
 // Configuration for legacy mode (index-legacy.html)
 // This serves the main entry point directly without the test environment
-export default ({ mode }) => {
+export default ({ mode }: { mode: string }) => {
     process.env = { ...process.env, ...loadEnv(mode, process.cwd()) };
 
-    const key = process.env.VITE_KEY || 'default';
+    const key = process.env.VITE_KEY || 'baptizo-taufmanager';
 
     return defineConfig({
         // Use root path for legacy mode
@@ -24,6 +25,7 @@ export default ({ mode }) => {
             },
         },
         plugins: [
+            vue(),
             // Serve index-legacy.html as the root index.html in dev mode
             {
                 name: 'serve-legacy-as-index',

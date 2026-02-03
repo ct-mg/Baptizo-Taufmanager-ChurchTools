@@ -25,8 +25,16 @@
         <button @click="openReportModal" class="ct-button ct-button--report">
           <span class="icon">📄</span> Report erstellen
         </button>
-        <button @click="refreshData" class="ct-button ct-button--primary">
+      <button @click="refreshData" class="ct-button ct-button--primary">
           <span class="icon">↻</span> Refresh
+        </button>
+        <button 
+          v-if="user?.is_admin || user?.meta?.is_admin" 
+          @click="currentTab = 'settings'" 
+          class="ct-button ct-button--admin"
+          style="background-color: #333; color: white; margin-left: 8px;"
+        >
+          <span class="icon">⚙️</span> System-Einstellungen
         </button>
       </div>
     </header>
@@ -444,6 +452,10 @@ import PersonDetailModal from './PersonDetailModal.vue';
 import SettingsTab from './SettingsTab.vue';
 import { DEFAULT_SETTINGS } from '../types/baptizo-settings';
 import type { BaptizoSettings } from '../types/baptizo-settings';
+
+defineProps<{
+  user?: any;
+}>();
 
 const provider = new MockDataProvider();
 const loading = ref(true);
