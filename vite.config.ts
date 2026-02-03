@@ -6,11 +6,16 @@ import manifest from './manifest.json';
 
 // https://vitejs.dev/config/
 export default ({ mode }) => {
-    process.env = { ...process.env, ...loadEnv(mode, process.cwd()) };
+    // Load env files properly
+    const env = loadEnv(mode, process.cwd(), '');
+    process.env = { ...process.env, ...env };
+
+    // Debug: Log loaded env vars
+    console.log(`VITE_BASE_URL from env:`, env.VITE_BASE_URL);
 
     const isDevelopment = mode === 'development';
     const key = manifest.key;
-    const buildMode = process.env.VITE_BUILD_MODE || 'simple';
+    const buildMode = env.VITE_BUILD_MODE || 'simple';
 
     // Create a unique global name for UMD based on the extension key
     // This prevents namespace collisions when multiple extensions are loaded
@@ -56,6 +61,14 @@ export default ({ mode }) => {
     };
 
     return defineConfig({
+        // Explicitly set envDir to project root to ensure .env is loaded
+        envDir: process.cwd(),
+        // Explicitly define env vars for client (workaround for Vite env loading issues)
+        define: {
+            'import.meta.env.VITE_BASE_URL': JSON.stringify(env.VITE_BASE_URL || 'https://baptizo.church.tools/'),
+            'import.meta.env.VITE_USERNAME': JSON.stringify(env.VITE_USERNAME || ''),
+            'import.meta.env.VITE_PASSWORD': JSON.stringify(env.VITE_PASSWORD || ''),
+        },
         // For development, use the ccm path
         // For production library builds, use relative paths so ChurchTools can control deployment location
         base: `/extensions/${key}/`,

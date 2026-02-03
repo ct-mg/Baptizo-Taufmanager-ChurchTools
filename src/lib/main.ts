@@ -47,8 +47,18 @@ async function initializeChurchToolsClient(): Promise<void> {
     // Auto-login in development mode
     const username = import.meta.env.VITE_USERNAME;
     const password = import.meta.env.VITE_PASSWORD;
+
     if (import.meta.env.MODE === 'development' && username && password) {
-        await churchtoolsClient.post('/login', { username, password });
+        try {
+            console.log('[Baptizo] Attempting auto-login for development mode...');
+            await churchtoolsClient.post('/login', { username, password });
+            console.log('[Baptizo] ✓ Login successful');
+        } catch (error) {
+            console.error('[Baptizo] ✗ Login fehlgeschlagen. Bitte .env prüfen:', error);
+            throw new Error('Login fehlgeschlagen. Bitte VITE_USERNAME und VITE_PASSWORD in der .env prüfen.');
+        }
+    } else if (import.meta.env.MODE === 'development') {
+        console.warn('[Baptizo] ⚠ No login credentials provided in .env - some features may not work');
     }
 
     isInitialized = true;
