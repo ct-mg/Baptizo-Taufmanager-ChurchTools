@@ -7,7 +7,7 @@
         <h1 class="app-title">BAPTIZO TAUFMANAGER</h1>
       </div>
       <div class="actions">
-        <!-- Back Button (Ghost Style like Report Button) -->
+        <!-- Back Button (Ghost Style) -->
         <button @click="navigateBack" class="ct-button ct-button--report">
           <span class="icon">←</span> ZURÜCK ZUM DASHBOARD
         </button>
@@ -16,96 +16,147 @@
 
     <!-- Content Area -->
     <div class="admin-content">
-      <!-- Settings Header (Same as SettingsTab) -->
+      <!-- Settings Header -->
       <div class="settings-header">
-        <div class="filter-bar">
-          <button class="active">ChurchTools IDs</button>
-        </div>
+        <h2 class="section-title">ChurchTools IDs konfigurieren</h2>
         <button @click="handleSave" class="ct-button ct-button--primary" :disabled="saving">
           <span v-if="!saving">Einstellungen speichern</span>
           <span v-else>Speichert...</span>
         </button>
       </div>
 
-      <!-- ID Cards Grid (Same styling as SettingsTab links-grid) -->
-      <div class="ids-grid">
-        <!-- Taufpool ID -->
-        <div class="id-card">
-          <div class="card-header">
-            <h4>Taufpool Gruppe</h4>
+      <!-- Section 1: DIE MENSCHEN (Gruppen) -->
+      <div class="config-section">
+        <div class="section-header">
+          <h3>1. Die Menschen (Gruppen)</h3>
+          <p class="section-description">Gruppen-IDs für den Tauf-Workflow</p>
+        </div>
+        <div class="ids-grid">
+          <div class="id-card">
+            <div class="card-header">
+              <h4>Taufpool / Interessenten</h4>
+            </div>
+            <div class="form-group">
+              <label>Gruppen-ID</label>
+              <input 
+                v-model="localSettings.pipelineGroupId" 
+                type="text" 
+                placeholder="z.B. 123"
+              />
+              <p class="help-text">Hier kommen neue Leute rein (Quelle für Liste 1 & 2)</p>
+            </div>
           </div>
-          <div class="form-group">
-            <label>Gruppen-ID</label>
-            <input 
-              v-model="localSettings.taufpoolGroupId" 
-              type="text" 
-              placeholder="z.B. 123"
-            />
-            <p class="help-text">ID der ChurchTools-Gruppe für den Taufpool</p>
+
+          <div class="id-card">
+            <div class="card-header">
+              <h4>Getaufte</h4>
+            </div>
+            <div class="form-group">
+              <label>Gruppen-ID</label>
+              <input 
+                v-model="localSettings.baptizedGroupId" 
+                type="text" 
+                placeholder="z.B. 456"
+              />
+              <p class="help-text">Hier landen Leute nach der Taufe (Quelle für Liste 3 & 4)</p>
+            </div>
           </div>
         </div>
+      </div>
 
-        <!-- Seminar ID -->
-        <div class="id-card">
-          <div class="card-header">
-            <h4>Taufseminar Gruppe</h4>
+      <!-- Section 2: DER FORTSCHRITT (Felder) -->
+      <div class="config-section">
+        <div class="section-header">
+          <h3>2. Der Fortschritt (Felder)</h3>
+          <p class="section-description">Personenfelder für Status-Tracking</p>
+        </div>
+        <div class="ids-grid">
+          <div class="id-card">
+            <div class="card-header">
+              <h4>Seminar besucht am</h4>
+              <span class="field-type">Datum</span>
+            </div>
+            <div class="form-group">
+              <label>Feld-ID</label>
+              <input 
+                v-model="localSettings.fieldSeminarDateId" 
+                type="text" 
+                placeholder="z.B. 101"
+              />
+              <p class="help-text">Trigger für Wechsel von Liste 1 → 2</p>
+            </div>
           </div>
-          <div class="form-group">
-            <label>Gruppen-ID</label>
-            <input 
-              v-model="localSettings.seminarGroupId" 
-              type="text" 
-              placeholder="z.B. 456"
-            />
-            <p class="help-text">ID der ChurchTools-Gruppe für Seminarteilnehmer</p>
+
+          <div class="id-card">
+            <div class="card-header">
+              <h4>Getauft am</h4>
+              <span class="field-type">Datum</span>
+            </div>
+            <div class="form-group">
+              <label>Feld-ID</label>
+              <input 
+                v-model="localSettings.fieldBaptismDateId" 
+                type="text" 
+                placeholder="z.B. 102"
+              />
+              <p class="help-text">Trigger für Verschiebung in Gruppe "Getaufte"</p>
+            </div>
+          </div>
+
+          <div class="id-card">
+            <div class="card-header">
+              <h4>Urkunde überreicht</h4>
+              <span class="field-type">Checkbox</span>
+            </div>
+            <div class="form-group">
+              <label>Feld-ID</label>
+              <input 
+                v-model="localSettings.fieldCertificateId" 
+                type="text" 
+                placeholder="z.B. 103"
+              />
+              <p class="help-text">Erledigt Liste 3</p>
+            </div>
+          </div>
+
+          <div class="id-card">
+            <div class="card-header">
+              <h4>Integriert</h4>
+              <span class="field-type">Checkbox</span>
+            </div>
+            <div class="form-group">
+              <label>Feld-ID</label>
+              <input 
+                v-model="localSettings.fieldIntegratedId" 
+                type="text" 
+                placeholder="z.B. 104"
+              />
+              <p class="help-text">Erledigt Liste 4</p>
+            </div>
           </div>
         </div>
+      </div>
 
-        <!-- Taufdatum Status ID -->
-        <div class="id-card">
-          <div class="card-header">
-            <h4>Taufdatum Status</h4>
-          </div>
-          <div class="form-group">
-            <label>Status-Feld-ID</label>
-            <input 
-              v-model="localSettings.taufdatumStatusId" 
-              type="text" 
-              placeholder="z.B. 789"
-            />
-            <p class="help-text">ID des Personenstatus-Feldes für das Taufdatum</p>
-          </div>
+      <!-- Section 3: DIE TERMINE (Kalender) -->
+      <div class="config-section">
+        <div class="section-header">
+          <h3>3. Die Termine (Kalender)</h3>
+          <p class="section-description">Kalender für Tauf-Events und Seminare</p>
         </div>
-
-        <!-- Taufstatus Field ID -->
-        <div class="id-card">
-          <div class="card-header">
-            <h4>Taufstatus Feld</h4>
-          </div>
-          <div class="form-group">
-            <label>Feld-ID</label>
-            <input 
-              v-model="localSettings.taufstatusFieldId" 
-              type="text" 
-              placeholder="z.B. 101"
-            />
-            <p class="help-text">ID des Personenfeldes für den Taufstatus</p>
-          </div>
-        </div>
-
-        <!-- Taufort Field ID -->
-        <div class="id-card">
-          <div class="card-header">
-            <h4>Taufort Feld</h4>
-          </div>
-          <div class="form-group">
-            <label>Feld-ID</label>
-            <input 
-              v-model="localSettings.taufortFieldId" 
-              type="text" 
-              placeholder="z.B. 102"
-            />
-            <p class="help-text">ID des Personenfeldes für den Taufort</p>
+        <div class="ids-grid">
+          <div class="id-card id-card--wide">
+            <div class="card-header">
+              <h4>Kalender</h4>
+            </div>
+            <div class="form-group">
+              <label>Kalender-ID</label>
+              <input 
+                v-model="localSettings.calendarId" 
+                type="text" 
+                placeholder="z.B. 5"
+              />
+              <p class="help-text">Hier werden Tauf-Termine und Seminare gespeichert und gelesen</p>
+            </div>
           </div>
         </div>
       </div>
@@ -184,7 +235,7 @@ async function handleSave() {
 </script>
 
 <style scoped>
-/* Container - Full dark background like Dashboard */
+/* Container */
 .admin-container {
   background: #1a1a1a;
   min-height: 100vh;
@@ -222,11 +273,11 @@ async function handleSave() {
 
 .actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 1rem;
   align-items: center;
 }
 
-/* Buttons - Identical to Dashboard */
+/* Buttons */
 .ct-button {
   padding: 0.5rem 1rem;
   border-radius: 4px;
@@ -263,83 +314,62 @@ async function handleSave() {
   cursor: not-allowed;
 }
 
-/* Tabs - Identical to Dashboard */
-.tabs {
-  display: flex;
-  gap: 0.5rem;
-  padding: 1rem 2rem;
-  background: #252538;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.tab-btn {
-  background: rgba(255,255,255,0.1);
-  border: none;
-  color: #ccc;
-  padding: 0.75rem 1.5rem;
-  border-radius: 4px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tab-btn.active {
-  background: #3C3C5B;
-  color: white;
-}
-
 /* Content Area */
 .admin-content {
-  padding: 0 2rem 2rem 2rem;
-  max-width: 1400px;
+  padding: 2rem;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
-/* Settings Header - Identical to SettingsTab */
+/* Settings Header */
 .settings-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #333;
 }
 
-.filter-bar {
-  display: flex;
-  gap: 0.5rem;
-  background: #1a1a1a;
-  padding: 0.25rem;
-  border-radius: 6px;
-}
-
-.filter-bar button {
-  background: #444;
-  border: none;
-  color: #fff;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s;
-}
-
-.filter-bar button.active {
-  background: #3C3C5B;
-  color: white;
+.section-title {
+  font-size: 1.5rem;
   font-weight: bold;
+  color: #92C9D6;
+  margin: 0;
 }
 
-/* ID Cards Grid - Similar to SettingsTab links-grid */
+/* Config Sections */
+.config-section {
+  margin-bottom: 2.5rem;
+}
+
+.section-header {
+  margin-bottom: 1rem;
+}
+
+.section-header h3 {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #fff;
+  margin: 0 0 0.25rem 0;
+}
+
+.section-description {
+  color: #888;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* ID Cards Grid */
 .ids-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
 }
 
 .id-card {
   background: #2a2a2a;
-  padding: 1.5rem;
+  padding: 1.25rem;
   border-radius: 8px;
   transition: all 0.2s;
 }
@@ -348,17 +378,17 @@ async function handleSave() {
   background: #2f2f2f;
 }
 
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #444;
+.id-card--wide {
+  max-width: 400px;
 }
 
-.card-icon {
-  font-size: 1.5rem;
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #444;
 }
 
 .card-header h4 {
@@ -368,7 +398,16 @@ async function handleSave() {
   font-weight: bold;
 }
 
-/* Form Group - Identical to SettingsTab */
+.field-type {
+  background: #444;
+  color: #aaa;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+/* Form Group */
 .form-group {
   margin-bottom: 0;
 }
@@ -403,13 +442,13 @@ async function handleSave() {
 }
 
 .help-text {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #888;
   margin-top: 0.5rem;
   margin-bottom: 0;
 }
 
-/* Save Toast - Identical to SettingsTab */
+/* Save Toast */
 .save-toast {
   position: fixed;
   bottom: 2rem;

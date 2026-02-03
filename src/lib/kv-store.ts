@@ -1,16 +1,35 @@
 /**
  * KV-Store for Baptizo Admin Settings
- * Stores configuration IDs for groups, status fields, etc.
+ * Stores configuration IDs for groups, fields, and calendar.
+ * 
+ * Final v1 Mapping: 7 IDs total
+ * - 2 Groups (Pipeline, Baptized)
+ * - 4 Fields (Seminar Date, Baptism Date, Certificate, Integrated)
+ * - 1 Calendar
  */
 
 import { churchtoolsClient } from '@churchtools/churchtools-client';
 
 export interface AdminSettings {
-    taufpoolGroupId: string;
-    seminarGroupId: string;
-    taufdatumStatusId: string;
-    taufstatusFieldId: string;
-    taufortFieldId: string;
+    // === DIE MENSCHEN (Gruppen) ===
+    /** ID Gruppe: Taufpool / Interessenten - Quelle für Liste 1 & 2 */
+    pipelineGroupId: string;
+    /** ID Gruppe: Getaufte - Quelle für Liste 3 & 4 */
+    baptizedGroupId: string;
+
+    // === DER FORTSCHRITT (Felder) ===
+    /** ID Feld: Seminar besucht am (Datum) - Trigger Liste 1 -> 2 */
+    fieldSeminarDateId: string;
+    /** ID Feld: Getauft am (Datum) - Trigger für Verschiebung in Gruppe Getaufte */
+    fieldBaptismDateId: string;
+    /** ID Feld: Urkunde überreicht (Checkbox) - Erledigt Liste 3 */
+    fieldCertificateId: string;
+    /** ID Feld: Integriert (Checkbox) - Erledigt Liste 4 */
+    fieldIntegratedId: string;
+
+    // === DIE TERMINE (Kalender) ===
+    /** ID Kalender - Tauf-Termine und Seminare */
+    calendarId: string;
 }
 
 const STORAGE_KEY = 'baptizo-admin-settings';
@@ -62,14 +81,19 @@ export async function saveAdminSettings(settings: AdminSettings): Promise<boolea
 }
 
 /**
- * Get default empty settings
+ * Get default empty settings (all 7 IDs)
  */
 export function getDefaultAdminSettings(): AdminSettings {
     return {
-        taufpoolGroupId: '',
-        seminarGroupId: '',
-        taufdatumStatusId: '',
-        taufstatusFieldId: '',
-        taufortFieldId: ''
+        // Gruppen
+        pipelineGroupId: '',
+        baptizedGroupId: '',
+        // Felder
+        fieldSeminarDateId: '',
+        fieldBaptismDateId: '',
+        fieldCertificateId: '',
+        fieldIntegratedId: '',
+        // Kalender
+        calendarId: ''
     };
 }
