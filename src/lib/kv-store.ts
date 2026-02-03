@@ -2,33 +2,35 @@
  * KV-Store for Baptizo Admin Settings
  * Stores configuration IDs for groups, fields, and calendar.
  * 
- * Final v1 Mapping: 7 IDs total
- * - 2 Groups (Pipeline, Baptized)
- * - 4 Fields (Seminar Date, Baptism Date, Certificate, Integrated)
- * - 1 Calendar
+ * Final v1 Mapping: 8 IDs total
+ * - A. Container: 2 Groups (Interest, Baptized)
+ * - B. Milestones: 4 Date Fields (Seminar, Baptism, Certificate, Integrated)
+ * - C. Control: Status Field + Calendar
  */
 
 import { churchtoolsClient } from '@churchtools/churchtools-client';
 
 export interface AdminSettings {
-    // === DIE MENSCHEN (Gruppen) ===
-    /** ID Gruppe: Taufpool / Interessenten - Quelle für Liste 1 & 2 */
-    pipelineGroupId: string;
-    /** ID Gruppe: Getaufte - Quelle für Liste 3 & 4 */
+    // === A. CONTAINER (Gruppen) ===
+    /** ID Gruppe: Interessenten */
+    interestGroupId: string;
+    /** ID Gruppe: Getaufte */
     baptizedGroupId: string;
 
-    // === DER FORTSCHRITT (Felder) ===
-    /** ID Feld: Seminar besucht am (Datum) - Trigger Liste 1 -> 2 */
-    fieldSeminarDateId: string;
-    /** ID Feld: Getauft am (Datum) - Trigger für Verschiebung in Gruppe Getaufte */
-    fieldBaptismDateId: string;
-    /** ID Feld: Urkunde überreicht (Checkbox) - Erledigt Liste 3 */
-    fieldCertificateId: string;
-    /** ID Feld: Integriert (Checkbox) - Erledigt Liste 4 */
-    fieldIntegratedId: string;
+    // === B. MEILENSTEINE (Alle Typ: Datum) ===
+    /** ID Feld: Seminar (Datum) */
+    seminarDateId: string;
+    /** ID Feld: Taufe (Datum) */
+    baptismDateId: string;
+    /** ID Feld: Urkunde (Datum) */
+    certificateDateId: string;
+    /** ID Feld: Integration (Datum) */
+    integratedDateId: string;
 
-    // === DIE TERMINE (Kalender) ===
-    /** ID Kalender - Tauf-Termine und Seminare */
+    // === C. STEUERUNG ===
+    /** ID Feld: Aktiv/Inaktiv (Dropdown) - Pausiert-Status */
+    statusFieldId: string;
+    /** ID Kalender: Events */
     calendarId: string;
 }
 
@@ -81,19 +83,20 @@ export async function saveAdminSettings(settings: AdminSettings): Promise<boolea
 }
 
 /**
- * Get default empty settings (all 7 IDs)
+ * Get default empty settings (all 8 IDs)
  */
 export function getDefaultAdminSettings(): AdminSettings {
     return {
-        // Gruppen
-        pipelineGroupId: '',
+        // A. Container
+        interestGroupId: '',
         baptizedGroupId: '',
-        // Felder
-        fieldSeminarDateId: '',
-        fieldBaptismDateId: '',
-        fieldCertificateId: '',
-        fieldIntegratedId: '',
-        // Kalender
+        // B. Meilensteine
+        seminarDateId: '',
+        baptismDateId: '',
+        certificateDateId: '',
+        integratedDateId: '',
+        // C. Steuerung
+        statusFieldId: '',
         calendarId: ''
     };
 }

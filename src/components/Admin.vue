@@ -7,7 +7,6 @@
         <h1 class="app-title">BAPTIZO TAUFMANAGER</h1>
       </div>
       <div class="actions">
-        <!-- Back Button (Ghost Style) -->
         <button @click="navigateBack" class="ct-button ct-button--report">
           <span class="icon">←</span> ZURÜCK ZUM DASHBOARD
         </button>
@@ -25,25 +24,23 @@
         </button>
       </div>
 
-      <!-- Section 1: DIE MENSCHEN (Gruppen) -->
+      <!-- Section A: CONTAINER (Gruppen) -->
       <div class="config-section">
         <div class="section-header">
-          <h3>1. Die Menschen (Gruppen)</h3>
-          <p class="section-description">Gruppen-IDs für den Tauf-Workflow</p>
+          <h3>A. Container (Gruppen)</h3>
         </div>
         <div class="ids-grid">
           <div class="id-card">
             <div class="card-header">
-              <h4>Taufpool / Interessenten</h4>
+              <h4>Interessenten</h4>
             </div>
             <div class="form-group">
               <label>Gruppen-ID</label>
               <input 
-                v-model="localSettings.pipelineGroupId" 
+                v-model="localSettings.interestGroupId" 
                 type="text" 
                 placeholder="z.B. 123"
               />
-              <p class="help-text">Hier kommen neue Leute rein (Quelle für Liste 1 & 2)</p>
             </div>
           </div>
 
@@ -58,95 +55,105 @@
                 type="text" 
                 placeholder="z.B. 456"
               />
-              <p class="help-text">Hier landen Leute nach der Taufe (Quelle für Liste 3 & 4)</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Section 2: DER FORTSCHRITT (Felder) -->
+      <!-- Section B: MEILENSTEINE (Alle Typ: Datum) -->
       <div class="config-section">
         <div class="section-header">
-          <h3>2. Der Fortschritt (Felder)</h3>
-          <p class="section-description">Personenfelder für Status-Tracking</p>
+          <h3>B. Meilensteine (Datumsfelder)</h3>
         </div>
         <div class="ids-grid">
           <div class="id-card">
             <div class="card-header">
-              <h4>Seminar besucht am</h4>
+              <h4>Seminar</h4>
               <span class="field-type">Datum</span>
             </div>
             <div class="form-group">
               <label>Feld-ID</label>
               <input 
-                v-model="localSettings.fieldSeminarDateId" 
+                v-model="localSettings.seminarDateId" 
                 type="text" 
                 placeholder="z.B. 101"
               />
-              <p class="help-text">Trigger für Wechsel von Liste 1 → 2</p>
             </div>
           </div>
 
           <div class="id-card">
             <div class="card-header">
-              <h4>Getauft am</h4>
+              <h4>Taufe</h4>
               <span class="field-type">Datum</span>
             </div>
             <div class="form-group">
               <label>Feld-ID</label>
               <input 
-                v-model="localSettings.fieldBaptismDateId" 
+                v-model="localSettings.baptismDateId" 
                 type="text" 
                 placeholder="z.B. 102"
               />
-              <p class="help-text">Trigger für Verschiebung in Gruppe "Getaufte"</p>
             </div>
           </div>
 
           <div class="id-card">
             <div class="card-header">
-              <h4>Urkunde überreicht</h4>
-              <span class="field-type">Checkbox</span>
+              <h4>Urkunde</h4>
+              <span class="field-type">Datum</span>
             </div>
             <div class="form-group">
               <label>Feld-ID</label>
               <input 
-                v-model="localSettings.fieldCertificateId" 
+                v-model="localSettings.certificateDateId" 
                 type="text" 
                 placeholder="z.B. 103"
               />
-              <p class="help-text">Erledigt Liste 3</p>
             </div>
           </div>
 
           <div class="id-card">
             <div class="card-header">
-              <h4>Integriert</h4>
-              <span class="field-type">Checkbox</span>
+              <h4>Integration</h4>
+              <span class="field-type">Datum</span>
             </div>
             <div class="form-group">
               <label>Feld-ID</label>
               <input 
-                v-model="localSettings.fieldIntegratedId" 
+                v-model="localSettings.integratedDateId" 
                 type="text" 
                 placeholder="z.B. 104"
               />
-              <p class="help-text">Erledigt Liste 4</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Section 3: DIE TERMINE (Kalender) -->
+      <!-- Section C: STEUERUNG -->
       <div class="config-section">
         <div class="section-header">
-          <h3>3. Die Termine (Kalender)</h3>
-          <p class="section-description">Kalender für Tauf-Events und Seminare</p>
+          <h3>C. Steuerung</h3>
         </div>
         <div class="ids-grid">
-          <div class="id-card id-card--wide">
+          <div class="id-card">
             <div class="card-header">
-              <h4>Kalender</h4>
+              <h4>Aktiv/Inaktiv</h4>
+              <span class="field-type">Dropdown</span>
+            </div>
+            <div class="form-group">
+              <label>Feld-ID</label>
+              <input 
+                v-model="localSettings.statusFieldId" 
+                type="text" 
+                placeholder="z.B. 105"
+              />
+              <p class="help-text">Speichert ob Person im Taufmanager "Pausiert" ist</p>
+            </div>
+          </div>
+
+          <div class="id-card">
+            <div class="card-header">
+              <h4>Events</h4>
+              <span class="field-type">Kalender</span>
             </div>
             <div class="form-group">
               <label>Kalender-ID</label>
@@ -155,7 +162,6 @@
                 type="text" 
                 placeholder="z.B. 5"
               />
-              <p class="help-text">Hier werden Tauf-Termine und Seminare gespeichert und gelesen</p>
             </div>
           </div>
         </div>
@@ -178,19 +184,15 @@ const props = defineProps<{
 }>();
 
 function navigateBack() {
-  console.log('[Baptizo] Navigating back to Main Entry Point...');
   const menuItems = document.querySelectorAll('.menu-item');
   for (const item of menuItems) {
     if (item.textContent?.includes('main')) {
-      console.log('[Baptizo] Found main menu item, clicking...');
       (item as HTMLElement).click();
       return;
     }
   }
   if (props.onNavigate) {
     props.onNavigate('main');
-  } else {
-    console.warn('[Baptizo] Could not find main menu item');
   }
 }
 
@@ -203,7 +205,6 @@ onMounted(async () => {
   try {
     const settings = await getAdminSettings();
     localSettings.value = settings ?? getDefaultAdminSettings();
-    console.log('[Baptizo] Admin settings loaded:', settings);
   } catch (error) {
     console.error('[Baptizo] Error loading admin settings:', error);
   }
@@ -226,7 +227,6 @@ async function handleSave() {
   } catch (error) {
     saveMessage.value = '✗ Fehler beim Speichern';
     saveError.value = true;
-    console.error('[Baptizo] Error saving admin settings:', error);
   } finally {
     saving.value = false;
     setTimeout(() => saveMessage.value = '', 3000);
@@ -235,7 +235,6 @@ async function handleSave() {
 </script>
 
 <style scoped>
-/* Container */
 .admin-container {
   background: #1a1a1a;
   min-height: 100vh;
@@ -243,7 +242,6 @@ async function handleSave() {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* Header - Identical to Dashboard */
 .dashboard-header {
   background: #3C3C5B;
   padding: 1rem 2rem;
@@ -268,7 +266,6 @@ async function handleSave() {
   font-weight: bold;
   color: #fff;
   margin: 0;
-  text-transform: uppercase;
 }
 
 .actions {
@@ -277,7 +274,6 @@ async function handleSave() {
   align-items: center;
 }
 
-/* Buttons */
 .ct-button {
   padding: 0.5rem 1rem;
   border-radius: 4px;
@@ -314,14 +310,12 @@ async function handleSave() {
   cursor: not-allowed;
 }
 
-/* Content Area */
 .admin-content {
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-/* Settings Header */
 .settings-header {
   display: flex;
   justify-content: space-between;
@@ -338,32 +332,20 @@ async function handleSave() {
   margin: 0;
 }
 
-/* Config Sections */
 .config-section {
-  margin-bottom: 2.5rem;
-}
-
-.section-header {
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
 }
 
 .section-header h3 {
   font-size: 1.1rem;
   font-weight: bold;
   color: #fff;
-  margin: 0 0 0.25rem 0;
+  margin: 0 0 1rem 0;
 }
 
-.section-description {
-  color: #888;
-  font-size: 0.9rem;
-  margin: 0;
-}
-
-/* ID Cards Grid */
 .ids-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1rem;
 }
 
@@ -371,15 +353,10 @@ async function handleSave() {
   background: #2a2a2a;
   padding: 1.25rem;
   border-radius: 8px;
-  transition: all 0.2s;
 }
 
 .id-card:hover {
   background: #2f2f2f;
-}
-
-.id-card--wide {
-  max-width: 400px;
 }
 
 .card-header {
@@ -407,11 +384,6 @@ async function handleSave() {
   text-transform: uppercase;
 }
 
-/* Form Group */
-.form-group {
-  margin-bottom: 0;
-}
-
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
@@ -427,7 +399,6 @@ async function handleSave() {
   border: 1px solid #444;
   color: #fff;
   border-radius: 4px;
-  font-family: inherit;
   font-size: 0.95rem;
   box-sizing: border-box;
 }
@@ -448,7 +419,6 @@ async function handleSave() {
   margin-bottom: 0;
 }
 
-/* Save Toast */
 .save-toast {
   position: fixed;
   bottom: 2rem;
@@ -468,13 +438,7 @@ async function handleSave() {
 }
 
 @keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 </style>
