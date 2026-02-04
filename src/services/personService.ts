@@ -55,9 +55,17 @@ export class PersonService implements DataProvider {
             }
 
             // Map to BaptizoPerson
-            const members: BaptizoPerson[] = ctPersons.map((m: any) => {
+            const members: BaptizoPerson[] = ctPersons.map((m: any, index: number) => {
                 // Group members have person data nested in 'person' property!
                 const p = m.person || {};
+
+                // DEBUG: Log first person object to see structure
+                if (index === 0) {
+                    console.log('[Baptizo] First m.person object:', p);
+                    console.log('[Baptizo] First m.person keys:', Object.keys(p));
+                    console.log('[Baptizo] taufmanager_seminar value:', p.taufmanager_seminar);
+                    console.log('[Baptizo] firstName value:', p.firstName);
+                }
 
                 // ChurchTools fields are at root level of person object
                 const fields: BaptizoFields = {
