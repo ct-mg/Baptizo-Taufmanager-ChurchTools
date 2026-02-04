@@ -36,22 +36,32 @@ export class PersonService implements DataProvider {
         }
 
         try {
-            // Fetch group members
-            const response = await churchtoolsClient.get<any>(`/groups/${groupId}/members`);
+            // Fetch ALL group members with pagination
+            let allMembers: any[] = [];
+            let page = 1;
+            let hasMore = true;
 
-            // DEBUG: Log raw response to find structure
-            console.log(`[Baptizo] RAW Group Response (first 300 chars):`, JSON.stringify(response).substring(0, 300));
+            while (hasMore) {
+                const response = await churchtoolsClient.get<any>(`/groups/${groupId}/members?page=${page}`);
+                const members: any[] = Array.isArray(response) ? response : (response.data || []);
 
-            // Handle both direct array and wrapped response
-            const ctPersons: any[] = Array.isArray(response) ? response : (response.data || []);
+                if (members.length === 0) {
+                    hasMore = false;
+                } else {
+                    allMembers = allMembers.concat(members);
+                    // ChurchTools default pagination is usually 10 per page
+                    if (members.length < 10) hasMore = false;
+                    page++;
+                }
+            }
 
-            console.log(`[Baptizo] API Erfolg für Gruppe ${groupId}. Anzahl Personen: ${ctPersons.length}`);
+            // Filter out leaders (groupTypeRoleId 1 = Leader, 23/other = Participant)
+            const ctPersons = allMembers.filter(m => m.groupTypeRoleId !== 1);
+
+            console.log(`[Baptizo] API Erfolg für Gruppe ${groupId}. Gesamt: ${allMembers.length}, Teilnehmer: ${ctPersons.length}`);
 
             if (ctPersons.length === 0) {
-                console.warn(`[Baptizo] Verbindung steht, aber Gruppe ${groupId} ist leer.`);
-            } else {
-                // Log first member structure
-                console.log(`[Baptizo] First member structure:`, ctPersons[0]);
+                console.warn(`[Baptizo] Verbindung steht, aber Gruppe ${groupId} hat keine Teilnehmer.`);
             }
 
             // Map to BaptizoPerson - MUST fetch individual person details!
@@ -87,7 +97,8 @@ export class PersonService implements DataProvider {
                     firstName: personDetail.firstName || 'Unknown',
                     lastName: personDetail.lastName || 'Unknown',
                     status: m.groupMemberStatus === 'inactive' ? 'inactive' : 'active',
-                    entry_date: m.memberStartDate || new Date().toISOString().split('T')[0],
+                    // Use seminar date as realistic onboarding date, fallback to memberStartDate
+                    entry_date: personDetail.taufmanager_seminar || m.memberStartDate || new Date().toISOString().split('T')[0],
                     fields,
                     imageUrl: personDetail.imageUrl || `https://ui-avatars.com/api/?name=${personDetail.firstName}+${personDetail.lastName}&background=random`
                 });
