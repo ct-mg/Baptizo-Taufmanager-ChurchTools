@@ -25,10 +25,22 @@ export class PersonService implements DataProvider {
     }
 
     private async fetchGroupInternal(groupId: number, title: string, settings: any): Promise<BaptizoGroup> {
+        console.log(`[Baptizo] Versuche Daten zu laden für Gruppe: ${groupId} (${title})`);
+
+        // Log masked token
+        const token = import.meta.env.VITE_LOGIN_TOKEN;
+        console.log(`[Baptizo] Verwendeter Token: ${token ? token.substring(0, 5) + '...' : 'KEIN TOKEN!'}`);
+
         try {
             // Fetch group members
             const response = await churchtoolsClient.get<{ data: any[] }>(`/groups/${groupId}/members`);
             const ctPersons = response.data || [];
+
+            console.log(`[Baptizo] API Erfolg für Gruppe ${groupId}. Anzahl Personen: ${ctPersons.length}`);
+
+            if (ctPersons.length === 0) {
+                console.warn(`[Baptizo] Verbindung steht, aber Gruppe ${groupId} ist leer.`);
+            }
 
             // Map to BaptizoPerson
             const members: BaptizoPerson[] = ctPersons.map((p: any) => {
@@ -63,8 +75,13 @@ export class PersonService implements DataProvider {
                 members
             };
 
-        } catch (error) {
-            console.error(`[Baptizo] Error fetching group ${groupId}:`, error);
+        } catch (error: any) {
+            console.error(`[Baptizo] API-Fehlermeldung bei Fehlschlag für Gruppe ${groupId}:`, error);
+            // Log detailed error info if available (axios error)
+            if (error.response) {
+                console.error(`Status: ${error.response.status}`);
+                console.error(`Data:`, error.response.data);
+            }
             return { id: groupId, title, members: [] };
         }
     }
