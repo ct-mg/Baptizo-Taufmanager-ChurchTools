@@ -209,8 +209,16 @@ export class PersonService implements DataProvider {
                 // IDs: 1 (active), 2 (archive), 3 (inactive) - standardized in CT usually
                 // Safe approach: status_ids[]=active&status_ids[]=inactive
 
-                const url = `/persons?limit=${limit}&page=${page}&status_ids[]=active&status_ids[]=inactive&status_ids[]=archive`;
-                console.log(`[Baptizo] Requesting Page ${page} (Limit: ${limit})... URL: ${url}`);
+                // DEBUG: Inspect Base URL to prevent double slashes
+                // @ts-ignore
+                const baseUrl = churchtoolsClient.ax?.defaults?.baseURL || 'UNKNOWN';
+
+                // Construct path carefully. User requested /api/persons check.
+                const endpoint = '/api/persons';
+                const query = `limit=${limit}&page=${page}&status_ids[]=active&status_ids[]=inactive&status_ids[]=archive`;
+                const url = `${endpoint}?${query}`;
+
+                console.log(`[Baptizo] DEBUG URL Config: Base: '${baseUrl}', Request: '${url}'`);
 
                 const response = await churchtoolsClient.get<{ data: any[], meta: any }>(url);
                 const persons = response.data || [];
