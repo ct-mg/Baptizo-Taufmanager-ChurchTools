@@ -221,9 +221,21 @@ export class PersonService implements DataProvider {
                     break;
                 }
 
-                for (const p of persons) {
+                for (const [index, p] of persons.entries()) {
                     const pid = p.id;
                     const fields = p.fields || {};
+
+                    // DEBUG: Log first person's fields to check key structure
+                    if (page === 1 && index === 0) {
+                        console.log('[Baptizo] DEBUG CHECK - Settings IDs:', {
+                            seminar: settings.seminarDateId,
+                            baptism: settings.baptismDateId,
+                            certificate: settings.certificateDateId,
+                            integration: settings.integratedDateId
+                        });
+                        console.log('[Baptizo] DEBUG CHECK - First Person Fields (Keys):', Object.keys(fields));
+                        console.log('[Baptizo] DEBUG CHECK - First Person Fields (Full):', fields);
+                    }
 
                     // Check Fields
                     const hasSeminar = !!fields[settings.seminarDateId];
