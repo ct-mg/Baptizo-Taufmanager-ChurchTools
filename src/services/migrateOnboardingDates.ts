@@ -6,6 +6,20 @@ import { getAdminSettings } from '../lib/kv-store';
 
 export async function migrateOnboardingDates(): Promise<{ updated: number; skipped: number; errors: number }> {
     console.log('[Migration] Starting onboarding date migration...');
+    console.log('[Migration] ⚠️  TESTING FIELD NAME FIRST...');
+
+    // FIRST: Test if the field exists by trying to read it from one person
+    try {
+        const testPerson: any = await churchtoolsClient.get(`/persons/1`);
+        console.log('[Migration] Test person fields:', {
+            taufmanager_onboarding: testPerson.taufmanager_onboarding,
+            taufmanager_seminar: testPerson.taufmanager_seminar,
+            taufmanager_taufe: testPerson.taufmanager_taufe,
+            allFields: Object.keys(testPerson).filter(k => k.startsWith('taufmanager'))
+        });
+    } catch (e) {
+        console.error('[Migration] Could not test field names:', e);
+    }
 
     const adminCfg = await getAdminSettings();
     const interestGroupId = parseInt(adminCfg?.interestGroupId || '0');
@@ -39,13 +53,10 @@ export async function migrateOnboardingDates(): Promise<{ updated: number; skipp
                 const response: any = await churchtoolsClient.get(`/groups/${groupId}/members?page=${page}`);
                 const members: any[] = Array.isArray(response) ? response : (response.data || []);
 
-                console.log(`[Migration] Group ${groupId} page ${page}: Found ${members.length} members`);
-
                 if (members.length === 0) {
                     hasMore = false;
                 } else {
                     allMembers = allMembers.concat(members);
-                    // ChurchTools default pagination is usually 10 per page
                     if (members.length < 10) hasMore = false;
                     page++;
                 }
@@ -57,8 +68,16 @@ export async function migrateOnboardingDates(): Promise<{ updated: number; skipp
 
         console.log(`[Migration] Total members in group ${groupId}: ${allMembers.length}`);
 
-        // Process each member
+        // Process each member - LIMIT TO FIRST 3 FOR TESTING
+        const testLimit = 3;
+        let processedCount = 0;
+
         for (const m of allMembers) {
+            if (processedCount >= testLimit) {
+                console.log(`[Migration] ⚠️  STOPPING AFTER ${testLimit} FOR TESTING - Remove this limit when field name is confirmed!`);
+                break;
+            }
+
             try {
                 // Fetch full person details (EXACT SAME AS personService.ts line 75)
                 const personDetail: any = await churchtoolsClient.get(`/persons/${m.personId}`);
@@ -66,7 +85,9 @@ export async function migrateOnboardingDates(): Promise<{ updated: number; skipp
                 const seminarDate = personDetail.taufmanager_seminar;
                 const currentOnboarding = personDetail.taufmanager_onboarding;
 
-                console.log(`[Migration] Person ${m.personId}: seminar=${seminarDate}, onboarding=${currentOnboarding}`);
+                console.log(`[Migration] Person ${m.personId} (${personDetail.firstName} ${personDetail.lastName}):`);
+                console.log(`  - seminar: ${seminarDate}`);
+                console.log(`  - current onboarding: ${currentOnboarding}`);
 
                 // Skip if no seminar date
                 if (!seminarDate) {
@@ -77,7 +98,7 @@ export async function migrateOnboardingDates(): Promise<{ updated: number; skipp
 
                 // Skip if onboarding already set and different from seminar
                 if (currentOnboarding && currentOnboarding !== seminarDate) {
-                    console.log(`[Migration]   → Skipping - onboarding already customized (${currentOnboarding})`);
+                    console.log(`[Migration]   → Skipping - onboarding already customized`);
                     skipped++;
                     continue;
                 }
@@ -88,13 +109,32 @@ export async function migrateOnboardingDates(): Promise<{ updated: number; skipp
                 const onboardingDateObj = new Date(seminarDateObj.getTime() - daysOffset * 86400000);
                 const newOnboarding = onboardingDateObj.toISOString().split('T')[0];
 
-                // Update person in ChurchTools
-                await churchtoolsClient.patch(`/persons/${m.personId}`, {
-                    taufmanager_onboarding: newOnboarding
-                });
+                console.log(`[Migration]   → WILL UPDATE to: ${newOnboarding} (${daysOffset} days earlier)`);
 
-                console.log(`[Migration]   ✓ Updated: ${seminarDate} → ${newOnboarding} (${daysOffset} days earlier)`);
-                updated++;
+                // Update person in ChurchTools
+                const patchData = {
+                    taufmanager_onboarding: newOnboarding
+                };
+
+                console.log('[Migration]   → Sending PATCH:', patchData);
+
+                const patchResponse: any = await churchtoolsClient.patch(`/persons/${m.personId}`, patchData);
+
+                console.log('[Migration]   → PATCH response:', patchResponse);
+
+                // READ BACK to verify
+                const verifyPerson: any = await churchtoolsClient.get(`/persons/${m.personId}`);
+                console.log('[Migration]   → VERIFICATION: taufmanager_onboarding =', verifyPerson.taufmanager_onboarding);
+
+                if (verifyPerson.taufmanager_onboarding === newOnboarding) {
+                    console.log(`[Migration]   ✓✓✓ VERIFIED - Data persisted in ChurchTools!`);
+                    updated++;
+                } else {
+                    console.error(`[Migration]   ✗✗✗ FAILED - Data NOT persisted! Field might not exist in ChurchTools custom fields!`);
+                    errors++;
+                }
+
+                processedCount++;
 
             } catch (personError) {
                 console.error(`[Migration] Error processing person ${m.personId}:`, personError);
@@ -104,7 +144,7 @@ export async function migrateOnboardingDates(): Promise<{ updated: number; skipp
     }
 
     console.log(`[Migration] ========================================`);
-    console.log(`[Migration] Complete!`);
+    console.log(`[Migration] TEST RUN Complete!`);
     console.log(`[Migration] ✓ Updated: ${updated}`);
     console.log(`[Migration] ⊘ Skipped: ${skipped}`);
     console.log(`[Migration] ✗ Errors: ${errors}`);
