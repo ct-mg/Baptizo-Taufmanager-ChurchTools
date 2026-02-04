@@ -214,13 +214,17 @@ export class PersonService implements DataProvider {
                 const baseUrl = churchtoolsClient.ax?.defaults?.baseURL || 'UNKNOWN';
 
                 // Construct path carefully. User requested /api/persons check.
-                const endpoint = '/api/persons';
+                const endpoint = '/persons';
                 const query = `limit=${limit}&page=${page}&status_ids[]=active&status_ids[]=inactive&status_ids[]=archive`;
                 const url = `${endpoint}?${query}`;
 
                 console.log(`[Baptizo] DEBUG URL Config: Base: '${baseUrl}', Request: '${url}'`);
 
                 const response = await churchtoolsClient.get<{ data: any[], meta: any }>(url);
+
+                // DEBUG: Log raw response structure
+                console.log('[Baptizo] RAW Response (first 500 chars):', JSON.stringify(response).substring(0, 500));
+
                 const persons = response.data || [];
 
                 console.log(`[Baptizo] Page ${page}: Received ${persons.length} persons.`);
