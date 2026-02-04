@@ -215,9 +215,9 @@ export class PersonService implements DataProvider {
 
                 // Construct path carefully. User requested /api/persons check.
                 // Note: churchtoolsClient adds /api prefix automatically!
-                // Simplified: remove status_ids to test basic endpoint first
+                // IMPORTANT: Add include=properties to get custom fields!
                 const endpoint = '/persons';
-                const query = `limit=${limit}&page=${page}`;
+                const query = `limit=${limit}&page=${page}&include=properties`;
                 const url = `${endpoint}?${query}`;
 
                 console.log(`[Baptizo] DEBUG URL Config: Base: '${baseUrl}', Request: '${url}'`);
@@ -243,9 +243,21 @@ export class PersonService implements DataProvider {
 
                 for (const [index, p] of persons.entries()) {
                     const pid = p.id;
-                    const fields = p.fields || {};
 
-                    // DEBUG: Log first person's fields to check key structure
+                    // ChurchTools: /persons list doesn't include custom fields
+                    // Must fetch individual person to get them!
+                    let personDetail: any;
+                    try {
+                        personDetail = await churchtoolsClient.get<any>(`/persons/${pid}`);
+                    } catch (e) {
+                        console.error(`[Baptizo] Failed to fetch details for person ${pid}`, e);
+                        continue;
+                    }
+
+                    // Custom fields might be in 'fields', 'properties', or root level
+                    const fields = personDetail.fields || personDetail.properties || personDetail || {};
+
+                    // DEBUG: Log first person's full structure to find where custom fields are
                     if (page === 1 && index === 0) {
                         console.log('[Baptizo] DEBUG CHECK - Settings IDs:', {
                             seminar: settings.seminarDateId,
@@ -254,16 +266,17 @@ export class PersonService implements DataProvider {
                             integration: settings.integratedDateId,
                             status: settings.statusFieldId
                         });
-                        console.log('[Baptizo] DEBUG CHECK - First Person Fields (Keys):', Object.keys(fields));
-                        console.log('[Baptizo] DEBUG CHECK - First Person Fields (Full):', fields);
+                        console.log('[Baptizo] DEBUG CHECK - First Person FULL Detail Object:', personDetail);
+                        console.log('[Baptizo] DEBUG CHECK - First Person Fields/Properties (Keys):', Object.keys(fields));
+                        console.log('[Baptizo] DEBUG CHECK - First Person Fields/Properties (Full):', fields);
                     }
 
-                    // Check Fields
-                    const hasSeminar = !!fields[settings.seminarDateId];
-                    const hasBaptism = !!fields[settings.baptismDateId]; // Field 187 => TAUFE
-                    const hasCertificate = !!fields[settings.certificateDateId];
-                    const hasIntegration = !!fields[settings.integratedDateId];
-                    const hasStatus = !!fields[settings.statusFieldId]; // Field 196
+                    // Check Fields - try both numeric and string keys
+                    const hasSeminar = !!fields[settings.seminarDateId] || !!fields[`f${settings.seminarDateId}`];
+                    const hasBaptism = !!fields[settings.baptismDateId] || !!fields[`f${settings.baptismDateId}`]; // Field 187 => TAUFE
+                    const hasCertificate = !!fields[settings.certificateDateId] || !!fields[`f${settings.certificateDateId}`];
+                    const hasIntegration = !!fields[settings.integratedDateId] || !!fields[`f${settings.integratedDateId}`];
+                    const hasStatus = !!fields[settings.statusFieldId] || !!fields[`f${settings.statusFieldId}`]; // Field 196
 
                     // LOGIC:
 
