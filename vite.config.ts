@@ -68,6 +68,7 @@ export default ({ mode }: { mode: string }) => {
             'import.meta.env.VITE_BASE_URL': JSON.stringify(env.VITE_BASE_URL || 'https://baptizo.church.tools/'),
             'import.meta.env.VITE_USERNAME': JSON.stringify(env.VITE_USERNAME || ''),
             'import.meta.env.VITE_PASSWORD': JSON.stringify(env.VITE_PASSWORD || ''),
+            'import.meta.env.VITE_LOGIN_TOKEN': JSON.stringify(env.VITE_LOGIN_TOKEN || ''),
         },
         // For development, use the ccm path
         // For production library builds, use relative paths so ChurchTools can control deployment location
