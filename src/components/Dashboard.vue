@@ -1028,7 +1028,7 @@ const listSeminarPending = computed(() => {
 });
 
 const listBaptismPending = computed(() => {
-  const g = groups.value.find(g => g.id === baptizedGroupId.value);
+  const g = groups.value.find(g => g.id === interestGroupId.value);
   if (!g) return [];
   return g.members
     .filter(m => m.fields.seminar_besucht_am && !m.fields.getauft_am && filterByTime(m, 'entry'))
@@ -1039,7 +1039,7 @@ const listCertificatePending = computed(() => {
   const g = groups.value.find(g => g.id === baptizedGroupId.value);
   if (!g) return [];
   return g.members
-    .filter(m => !m.fields.urkunde_ueberreicht && filterByTime(m, 'baptism'))
+    .filter(m => m.fields.getauft_am && !m.fields.urkunde_ueberreicht && filterByTime(m, 'baptism'))
     .map(p => ({ ...p, subtitle: `Taufe: ${formatDate(p.fields.getauft_am)}` }));
 });
 
@@ -1047,7 +1047,7 @@ const listIntegrationPending = computed(() => {
   const g = groups.value.find(g => g.id === baptizedGroupId.value);
   if (!g) return [];
   return g.members
-    .filter(m => !m.fields.in_gemeinde_integriert && filterByTime(m, 'baptism'))
+    .filter(m => m.fields.getauft_am && m.fields.urkunde_ueberreicht && !m.fields.in_gemeinde_integriert && filterByTime(m, 'baptism'))
     .map(p => ({ ...p, subtitle: `Taufe: ${formatDate(p.fields.getauft_am)}` }));
 });
 
