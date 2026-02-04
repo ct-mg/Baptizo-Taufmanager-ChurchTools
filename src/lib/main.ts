@@ -44,21 +44,23 @@ async function initializeChurchToolsClient(): Promise<void> {
 
     churchtoolsClient.setBaseUrl(baseUrl);
 
-    // Auto-login in development mode
-    const username = import.meta.env.VITE_USERNAME;
-    const password = import.meta.env.VITE_PASSWORD;
-
-    if (import.meta.env.MODE === 'development' && username && password) {
-        try {
-            console.log('[Baptizo] Attempting auto-login for development mode...');
-            await churchtoolsClient.post('/login', { username, password });
-            console.log('[Baptizo] ✓ Login successful');
-        } catch (error) {
-            console.error('[Baptizo] ✗ Login fehlgeschlagen. Bitte .env prüfen:', error);
-            throw new Error('Login fehlgeschlagen. Bitte VITE_USERNAME und VITE_PASSWORD in der .env prüfen.');
+    // Auto-login in development mode using Token
+    if (import.meta.env.MODE === 'development') {
+        const token = import.meta.env.VITE_LOGIN_TOKEN;
+        if (token) {
+            console.log('[Baptizo] Using Token-Auth for development mode...');
+            // Inject Authorization header directly into the internal axios instance
+            // @ts-ignore - 'ax' is private but we need to set the header for all requests
+            if (churchtoolsClient.ax) {
+                // @ts-ignore
+                churchtoolsClient.ax.defaults.headers.common['Authorization'] = 'Login ' + token;
+                console.log('[Baptizo] ✓ Authorization header set');
+            } else {
+                console.warn('[Baptizo] ⚠ Could not access internal axios instance');
+            }
+        } else {
+            console.warn('[Baptizo] ⚠ No VITE_LOGIN_TOKEN provided in .env');
         }
-    } else if (import.meta.env.MODE === 'development') {
-        console.warn('[Baptizo] ⚠ No login credentials provided in .env - some features may not work');
     }
 
     isInitialized = true;
