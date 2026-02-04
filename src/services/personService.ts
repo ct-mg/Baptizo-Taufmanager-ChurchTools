@@ -222,15 +222,16 @@ export class PersonService implements DataProvider {
 
                 console.log(`[Baptizo] DEBUG URL Config: Base: '${baseUrl}', Request: '${url}'`);
 
-                const response = await churchtoolsClient.get<{ data: any[], meta: any }>(url);
+                const response = await churchtoolsClient.get<any>(url);
 
                 // DEBUG: Log raw response structure
                 console.log('[Baptizo] RAW Response (first 500 chars):', JSON.stringify(response).substring(0, 500));
 
-                const persons = response.data || [];
+                // API returns persons as direct array, NOT wrapped in {data:[]}
+                const persons: any[] = Array.isArray(response) ? response : (response.data || []);
 
                 console.log(`[Baptizo] Page ${page}: Received ${persons.length} persons.`);
-                // DEBUG: Log Meta to see total count
+                // DEBUG: Log Meta to see total count (only if wrapped response)
                 if (response.meta) {
                     console.log('[Baptizo] API Meta:', response.meta);
                 }
