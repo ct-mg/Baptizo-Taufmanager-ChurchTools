@@ -54,37 +54,44 @@ export class PersonService implements DataProvider {
                 console.log(`[Baptizo] First member structure:`, ctPersons[0]);
             }
 
-            // Map to BaptizoPerson
-            const members: BaptizoPerson[] = ctPersons.map((m: any, index: number) => {
-                // Group members have person data nested in 'person' property!
-                const p = m.person || {};
+            // Map to BaptizoPerson - MUST fetch individual person details!
+            const members: BaptizoPerson[] = [];
 
-                // DEBUG: Log first person object to see structure
-                if (index === 0) {
-                    console.log('[Baptizo] First m.person object:', p);
-                    console.log('[Baptizo] First m.person keys:', Object.keys(p));
-                    console.log('[Baptizo] taufmanager_seminar value:', p.taufmanager_seminar);
-                    console.log('[Baptizo] firstName value:', p.firstName);
+            for (const [index, m] of ctPersons.entries()) {
+                // Group member has personId but person object is just a summary
+                // Must fetch full person details to get custom fields!
+                let personDetail: any;
+                try {
+                    personDetail = await churchtoolsClient.get<any>(`/persons/${m.personId}`);
+                } catch (e) {
+                    console.error(`[Baptizo] Failed to fetch person ${m.personId} in group ${groupId}`, e);
+                    continue;
                 }
 
-                // ChurchTools fields are at root level of person object
+                // DEBUG: Log first person to verify we got full data
+                if (index === 0) {
+                    console.log('[Baptizo] First FULL person detail:', personDetail);
+                    console.log('[Baptizo] Has taufmanager_seminar?', !!personDetail.taufmanager_seminar);
+                }
+
+                // ChurchTools custom fields are at root level of person detail
                 const fields: BaptizoFields = {
-                    seminar_besucht_am: p.taufmanager_seminar || null,
-                    getauft_am: p.taufmanager_taufe || null,
-                    urkunde_ueberreicht: !!p.taufmanager_urkunde,
-                    in_gemeinde_integriert: !!p.taufmanager_integration
+                    seminar_besucht_am: personDetail.taufmanager_seminar || null,
+                    getauft_am: personDetail.taufmanager_taufe || null,
+                    urkunde_ueberreicht: !!personDetail.taufmanager_urkunde,
+                    in_gemeinde_integriert: !!personDetail.taufmanager_integration
                 };
 
-                return {
-                    id: m.personId || p.id,
-                    firstName: p.firstName || 'Unknown',
-                    lastName: p.lastName || 'Unknown',
+                members.push({
+                    id: m.personId || personDetail.id,
+                    firstName: personDetail.firstName || 'Unknown',
+                    lastName: personDetail.lastName || 'Unknown',
                     status: m.groupMemberStatus === 'inactive' ? 'inactive' : 'active',
                     entry_date: m.memberStartDate || new Date().toISOString().split('T')[0],
                     fields,
-                    imageUrl: p.imageUrl || `https://ui-avatars.com/api/?name=${p.firstName}+${p.lastName}&background=random`
-                };
-            });
+                    imageUrl: personDetail.imageUrl || `https://ui-avatars.com/api/?name=${personDetail.firstName}+${personDetail.lastName}&background=random`
+                });
+            }
 
             return {
                 id: groupId,
