@@ -204,11 +204,22 @@ export class PersonService implements DataProvider {
             let hasMore = true;
 
             while (hasMore) {
-                console.log(`[Baptizo] Requesting Page ${page} (Limit: ${limit})...`);
-                const response = await churchtoolsClient.get<{ data: any[], meta: any }>(`/api/persons?limit=${limit}&page=${page}`);
+                // IMPORTANT: Use /persons endpoint (v2) which seems to work relative to baseURL
+                // ADDED: status_ids to filter for active+inactive+archive to find everyone
+                // IDs: 1 (active), 2 (archive), 3 (inactive) - standardized in CT usually
+                // Safe approach: status_ids[]=active&status_ids[]=inactive
+
+                const url = `/persons?limit=${limit}&page=${page}&status_ids[]=active&status_ids[]=inactive&status_ids[]=archive`;
+                console.log(`[Baptizo] Requesting Page ${page} (Limit: ${limit})... URL: ${url}`);
+
+                const response = await churchtoolsClient.get<{ data: any[], meta: any }>(url);
                 const persons = response.data || [];
 
                 console.log(`[Baptizo] Page ${page}: Received ${persons.length} persons.`);
+                // DEBUG: Log Meta to see total count
+                if (response.meta) {
+                    console.log('[Baptizo] API Meta:', response.meta);
+                }
 
                 if (persons.length === 0) {
                     hasMore = false;
@@ -237,8 +248,7 @@ export class PersonService implements DataProvider {
                     const hasBaptism = !!fields[settings.baptismDateId]; // Field 187 => TAUFE
                     const hasCertificate = !!fields[settings.certificateDateId];
                     const hasIntegration = !!fields[settings.integratedDateId];
-                    // IMPORTANT: Field 196 (Status/Interesse) check as requested by User
-                    const hasStatus = !!fields[settings.statusFieldId];
+                    const hasStatus = !!fields[settings.statusFieldId]; // Field 196
 
                     // LOGIC:
 
@@ -268,7 +278,7 @@ export class PersonService implements DataProvider {
                             }
                         }
                     }
-                    // Case B: NO Baptism Date, but Has Other Milestones (Seminar, Cert, Integration, Status) -> MUST be in Group 13 (Interest)
+                    // Case B: NO Baptism Date, but Has Other Milestones -> MUST be in Group 13 (Interest)
                     else if (hasSeminar || hasCertificate || hasIntegration || hasStatus) {
                         const ininterest = interestMemberIds.has(pid);
                         const inbaptized = baptizedMemberIds.has(pid);
