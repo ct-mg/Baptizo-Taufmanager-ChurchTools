@@ -7,6 +7,10 @@
         <h1 class="app-title">BAPTIZO TAUFMANAGER</h1>
       </div>
       <div class="actions">
+        <button @click="runSync" class="ct-button ct-button--primary" :disabled="syncing">
+          <span v-if="!syncing">🔄 Globale Personen-Sync</span>
+          <span v-else>⏳ Synchronisiere...</span>
+        </button>
         <button @click="navigateBack" class="ct-button ct-button--report">
           <span class="icon">←</span> ZURÜCK ZUM DASHBOARD
         </button>
@@ -171,12 +175,18 @@
     <div v-if="saveMessage" class="save-toast" :class="{ error: saveError }">
       {{ saveMessage }}
     </div>
+    
+    <!-- Sync Toast -->
+    <div v-if="syncMessage" class="save-toast" :class="{ error: syncError }">
+      {{ syncMessage }}
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { getAdminSettings, saveAdminSettings, getDefaultAdminSettings, type AdminSettings } from '../lib/kv-store';
+import { PersonService } from '../services/personService';
 
 const props = defineProps<{
   onNavigate?: (target: string) => void;
@@ -199,6 +209,11 @@ const localSettings = ref<AdminSettings>(getDefaultAdminSettings());
 const saving = ref(false);
 const saveMessage = ref('');
 const saveError = ref(false);
+
+const syncing = ref(false);
+const syncMessage = ref('');
+const syncError = ref(false);
+const provider = new PersonService();
 
 onMounted(async () => {
   try {
@@ -229,6 +244,31 @@ async function handleSave() {
   } finally {
     saving.value = false;
     setTimeout(() => saveMessage.value = '', 3000);
+  }
+}
+
+async function runSync() {
+  syncing.value = true;
+  syncMessage.value = '';
+  syncError.value = false;
+
+  try {
+    const stats = await provider.runGlobalDiscoveryAndSync();
+    
+    if (stats.addedToInterest > 0 || stats.addedToBaptized > 0 || stats.removedFromInterest > 0) {
+      syncMessage.value = `✓ Sync Complete: +${stats.addedToInterest} Interessenten, +${stats.addedToBaptized} Getaufte, -${stats.removedFromInterest} aus Interessenten`;
+      syncError.value = false;
+    } else {
+      syncMessage.value = '✓ Sync Complete: Keine Änderungen erforderlich';
+      syncError.value = false;
+    }
+  } catch (error) {
+    console.error('[Admin] Sync failed:', error);
+    syncMessage.value = '✗ Sync fehlgeschlagen';
+    syncError.value = true;
+  } finally {
+    syncing.value = false;
+    setTimeout(() => syncMessage.value = '', 6000);
   }
 }
 </script>

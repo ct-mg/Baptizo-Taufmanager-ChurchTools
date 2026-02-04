@@ -639,25 +639,7 @@ const toastMessage = ref('');
 const loadData = async () => {
   loading.value = true;
   
-  // 1. Auto-Sync Logic (only if provider supports it)
-  if (provider.runGlobalDiscoveryAndSync) {
-      isSyncing.value = true;
-      try {
-          // Perform Global Discovery & Sync
-          const stats = await provider.runGlobalDiscoveryAndSync();
-          
-          if (stats.addedToInterest > 0 || stats.addedToBaptized > 0 || stats.removedFromInterest > 0) {
-              toastMessage.value = `Global-Sync: +${stats.addedToInterest} Interessenten, +${stats.addedToBaptized} Getaufte (verschoben aus Interessenten: ${stats.removedFromInterest})`;
-              showToast.value = true;
-              setTimeout(() => showToast.value = false, 6000);
-          }
-      } catch (e) {
-          console.error('[Dashboard] Auto-Sync failed', e);
-      } finally {
-          isSyncing.value = false;
-      }
-  }
-
+  // Load group data, events, and settings (NO auto-sync)
   try {
     const [groupsData, eventsData, settingsData, adminCfg] = await Promise.all([
       provider.getGroups(),
