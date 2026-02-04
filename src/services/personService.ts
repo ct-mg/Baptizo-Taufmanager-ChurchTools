@@ -132,7 +132,7 @@ export class PersonService implements DataProvider {
 
     async deletePerson(id: number): Promise<void> {
         // Not implemented for safety in v1
-        console.warn('[Baptizo] Delete person not implemented in real provider');
+        console.warn(`[Baptizo] Delete person ${id} not implemented in real provider`);
     }
 
     // Settings (Email templates etc - stored in KV Store?)
@@ -174,6 +174,7 @@ export class PersonService implements DataProvider {
 
     async createEvent(event: Omit<BaptizoEvent, 'id'>): Promise<BaptizoEvent> {
         // Implement if needed for v1
+        console.warn('createEvent not implemented', event);
         throw new Error('Method not implemented.');
     }
 }
