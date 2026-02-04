@@ -269,6 +269,21 @@ export class PersonService implements DataProvider {
                         console.log('[Baptizo] DEBUG CHECK - First Person FULL Detail Object:', personDetail);
                         console.log('[Baptizo] DEBUG CHECK - First Person Fields/Properties (Keys):', Object.keys(fields));
                         console.log('[Baptizo] DEBUG CHECK - First Person Fields/Properties (Full):', fields);
+
+                        // DEEP SEARCH: Find where '2023-08-12' is hiding!
+                        const jsonStr = JSON.stringify(personDetail);
+                        if (jsonStr.includes('2023')) {
+                            console.log('[Baptizo] FOUND DATE in object! Full JSON:', jsonStr);
+                            // Find the key
+                            for (const key of Object.keys(personDetail)) {
+                                const val = JSON.stringify(personDetail[key]);
+                                if (val && val.includes('2023')) {
+                                    console.log(`[Baptizo] DATE FOUND IN KEY: '${key}' => ${val}`);
+                                }
+                            }
+                        } else {
+                            console.log('[Baptizo] NO DATE FOUND - personDetail does NOT contain 2023');
+                        }
                     }
 
                     // Check Fields - try both numeric and string keys
