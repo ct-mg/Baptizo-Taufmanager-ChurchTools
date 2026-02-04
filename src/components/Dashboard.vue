@@ -65,6 +65,11 @@
       </div>
     </header>
 
+    <!-- Config Warning -->
+    <div v-if="!loading && (!interestGroupId || !baptizedGroupId)" class="config-warning">
+      ⚠ Konfiguration fehlt. Bitte konfiguriere die IDs im <a href="#" @click.prevent="goToAdminEntryPoint">Admin-Bereich</a>.
+    </div>
+
     <!-- Tabs -->
     <div class="tabs">
       <button 
@@ -476,7 +481,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { MockDataProvider } from '../services/mock-data-provider';
+import { PersonService } from '../services/personService';
 import type { BaptizoGroup, BaptizoPerson, BaptizoEvent } from '../types/baptizo-types';
 import BaptismChart from './BaptismChart.vue';
 import PersonList from './PersonList.vue';
@@ -486,6 +491,7 @@ import SettingsTab from './SettingsTab.vue';
 import Admin from './Admin.vue';
 import { DEFAULT_SETTINGS } from '../types/baptizo-settings';
 import type { BaptizoSettings } from '../types/baptizo-settings';
+import { getAdminSettings, type AdminSettings } from '../lib/kv-store';
 
 const props = defineProps<{
   user?: any;
@@ -514,7 +520,7 @@ function goToAdminEntryPoint() {
   }
 }
 
-const provider = new MockDataProvider();
+const provider = new PersonService();
 const loading = ref(true);
 const groups = ref<BaptizoGroup[]>([]);
 const events = ref<BaptizoEvent[]>([]);
@@ -522,6 +528,10 @@ const settings = ref<BaptizoSettings>({ ...DEFAULT_SETTINGS });
 const currentTab = ref('dashboard');
 const showAdminView = ref(false);
 const selectedPerson = ref<BaptizoPerson | null>(null);
+const adminSettings = ref<AdminSettings | null>(null);
+
+const interestGroupId = computed(() => adminSettings.value ? parseInt(adminSettings.value.interestGroupId || '0') : 0);
+const baptizedGroupId = computed(() => adminSettings.value ? parseInt(adminSettings.value.baptizedGroupId || '0') : 0);
 
 const tabs = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -609,14 +619,16 @@ const toggleFaq = (index: number) => {
 const loadData = async () => {
   loading.value = true;
   try {
-    const [groupsData, eventsData, settingsData] = await Promise.all([
+    const [groupsData, eventsData, settingsData, adminCfg] = await Promise.all([
       provider.getGroups(),
       provider.getEvents(),
-      provider.getSettings()
+      provider.getSettings(),
+      getAdminSettings()
     ]);
     groups.value = groupsData;
     events.value = eventsData;
     settings.value = settingsData;
+    adminSettings.value = adminCfg;
   } catch (e) {
     console.error('Failed to load data', e);
   } finally {
@@ -938,7 +950,7 @@ const kpiBaptisms = computed(() => {
   }
   
   // Count ALL persons whose getauft_am is in range (typically in baptized group)
-  const baptGroup = groups.value.find(g => g.id === 101);
+  const baptGroup = groups.value.find(g => g.id === baptizedGroupId.value);
   if (baptGroup) {
     baptGroup.members.forEach(person => {
       if (person.fields.getauft_am) {
@@ -955,7 +967,7 @@ const kpiBaptisms = computed(() => {
 
 // Lists
 const listSeminarPending = computed(() => {
-  const g = groups.value.find(g => g.id === 100);
+  const g = groups.value.find(g => g.id === interestGroupId.value);
   if (!g) return [];
   return g.members
     .filter(m => !m.fields.seminar_besucht_am && filterByTime(m, 'entry'))
@@ -963,7 +975,7 @@ const listSeminarPending = computed(() => {
 });
 
 const listBaptismPending = computed(() => {
-  const g = groups.value.find(g => g.id === 100);
+  const g = groups.value.find(g => g.id === interestGroupId.value);
   if (!g) return [];
   return g.members
     .filter(m => m.fields.seminar_besucht_am && !m.fields.getauft_am && filterByTime(m, 'entry'))
@@ -971,7 +983,7 @@ const listBaptismPending = computed(() => {
 });
 
 const listCertificatePending = computed(() => {
-  const g = groups.value.find(g => g.id === 101);
+  const g = groups.value.find(g => g.id === baptizedGroupId.value);
   if (!g) return [];
   return g.members
     .filter(m => !m.fields.urkunde_ueberreicht && filterByTime(m, 'baptism'))
@@ -1945,5 +1957,19 @@ onMounted(() => loadData());
     grid-template-columns: 1fr;
     gap: 1rem;
   }
+}
+
+.config-warning {
+  background: #FEB2B2; /* Red-ish/Orange */
+  color: #C53030;
+  padding: 1rem;
+  text-align: center;
+  font-weight: bold;
+  border-bottom: 2px solid #C53030;
+}
+.config-warning a {
+  text-decoration: underline;
+  color: #742A2A;
+  cursor: pointer;
 }
 </style>
