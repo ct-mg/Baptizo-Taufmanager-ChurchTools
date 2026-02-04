@@ -180,8 +180,8 @@ export class MockDataProvider implements DataProvider {
                     fields: {
                         seminar_besucht_am: seminarDate,
                         getauft_am: baptismDate,
-                        urkunde_ueberreicht: false, // Will be set later
-                        in_gemeinde_integriert: false, // Will be set later
+                        urkunde_ueberreicht: null, // Will be set later if baptized
+                        in_gemeinde_integriert: null, // Will be set later if baptized
                     },
                     imageUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${id}`,
                 };
@@ -209,8 +209,10 @@ export class MockDataProvider implements DataProvider {
             .sort((a, b) => new Date(b.fields.getauft_am!).getTime() - new Date(a.fields.getauft_am!).getTime())[0];
 
         allBaptized.forEach(person => {
-            // Certificate: all true except last 2025 baptism
-            person.fields.urkunde_ueberreicht = person.id !== lastBaptized2025?.id;
+            // Certificate: set date for all except last 2025 baptism
+            if (person.id !== lastBaptized2025?.id && person.fields.getauft_am) {
+                person.fields.urkunde_ueberreicht = person.fields.getauft_am;
+            }
         });
 
         // Integration: ~4 people missing integration (deterministic selection)
@@ -222,7 +224,10 @@ export class MockDataProvider implements DataProvider {
         ].filter(p => p !== undefined);
 
         allBaptized.forEach(person => {
-            person.fields.in_gemeinde_integriert = !integrationMissing.includes(person);
+            // Integration: set date for all except missing list
+            if (!integrationMissing.includes(person) && person.fields.getauft_am) {
+                person.fields.in_gemeinde_integriert = person.fields.getauft_am;
+            }
         });
     }
 

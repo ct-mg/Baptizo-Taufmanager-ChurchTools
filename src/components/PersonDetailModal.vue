@@ -90,9 +90,9 @@ const seminarDate = ref(props.person.fields.seminar_besucht_am || '');
 const isBaptized = ref(!!props.person.fields.getauft_am);
 const baptismDate = ref(props.person.fields.getauft_am || '');
 const hasCertificate = ref(!!props.person.fields.urkunde_ueberreicht);
-const certificateDate = ref(props.person.fields.urkunde_ueberreicht ? new Date().toISOString().split('T')[0] : '');
+const certificateDate = ref(props.person.fields.urkunde_ueberreicht || '');
 const isIntegrated = ref(!!props.person.fields.in_gemeinde_integriert);
-const integrationDate = ref(props.person.fields.in_gemeinde_integriert ? new Date().toISOString().split('T')[0] : '');
+const integrationDate = ref(props.person.fields.in_gemeinde_integriert || '');
 
 // Helpers
 const formatDate = (dateStr: string | null | undefined) => {
@@ -122,8 +122,8 @@ const save = () => {
       ...props.person.fields,
       seminar_besucht_am: hasSeminar.value ? seminarDate.value : null,
       getauft_am: isBaptized.value ? baptismDate.value : null,
-      urkunde_ueberreicht: hasCertificate.value,
-      in_gemeinde_integriert: isIntegrated.value,
+      urkunde_ueberreicht: hasCertificate.value ? certificateDate.value : null,
+      in_gemeinde_integriert: isIntegrated.value ? integrationDate.value : null,
     }
   };
   emit('save', updatedPerson);

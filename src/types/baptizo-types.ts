@@ -1,8 +1,8 @@
 export interface BaptizoFields {
     seminar_besucht_am?: string | null; // ISO Date YYYY-MM-DD
     getauft_am?: string | null; // ISO Date YYYY-MM-DD
-    urkunde_ueberreicht?: boolean;
-    in_gemeinde_integriert?: boolean;
+    urkunde_ueberreicht?: string | null; // ISO Date YYYY-MM-DD (date when certificate was given)
+    in_gemeinde_integriert?: string | null; // ISO Date YYYY-MM-DD (date when integrated)
     custom_flag?: string | boolean | null;
 }
 

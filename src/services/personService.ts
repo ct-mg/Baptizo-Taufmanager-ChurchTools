@@ -88,8 +88,8 @@ export class PersonService implements DataProvider {
                 const fields: BaptizoFields = {
                     seminar_besucht_am: personDetail.taufmanager_seminar || null,
                     getauft_am: personDetail.taufmanager_taufe || null,
-                    urkunde_ueberreicht: !!personDetail.taufmanager_urkunde,
-                    in_gemeinde_integriert: !!personDetail.taufmanager_integration
+                    urkunde_ueberreicht: personDetail.taufmanager_urkunde || null,
+                    in_gemeinde_integriert: personDetail.taufmanager_integration || null
                 };
 
                 members.push({
@@ -128,26 +128,30 @@ export class PersonService implements DataProvider {
     }
 
     async updatePersonFields(personId: number, fields: Partial<BaptizoFields>): Promise<void> {
-        const settings = await getAdminSettings();
-        if (!settings) return;
-
+        // ChurchTools custom fields use naming convention: taufmanager_{fieldname}
+        // NOT numeric IDs! Must use actual field names.
         const ctFields: any = {};
-        if (fields.seminar_besucht_am !== undefined) ctFields[settings.seminarDateId] = fields.seminar_besucht_am;
-        if (fields.getauft_am !== undefined) ctFields[settings.baptismDateId] = fields.getauft_am;
-        // For boolean/date logic, we might need to send date if true, or null if false? 
-        // Or if it's a real checkbox field in CT:
-        // certificateDateId was defined as Date in Admin.vue labels?
-        // User prompt: "certificateDateId (Label: "ID Feld: Urkunde (Datum)")"
-        // So we should save a DATE.
-        // If frontend passes boolean true, we probably save TODAY? Or passed date?
-        // Let's assume frontend passes a string (date) directly if it's a date field.
-        // If frontend passes boolean, we need to decide what date to save.
 
-        // For now, assume simple mapping if keys match.
-        // If strict mapping needed, check types.
+        if (fields.seminar_besucht_am !== undefined) {
+            ctFields['taufmanager_seminar'] = fields.seminar_besucht_am;
+        }
+        if (fields.getauft_am !== undefined) {
+            ctFields['taufmanager_taufe'] = fields.getauft_am;
+        }
+        if (fields.urkunde_ueberreicht !== undefined) {
+            // Date string or null
+            ctFields['taufmanager_urkunde'] = fields.urkunde_ueberreicht;
+        }
+        if (fields.in_gemeinde_integriert !== undefined) {
+            // Date string or null
+            ctFields['taufmanager_integration'] = fields.in_gemeinde_integriert;
+        }
+
+        console.log(`[Baptizo] Updating person ${personId} with fields:`, ctFields);
 
         try {
-            await churchtoolsClient.patch(`/persons/${personId}`, { fields: ctFields });
+            await churchtoolsClient.patch(`/persons/${personId}`, ctFields);
+            console.log(`[Baptizo] ✓ Successfully updated person ${personId}`);
         } catch (error) {
             console.error('[Baptizo] Error updating person:', error);
             throw error;
