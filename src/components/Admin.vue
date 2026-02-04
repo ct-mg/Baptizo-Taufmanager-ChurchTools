@@ -11,6 +11,10 @@
           <span v-if="!syncing">🔄 Globale Personen-Sync</span>
           <span v-else>⏳ Synchronisiere...</span>
         </button>
+        <button @click="runMigration" class="ct-button ct-button--primary" :disabled="migrating" style="margin-left: 10px;">
+          <span v-if="!migrating">🔄 Onboarding-Daten migrieren</span>
+          <span v-else>⏳ Migriert...</span>
+        </button>
         <button @click="navigateBack" class="ct-button ct-button--report">
           <span class="icon">←</span> ZURÜCK ZUM DASHBOARD
         </button>
@@ -213,6 +217,7 @@ const saveError = ref(false);
 const syncing = ref(false);
 const syncMessage = ref('');
 const syncError = ref(false);
+const migrating = ref(false);
 const provider = new PersonService();
 
 onMounted(async () => {
@@ -271,6 +276,23 @@ async function runSync() {
     setTimeout(() => syncMessage.value = '', 6000);
   }
 }
+
+const runMigration = async () => {
+  if (!confirm('Möchten Sie die Onboarding-Daten für alle Personen aktualisieren?\n\nDies setzt das Onboarding-Datum auf 2-20 Tage VOR dem Seminar-Datum.')) return;
+  
+  migrating.value = true;
+  
+  try {
+    const { migrateOnboardingDates } = await import('../services/migrateOnboardingDates');
+    const result = await migrateOnboardingDates();
+    alert(`Migration abgeschlossen!\n\nAktualisiert: ${result.updated}\nÜbersprungen: ${result.skipped}\nFehler: ${result.errors}`);
+  } catch (error) {
+    console.error('[Admin] Migration failed:', error);
+    alert('Migration fehlgeschlagen! Siehe Console für Details.');
+  } finally {
+    migrating.value = false;
+  }
+};
 </script>
 
 <style scoped>
