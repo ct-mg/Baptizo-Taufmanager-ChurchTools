@@ -214,8 +214,10 @@ export class PersonService implements DataProvider {
                 const baseUrl = churchtoolsClient.ax?.defaults?.baseURL || 'UNKNOWN';
 
                 // Construct path carefully. User requested /api/persons check.
+                // Note: churchtoolsClient adds /api prefix automatically!
+                // Simplified: remove status_ids to test basic endpoint first
                 const endpoint = '/persons';
-                const query = `limit=${limit}&page=${page}&status_ids[]=active&status_ids[]=inactive&status_ids[]=archive`;
+                const query = `limit=${limit}&page=${page}`;
                 const url = `${endpoint}?${query}`;
 
                 console.log(`[Baptizo] DEBUG URL Config: Base: '${baseUrl}', Request: '${url}'`);
