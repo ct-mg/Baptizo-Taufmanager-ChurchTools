@@ -200,12 +200,12 @@ export class PersonService implements DataProvider {
 
             // 2. Iterate ALL persons (Pagination)
             let page = 1;
-            const limit = 50;
+            const limit = 500;
             let hasMore = true;
 
             while (hasMore) {
                 console.log(`[Baptizo] Requesting Page ${page} (Limit: ${limit})...`);
-                const response = await churchtoolsClient.get<{ data: any[], meta: any }>(`/persons?limit=${limit}&page=${page}`);
+                const response = await churchtoolsClient.get<{ data: any[], meta: any }>(`/api/persons?limit=${limit}&page=${page}`);
                 const persons = response.data || [];
 
                 console.log(`[Baptizo] Page ${page}: Received ${persons.length} persons.`);
