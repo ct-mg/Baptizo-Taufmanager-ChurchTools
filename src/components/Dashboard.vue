@@ -123,10 +123,10 @@
                 {{ months }} Mon
               </button>
             </div>
-            <!-- Years (chronological 2023-2025) -->
+            <!-- Years (dynamic: current year and 2 previous) -->
             <div class="btn-group">
               <button 
-                v-for="year in [2023, 2024, 2025]" 
+                v-for="year in availableYears" 
                 :key="year"
                 class="chart-btn"
                 :class="{ active: chartMode === 'years' && selectedYears.includes(year) }"
@@ -582,6 +582,10 @@ const chartMode = ref<'rolling' | 'years'>('rolling');
 const rollingMonths = ref(12);
 const selectedYears = ref<number[]>([2025]);
 const visibleSeries = ref({ interessenten: true, seminare: true, taufen: true });
+
+// Dynamic years: current year and 2 previous (e.g., 2024, 2025, 2026 in year 2026)
+const currentYear = new Date().getFullYear();
+const availableYears = [currentYear - 2, currentYear - 1, currentYear];
 
 // Filter State
 const timeFilter = ref('all');
