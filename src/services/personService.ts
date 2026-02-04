@@ -48,17 +48,12 @@ export class PersonService implements DataProvider {
 
             // Map to BaptizoPerson
             const members: BaptizoPerson[] = ctPersons.map((p: any) => {
+                // ChurchTools fields are at root level with naming convention taufmanager_*
                 const fields: BaptizoFields = {
-                    seminar_besucht_am: p.fields[settings.seminarDateId] || null,
-                    getauft_am: p.fields[settings.baptismDateId] || null,
-                    // Map Date fields to boolean-like logic if needed, or store date string
-                    // BaptizoFields type expects specific types.
-                    // Assuming BaptizoFields matches strict logic, we might need conversion.
-                    // Converting "exists" to boolean if the frontend expects boolean for some.
-                    // But wait, BaptizoFields interface likely expects strings for dates?
-                    // Let's assume strings for dates.
-                    urkunde_ueberreicht: !!p.fields[settings.certificateDateId], // If it's a date, !!value works.
-                    in_gemeinde_integriert: !!p.fields[settings.integratedDateId]
+                    seminar_besucht_am: p.taufmanager_seminar || null,
+                    getauft_am: p.taufmanager_taufe || null,
+                    urkunde_ueberreicht: !!p.taufmanager_urkunde,
+                    in_gemeinde_integriert: !!p.taufmanager_integration
                 };
 
                 return {
@@ -286,12 +281,18 @@ export class PersonService implements DataProvider {
                         }
                     }
 
-                    // Check Fields - try both numeric and string keys
-                    const hasSeminar = !!fields[settings.seminarDateId] || !!fields[`f${settings.seminarDateId}`];
-                    const hasBaptism = !!fields[settings.baptismDateId] || !!fields[`f${settings.baptismDateId}`]; // Field 187 => TAUFE
-                    const hasCertificate = !!fields[settings.certificateDateId] || !!fields[`f${settings.certificateDateId}`];
-                    const hasIntegration = !!fields[settings.integratedDateId] || !!fields[`f${settings.integratedDateId}`];
-                    const hasStatus = !!fields[settings.statusFieldId] || !!fields[`f${settings.statusFieldId}`]; // Field 196
+                    // Check Fields - HARD-MAPPED to actual ChurchTools field names!
+                    // Keys are at ROOT level of personDetail, NOT in a "fields" object
+                    const hasSeminar = !!personDetail.taufmanager_seminar;
+                    const hasBaptism = !!personDetail.taufmanager_taufe; // TAUFE => Group 16
+                    const hasCertificate = !!personDetail.taufmanager_urkunde;
+                    const hasIntegration = !!personDetail.taufmanager_integration;
+                    const hasStatus = !!personDetail.taufmanager_status;
+
+                    // Debug log for first few persons
+                    if (index < 3) {
+                        console.log(`[Baptizo] Person ${pid} (${personDetail.firstName}): seminar=${hasSeminar}, taufe=${hasBaptism}, urkunde=${hasCertificate}, integration=${hasIntegration}, status=${hasStatus}`);
+                    }
 
                     // LOGIC:
 
@@ -301,7 +302,10 @@ export class PersonService implements DataProvider {
                         if (!baptizedMemberIds.has(pid)) {
                             console.log(`[Baptizo] [SYNC] Found Baptized (ID ${pid}): adding to Group ${settings.baptizedGroupId}`);
                             try {
-                                await churchtoolsClient.put(`/groups/${settings.baptizedGroupId}/members/${pid}`, {});
+                                const response = await churchtoolsClient.put(`/groups/${settings.baptizedGroupId}/members/${pid}`, {
+                                    groupMemberStatusId: 1 // 1 = active member
+                                });
+                                console.log(`[Baptizo] PUT response for ${pid}:`, response);
                                 stats.addedToBaptized++;
                                 baptizedMemberIds.add(pid);
                             } catch (e) {
@@ -327,9 +331,12 @@ export class PersonService implements DataProvider {
                         const inbaptized = baptizedMemberIds.has(pid);
 
                         if (!ininterest && !inbaptized) {
-                            console.log(`[Baptizo] [SYNC] Found Lost candidate: ${p.firstName} ${p.lastName}. Adding to Interest Group (${settings.interestGroupId})`);
+                            console.log(`[Baptizo] [SYNC] Found Lost candidate: ${personDetail.firstName} ${personDetail.lastName}. Adding to Interest Group (${settings.interestGroupId})`);
                             try {
-                                await churchtoolsClient.put(`/groups/${settings.interestGroupId}/members/${pid}`, {});
+                                const response = await churchtoolsClient.put(`/groups/${settings.interestGroupId}/members/${pid}`, {
+                                    groupMemberStatusId: 1 // 1 = active member
+                                });
+                                console.log(`[Baptizo] PUT response for ${pid}:`, response);
                                 stats.addedToInterest++;
                                 interestMemberIds.add(pid);
                             } catch (e) {
