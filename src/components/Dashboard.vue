@@ -640,14 +640,14 @@ const loadData = async () => {
   loading.value = true;
   
   // 1. Auto-Sync Logic (only if provider supports it)
-  if (provider.syncMissingGroupMembers) {
+  if (provider.runGlobalDiscoveryAndSync) {
       isSyncing.value = true;
       try {
-          // Perform sync before loading groups so lists are up to date
-          const stats = await provider.syncMissingGroupMembers();
+          // Perform Global Discovery & Sync
+          const stats = await provider.runGlobalDiscoveryAndSync();
           
           if (stats.addedToInterest > 0 || stats.addedToBaptized > 0 || stats.removedFromInterest > 0) {
-              toastMessage.value = `Auto-Sync: +${stats.addedToInterest} Interessenten, +${stats.addedToBaptized} Getaufte (verschoben aus Interessenten: ${stats.removedFromInterest})`;
+              toastMessage.value = `Global-Sync: +${stats.addedToInterest} Interessenten, +${stats.addedToBaptized} Getaufte (verschoben aus Interessenten: ${stats.removedFromInterest})`;
               showToast.value = true;
               setTimeout(() => showToast.value = false, 6000);
           }

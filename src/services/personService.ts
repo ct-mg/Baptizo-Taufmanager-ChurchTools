@@ -182,18 +182,16 @@ export class PersonService implements DataProvider {
         throw new Error('Method not implemented.');
     }
 
-    async syncMissingGroupMembers(): Promise<{ addedToInterest: number; addedToBaptized: number; removedFromInterest: number }> {
+    async runGlobalDiscoveryAndSync(): Promise<{ addedToInterest: number; addedToBaptized: number; removedFromInterest: number }> {
         const settings = await getAdminSettings();
         if (!settings) return { addedToInterest: 0, addedToBaptized: 0, removedFromInterest: 0 };
 
-        console.log('[Baptizo] Starting Auto-Sync of Group Members...');
+        console.log('[Baptizo] Starting Global Discovery & Sync...');
 
-        // Stats
         let stats = { addedToInterest: 0, addedToBaptized: 0, removedFromInterest: 0 };
 
         try {
             // 1. Fetch current members of target groups for efficient lookup
-            // Using internal fetch to get IDs
             const interestGroup = await this.fetchGroupInternal(parseInt(settings.interestGroupId), 'Interest', settings);
             const baptizedGroup = await this.fetchGroupInternal(parseInt(settings.baptizedGroupId), 'Baptized', settings);
 
@@ -202,19 +200,15 @@ export class PersonService implements DataProvider {
 
             // 2. Iterate ALL persons (Pagination)
             let page = 1;
-            const limit = 100;
+            const limit = 50;
             let hasMore = true;
 
             while (hasMore) {
-                console.log(`[Baptizo] Scanning Page ${page} for candidates...`);
-                // Note: /persons endpoint returns a list of persons
-                // We need to request the specific fields to ensure they are included in the response
-                // churchtoolsClient automatically includes core fields, but custom fields might need 'group_id' or special handling?
-                // Actually, CT api returns "fields" object if not specified otherwise.
-                // But fields 184 etc might need to be computed or are custom.
-                // Let's hope basic /persons call returns all custom fields in 'fields'.
+                console.log(`[Baptizo] Requesting Page ${page} (Limit: ${limit})...`);
                 const response = await churchtoolsClient.get<{ data: any[], meta: any }>(`/persons?limit=${limit}&page=${page}`);
                 const persons = response.data || [];
+
+                console.log(`[Baptizo] Page ${page}: Received ${persons.length} persons.`);
 
                 if (persons.length === 0) {
                     hasMore = false;
@@ -231,7 +225,8 @@ export class PersonService implements DataProvider {
                             seminar: settings.seminarDateId,
                             baptism: settings.baptismDateId,
                             certificate: settings.certificateDateId,
-                            integration: settings.integratedDateId
+                            integration: settings.integratedDateId,
+                            status: settings.statusFieldId
                         });
                         console.log('[Baptizo] DEBUG CHECK - First Person Fields (Keys):', Object.keys(fields));
                         console.log('[Baptizo] DEBUG CHECK - First Person Fields (Full):', fields);
@@ -242,6 +237,8 @@ export class PersonService implements DataProvider {
                     const hasBaptism = !!fields[settings.baptismDateId]; // Field 187 => TAUFE
                     const hasCertificate = !!fields[settings.certificateDateId];
                     const hasIntegration = !!fields[settings.integratedDateId];
+                    // IMPORTANT: Field 196 (Status/Interesse) check as requested by User
+                    const hasStatus = !!fields[settings.statusFieldId];
 
                     // LOGIC:
 
@@ -249,11 +246,11 @@ export class PersonService implements DataProvider {
                     if (hasBaptism) {
                         // Ensure in Group 16
                         if (!baptizedMemberIds.has(pid)) {
-                            console.log(`[Baptizo] [SYNC] Adding ${p.firstName} ${p.lastName} to Baptized Group (${settings.baptizedGroupId})`);
+                            console.log(`[Baptizo] [SYNC] Found Baptized (ID ${pid}): adding to Group ${settings.baptizedGroupId}`);
                             try {
                                 await churchtoolsClient.put(`/groups/${settings.baptizedGroupId}/members/${pid}`, {});
                                 stats.addedToBaptized++;
-                                baptizedMemberIds.add(pid); // Update local cache
+                                baptizedMemberIds.add(pid);
                             } catch (e) {
                                 console.error(`[Baptizo] Failed to add ${pid} to Baptized group`, e);
                             }
@@ -271,11 +268,8 @@ export class PersonService implements DataProvider {
                             }
                         }
                     }
-                    // Case B: NO Baptism Date, but Has Other Milestones -> MUST be in Group 13 (Interest)
-                    else if (hasSeminar || hasCertificate || hasIntegration) {
-                        // If they are NOT in 13 and NOT in 16 (if they are in 16 without date, maybe leave them? Logic says "AND Not Baptized" -> checking group 16 membership or date? "AND NOT Baptized" usually means not in the baptized state/group. Let's assume if they are in 16 they are fine. Only add if in NEITHER).
-                        // Requirement: "WENN Feld 184, 190 oder 193 ein Datum hat UND Person NICHT in Gruppe 13 oder 16 ist -> POST /groups/13/members."
-
+                    // Case B: NO Baptism Date, but Has Other Milestones (Seminar, Cert, Integration, Status) -> MUST be in Group 13 (Interest)
+                    else if (hasSeminar || hasCertificate || hasIntegration || hasStatus) {
                         const ininterest = interestMemberIds.has(pid);
                         const inbaptized = baptizedMemberIds.has(pid);
 

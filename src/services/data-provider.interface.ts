@@ -29,7 +29,7 @@ export interface DataProvider {
     createEvent(event: Omit<BaptizoEvent, 'id'>): Promise<BaptizoEvent>;
 
     /**
-     * Syncs group members based on milestone fields.
+     * Syncs group members based on milestone fields using Global Discovery.
      */
-    syncMissingGroupMembers?(): Promise<{ addedToInterest: number; addedToBaptized: number; removedFromInterest: number }>;
+    runGlobalDiscoveryAndSync?(): Promise<{ addedToInterest: number; addedToBaptized: number; removedFromInterest: number }>;
 }
