@@ -37,13 +37,21 @@ export class PersonService implements DataProvider {
 
         try {
             // Fetch group members
-            const response = await churchtoolsClient.get<{ data: any[] }>(`/groups/${groupId}/members`);
-            const ctPersons = response.data || [];
+            const response = await churchtoolsClient.get<any>(`/groups/${groupId}/members`);
+
+            // DEBUG: Log raw response to find structure
+            console.log(`[Baptizo] RAW Group Response (first 300 chars):`, JSON.stringify(response).substring(0, 300));
+
+            // Handle both direct array and wrapped response
+            const ctPersons: any[] = Array.isArray(response) ? response : (response.data || []);
 
             console.log(`[Baptizo] API Erfolg für Gruppe ${groupId}. Anzahl Personen: ${ctPersons.length}`);
 
             if (ctPersons.length === 0) {
                 console.warn(`[Baptizo] Verbindung steht, aber Gruppe ${groupId} ist leer.`);
+            } else {
+                // Log first member structure
+                console.log(`[Baptizo] First member structure:`, ctPersons[0]);
             }
 
             // Map to BaptizoPerson
