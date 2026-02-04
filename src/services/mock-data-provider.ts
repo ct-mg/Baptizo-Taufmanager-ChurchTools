@@ -182,6 +182,8 @@ export class MockDataProvider implements DataProvider {
                         getauft_am: baptismDate,
                         urkunde_ueberreicht: null, // Will be set later if baptized
                         in_gemeinde_integriert: null, // Will be set later if baptized
+                        taufmanager_onboarding: entryDate.toISOString().split('T')[0], // Realistic onboarding date
+                        taufmanager_offboarding: null // Will be set for 2 persons later
                     },
                     imageUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${id}`,
                 };
@@ -229,6 +231,19 @@ export class MockDataProvider implements DataProvider {
                 person.fields.in_gemeinde_integriert = person.fields.getauft_am;
             }
         });
+
+        // Offboarding: 2 persons left the Taufmanager (realistic scenarios)
+        // Person who completed everything
+        if (allBaptized.length > 5) {
+            const completedPerson = allBaptized[5]; // Fully baptized, has certificate, integrated
+            completedPerson.fields.taufmanager_offboarding = '2025-12-15'; // Left in December
+        }
+        // Person who dropped out early
+        const allInterested = this.groups.find(g => g.id === 100)?.members || [];
+        if (allInterested.length > 3) {
+            const droppedOut = allInterested[3]; // Had seminar but didn't continue
+            droppedOut.fields.taufmanager_offboarding = '2025-10-20'; // Dropped out in October
+        }
     }
 
     private events: BaptizoEvent[] = [];

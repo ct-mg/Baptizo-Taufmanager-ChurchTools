@@ -89,16 +89,24 @@ export class PersonService implements DataProvider {
                     seminar_besucht_am: personDetail.taufmanager_seminar || null,
                     getauft_am: personDetail.taufmanager_taufe || null,
                     urkunde_ueberreicht: personDetail.taufmanager_urkunde || null,
-                    in_gemeinde_integriert: personDetail.taufmanager_integration || null
+                    in_gemeinde_integriert: personDetail.taufmanager_integration || null,
+                    taufmanager_onboarding: personDetail.taufmanager_onboarding || null,
+                    taufmanager_offboarding: personDetail.taufmanager_offboarding || null
                 };
+
+                // CRITICAL: Skip persons with offboarding date - they left the Taufmanager
+                if (personDetail.taufmanager_offboarding) {
+                    console.log(`[Baptizo] Skipping person ${personDetail.id} - offboarded on ${personDetail.taufmanager_offboarding}`);
+                    continue;
+                }
 
                 members.push({
                     id: m.personId || personDetail.id,
                     firstName: personDetail.firstName || 'Unknown',
                     lastName: personDetail.lastName || 'Unknown',
                     status: m.groupMemberStatus === 'inactive' ? 'inactive' : 'active',
-                    // Use seminar date as realistic onboarding date, fallback to memberStartDate
-                    entry_date: personDetail.taufmanager_seminar || m.memberStartDate || new Date().toISOString().split('T')[0],
+                    // Use onboarding date as entry date (when they joined Taufmanager)
+                    entry_date: personDetail.taufmanager_onboarding || personDetail.taufmanager_seminar || m.memberStartDate || new Date().toISOString().split('T')[0],
                     fields,
                     imageUrl: personDetail.imageUrl || `https://ui-avatars.com/api/?name=${personDetail.firstName}+${personDetail.lastName}&background=random`
                 });
@@ -145,6 +153,12 @@ export class PersonService implements DataProvider {
         if (fields.in_gemeinde_integriert !== undefined) {
             // Date string or null
             ctFields['taufmanager_integration'] = fields.in_gemeinde_integriert;
+        }
+        if (fields.taufmanager_onboarding !== undefined) {
+            ctFields['taufmanager_onboarding'] = fields.taufmanager_onboarding;
+        }
+        if (fields.taufmanager_offboarding !== undefined) {
+            ctFields['taufmanager_offboarding'] = fields.taufmanager_offboarding;
         }
 
         console.log(`[Baptizo] Updating person ${personId} with fields:`, ctFields);
