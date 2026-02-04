@@ -11,12 +11,19 @@ export async function migrateOnboardingDates(): Promise<{ updated: number; skipp
     const interestGroupId = parseInt(adminCfg?.interestGroupId || '0');
     const baptizedGroupId = parseInt(adminCfg?.baptizedGroupId || '0');
 
+    console.log('[Migration] Group IDs:', { interestGroupId, baptizedGroupId });
+
     let updated = 0;
     let skipped = 0;
     let errors = 0;
 
     // Fetch all groups
     const groupIds = [interestGroupId, baptizedGroupId].filter(id => id > 0);
+
+    if (groupIds.length === 0) {
+        console.error('[Migration] No group IDs configured!');
+        return { updated, skipped, errors };
+    }
 
     for (const groupId of groupIds) {
         console.log(`[Migration] Processing group ${groupId}...`);
@@ -27,11 +34,14 @@ export async function migrateOnboardingDates(): Promise<{ updated: number; skipp
 
         while (hasMore) {
             try {
-                const response = await churchtoolsClient.get(`/groups/${groupId}/members`, {
-                    params: { limit: 500, page }
-                });
+                // Use correct API endpoint - without params, just query string
+                const response: any = await churchtoolsClient.get(`/groups/${groupId}/members?limit=500&page=${page}`);
 
-                const members = response.data || [];
+                console.log(`[Migration] Group ${groupId} page ${page} response:`, response);
+
+                const members = Array.isArray(response) ? response : (response.data || []);
+                console.log(`[Migration] Found ${members.length} members on page ${page}`);
+
                 if (members.length === 0) {
                     hasMore = false;
                     break;
@@ -40,37 +50,50 @@ export async function migrateOnboardingDates(): Promise<{ updated: number; skipp
                 // Process each member
                 for (const member of members) {
                     try {
+                        const personId = member.personId || member.id;
+                        if (!personId) {
+                            console.warn('[Migration] Member has no personId:', member);
+                            skipped++;
+                            continue;
+                        }
+
                         // Fetch full person details
-                        const personDetail = await churchtoolsClient.get(`/persons/${member.personId}`);
+                        const personDetail: any = await churchtoolsClient.get(`/persons/${personId}`);
+
+                        console.log(`[Migration] Person ${personId} details:`, {
+                            seminar: personDetail.taufmanager_seminar,
+                            onboarding: personDetail.taufmanager_onboarding
+                        });
 
                         const seminarDate = personDetail.taufmanager_seminar;
                         const currentOnboarding = personDetail.taufmanager_onboarding;
 
                         // Skip if no seminar date
                         if (!seminarDate) {
+                            console.log(`[Migration] Skipping person ${personId} - no seminar date`);
                             skipped++;
                             continue;
                         }
 
                         // Skip if onboarding already set and different from seminar
                         if (currentOnboarding && currentOnboarding !== seminarDate) {
-                            console.log(`[Migration] Skipping person ${member.personId} - onboarding already customized`);
+                            console.log(`[Migration] Skipping person ${personId} - onboarding already customized (${currentOnboarding})`);
                             skipped++;
                             continue;
                         }
 
                         // Calculate new onboarding date (2-20 days before seminar)
                         const seminarDateObj = new Date(seminarDate);
-                        const daysOffset = 2 + (member.personId % 19); // 2-20 days
+                        const daysOffset = 2 + (personId % 19); // 2-20 days
                         const onboardingDateObj = new Date(seminarDateObj.getTime() - daysOffset * 86400000);
                         const newOnboarding = onboardingDateObj.toISOString().split('T')[0];
 
                         // Update person in ChurchTools
-                        await churchtoolsClient.patch(`/persons/${member.personId}`, {
+                        await churchtoolsClient.patch(`/persons/${personId}`, {
                             taufmanager_onboarding: newOnboarding
                         });
 
-                        console.log(`[Migration] ✓ Updated person ${member.personId}: ${seminarDate} → ${newOnboarding} (${daysOffset} days earlier)`);
+                        console.log(`[Migration] ✓ Updated person ${personId}: ${seminarDate} → ${newOnboarding} (${daysOffset} days earlier)`);
                         updated++;
 
                     } catch (personError) {
