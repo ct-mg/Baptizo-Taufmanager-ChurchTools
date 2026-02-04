@@ -2,7 +2,9 @@
   <div class="modal-overlay" @click.self="$emit('close')">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Person aus Taufmanager entfernen</h2>
+        <h2 class="person-name">
+          <span class="icon">🏆</span> Prozess abschließen
+        </h2>
         <button class="close-btn" @click="$emit('close')">&times;</button>
       </div>
       

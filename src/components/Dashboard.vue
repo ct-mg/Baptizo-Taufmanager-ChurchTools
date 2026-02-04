@@ -1024,7 +1024,7 @@ const listSeminarPending = computed(() => {
 });
 
 const listBaptismPending = computed(() => {
-  const g = groups.value.find(g => g.id === interestGroupId.value);
+  const g = groups.value.find(g => g.id === baptizedGroupId.value);
   if (!g) return [];
   return g.members
     .filter(m => m.fields.seminar_besucht_am && !m.fields.getauft_am && filterByTime(m, 'entry'))
@@ -1040,7 +1040,7 @@ const listCertificatePending = computed(() => {
 });
 
 const listIntegrationPending = computed(() => {
-  const g = groups.value.find(g => g.id === 101);
+  const g = groups.value.find(g => g.id === baptizedGroupId.value);
   if (!g) return [];
   return g.members
     .filter(m => !m.fields.in_gemeinde_integriert && filterByTime(m, 'baptism'))

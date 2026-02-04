@@ -62,12 +62,47 @@ const addPerson = async () => {
   error.value = '';
   
   try {
-    // Update person with onboarding date
-    await provider.updatePersonFields(personId.value, {
-      taufmanager_onboarding: onboardingDate.value
-    });
+    // First, fetch person to check if they already have an offboarding date
+    let personDetail: any;
+    try {
+      personDetail = await provider.getPerson(personId.value);
+    } catch (e) {
+      console.error(`[Baptizo] Failed to fetch person ${personId.value}`, e);
+      error.value = 'Person konnte nicht gefunden werden. Bitte ID prüfen.';
+      loading.value = false;
+      return;
+    }
     
-    console.log(`[Baptizo] Person ${personId.value} onboarded on ${onboardingDate.value}`);
+    // Check if person has offboarding date (was previously removed)
+    if (personDetail.taufmanager_offboarding) {
+      const confirmed = confirm(
+        `Diese Person wurde am ${personDetail.taufmanager_offboarding} offboarded.\n\n` +
+        `Möchten Sie die Person wieder zum Taufmanager hinzufügen?\n\n` +
+        `Das alte Offboarding-Datum wird gelöscht, aber das ursprüngliche Onboarding-Datum (${personDetail.taufmanager_onboarding || 'nicht gesetzt'}) bleibt erhalten.`
+      );
+      
+      if (!confirmed) {
+        loading.value = false;
+        emit('close');
+        return;
+      }
+      
+      // Clear offboarding date but keep original onboarding
+      await provider.updatePersonFields(personId.value, {
+        taufmanager_offboarding: null
+        // Intentionally NOT updating onboarding - keep original date!
+      });
+      
+      console.log(`[Baptizo] Person ${personId.value} re-onboarded (offboarding cleared, keeping original onboarding)`);
+    } else {
+      // New onboarding - set onboarding date
+      await provider.updatePersonFields(personId.value, {
+        taufmanager_onboarding: onboardingDate.value
+      });
+      
+      console.log(`[Baptizo] Person ${personId.value} onboarded on ${onboardingDate.value}`);
+    }
+    
     emit('personAdded');
     emit('close');
   } catch (e: any) {

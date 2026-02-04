@@ -135,6 +135,11 @@ export class PersonService implements DataProvider {
         return groups.find(g => g.id === id) || null;
     }
 
+    async getPerson(personId: number): Promise<any> {
+        // Fetch individual person details from ChurchTools
+        return await churchtoolsClient.get(`/persons/${personId}`);
+    }
+
     async updatePersonFields(personId: number, fields: Partial<BaptizoFields>): Promise<void> {
         // ChurchTools custom fields use naming convention: taufmanager_{fieldname}
         // NOT numeric IDs! Must use actual field names.
