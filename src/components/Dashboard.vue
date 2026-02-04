@@ -302,6 +302,21 @@
         </tbody>
       </table>
     </div>
+    
+    <!-- Onboarding Modal -->
+    <OnboardingModal 
+      v-if="showOnboardingModal" 
+      @close="showOnboardingModal = false"
+      @personAdded="handlePersonAdded"
+    />
+    
+    <!-- Offboarding Modal -->
+    <OffboardingModal 
+      v-if="showOffboardingModal" 
+      :persons="allPersons"
+      @close="showOffboardingModal = false"
+      @personRemoved="handlePersonRemoved"
+    />
 
     <!-- EVENTS TAB -->
     <div v-else-if="currentTab === 'events'" class="events-content">
@@ -505,6 +520,8 @@ import EventList from './EventList.vue';
 import PersonDetailModal from './PersonDetailModal.vue';
 import SettingsTab from './SettingsTab.vue';
 import Admin from './Admin.vue';
+import OnboardingModal from './OnboardingModal.vue';
+import OffboardingModal from './OffboardingModal.vue';
 import { DEFAULT_SETTINGS } from '../types/baptizo-settings';
 import type { BaptizoSettings } from '../types/baptizo-settings';
 import { getAdminSettings, type AdminSettings } from '../lib/kv-store';
@@ -545,6 +562,8 @@ const currentTab = ref('dashboard');
 const showAdminView = ref(false);
 const selectedPerson = ref<BaptizoPerson | null>(null);
 const adminSettings = ref<AdminSettings | null>(null);
+const showOnboardingModal = ref(false);
+const showOffboardingModal = ref(false);
 
 const interestGroupId = computed(() => adminSettings.value ? parseInt(adminSettings.value.interestGroupId || '0') : 0);
 const baptizedGroupId = computed(() => adminSettings.value ? parseInt(adminSettings.value.baptizedGroupId || '0') : 0);
@@ -668,8 +687,16 @@ const handleSavePerson = async (p: BaptizoPerson) => {
   selectedPerson.value = null; 
   await loadData(); 
 };
-const handleOnboarding = () => alert("Onboarding:\n\nSimuliere Suche in ChurchTools-Datenbank...\n(Feature in Entwicklung)");
-const handleOffboarding = () => alert("Offboarding:\n\nPerson archivieren.\n(Feature in Entwicklung)");
+const handleOnboarding = () => { showOnboardingModal.value = true; };
+const handleOffboarding = () => { showOffboardingModal.value = true; };
+const handlePersonAdded = async () => {
+  showOnboardingModal.value = false;
+  await loadData(); // Reload to show new person
+};
+const handlePersonRemoved = async () => {
+  showOffboardingModal.value = false;
+  await loadData(); // Reload to hide removed person
+};
 
 // Helper Functions
 const getDaysSince = (dateStr: string | undefined | null) => {
@@ -1019,6 +1046,9 @@ const listIntegrationPending = computed(() => {
     .filter(m => !m.fields.in_gemeinde_integriert && filterByTime(m, 'baptism'))
     .map(p => ({ ...p, subtitle: `Taufe: ${formatDate(p.fields.getauft_am)}` }));
 });
+
+// All persons from all groups (for offboarding modal)
+const allPersons = computed(() => groups.value.flatMap(g => g.members));
 
 // People Tab Filter (SORTED BY ONBOARDING DATE - FIFO)
 const filteredPersons = computed(() => {
