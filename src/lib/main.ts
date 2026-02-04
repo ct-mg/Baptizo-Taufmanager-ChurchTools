@@ -49,13 +49,20 @@ async function initializeChurchToolsClient(): Promise<void> {
         const token = import.meta.env.VITE_LOGIN_TOKEN;
         if (token) {
             console.log('[Baptizo] Using Token-Auth for development mode...');
-            try {
-                // Use official method which handles header formatting correctly
-                // This might typically set 'Authorization: Login <token>' internally
-                await churchtoolsClient.loginWithToken(token);
-                console.log('[Baptizo] ✓ Logged in via Token');
-            } catch (e) {
-                console.error('[Baptizo] ❌ Login with token failed:', e);
+            // Inject Authorization header directly into the internal axios instance
+            // @ts-ignore - 'ax' is private but we need to set the header for all requests
+            if (churchtoolsClient.ax) {
+                // @ts-ignore
+                churchtoolsClient.ax.defaults.headers.common['Authorization'] = 'Login ' + token.trim();
+                console.log('[Baptizo] ✓ Authorization header set: Login ' + token.substring(0, 5) + '...');
+
+                // Test the connection immediately
+                churchtoolsClient.get('/whoami').then(
+                    () => console.log('[Baptizo] ✓ Immediate /whoami check successful'),
+                    (err) => console.error('[Baptizo] ❌ Immediate /whoami check failed:', err.message)
+                );
+            } else {
+                console.warn('[Baptizo] ⚠ Could not access internal axios instance');
             }
         } else {
             console.warn('[Baptizo] ⚠ No VITE_LOGIN_TOKEN provided in .env');
