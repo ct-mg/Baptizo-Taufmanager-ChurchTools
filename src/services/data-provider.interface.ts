@@ -27,4 +27,9 @@ export interface DataProvider {
      * Creates a new event.
      */
     createEvent(event: Omit<BaptizoEvent, 'id'>): Promise<BaptizoEvent>;
+
+    /**
+     * Syncs group members based on milestone fields.
+     */
+    syncMissingGroupMembers?(): Promise<{ addedToInterest: number; addedToBaptized: number; removedFromInterest: number }>;
 }

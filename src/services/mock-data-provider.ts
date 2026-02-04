@@ -344,6 +344,10 @@ export class MockDataProvider implements DataProvider {
         return newEvent;
     }
 
+    async syncMissingGroupMembers(): Promise<{ addedToInterest: number; addedToBaptized: number; removedFromInterest: number }> {
+        return { addedToInterest: 0, addedToBaptized: 0, removedFromInterest: 0 };
+    }
+
     // Settings
     private settings: BaptizoSettings = { ...DEFAULT_SETTINGS };
 

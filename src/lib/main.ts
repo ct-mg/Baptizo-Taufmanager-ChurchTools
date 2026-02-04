@@ -44,14 +44,10 @@ async function initializeChurchToolsClient(): Promise<void> {
 
     churchtoolsClient.setBaseUrl(baseUrl);
 
-    // Auto-login in development mode
+    // Auto-login in development mode using Token
     if (import.meta.env.MODE === 'development') {
         const token = import.meta.env.VITE_LOGIN_TOKEN;
-        const username = import.meta.env.VITE_USERNAME;
-        const password = import.meta.env.VITE_PASSWORD;
-
-        // Strategy 1: Token (Preferred if valid)
-        if (token && token.length > 50) {
+        if (token) {
             console.log('[Baptizo] Using Token-Auth. Testing header formats...');
 
             // @ts-ignore
@@ -74,33 +70,18 @@ async function initializeChurchToolsClient(): Promise<void> {
                 }
             };
 
-            // Try Brute Force Formats
+            // Try 1: Standard 'Login <token>'
             if (await tryHeader('Login', 'Login <token>')) return;
+
+            // Try 2: 'Bearer <token>'
             if (await tryHeader('Bearer', 'Bearer <token>')) return;
+
+            // Try 3: Raw token
             if (await tryHeader('', 'Raw Token')) return;
 
-            console.error('[Baptizo] ❌ ALL TOKEN FORMATS FAILED. Falling back to credentials if available...');
-        }
-
-        // Strategy 2: Username/Password (Fallback)
-        if (username && password) {
-            console.log('[Baptizo] Using Credentials-Auth (Username/Password)...');
-            try {
-                // @ts-ignore - login likely exists on client
-                await churchtoolsClient.login(username, password);
-                console.log('[Baptizo] ✅ Logged in via Username/Password');
-
-                // Set Header for subsequent requests if login doesn't do it automatically for the axios instance?
-                // churchtoolsClient usually handles session via cookie or internal state.
-                // But let's verify connection.
-                await churchtoolsClient.get('/whoami');
-                console.log('[Baptizo] ✅ Session active.');
-
-            } catch (e) {
-                console.error('[Baptizo] ❌ Login with Username/Password failed:', e);
-            }
-        } else if (!token || token.length <= 50) {
-            console.warn('[Baptizo] ⚠ No valid Login-Method configured. Please check .env (VITE_LOGIN_TOKEN or VITE_USERNAME/PASSWORD).');
+            console.error('[Baptizo] ❌ ALL AUTH FORMATS FAILED. Please check if token is valid.');
+        } else {
+            console.warn('[Baptizo] ⚠ No VITE_LOGIN_TOKEN provided in .env');
         }
     }
 

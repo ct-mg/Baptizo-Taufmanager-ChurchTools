@@ -476,6 +476,22 @@
       @close="selectedPerson = null" 
       @save="handleSavePerson"
     />
+    <!-- Toast Notification -->
+    <Transition name="fade">
+        <div v-if="showToast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-4 rounded-lg shadow-xl z-50 flex items-center gap-3 border border-gray-700">
+            <div class="text-green-400 text-xl">✓</div>
+            <div>
+                <p class="font-medium text-sm">{{ toastMessage }}</p>
+            </div>
+            <button @click="showToast = false" class="ml-4 text-gray-400 hover:text-white">✕</button>
+        </div>
+    </Transition>
+
+    <!-- Loading Overlay for Sync -->
+    <div v-if="isSyncing" class="fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg z-50 flex items-center gap-2 text-xs font-medium animate-pulse">
+        <span>↻</span> Prüfe Meilensteine & Gruppen...
+    </div>
+
   </div>
 </template>
 
@@ -616,8 +632,32 @@ const toggleFaq = (index: number) => {
 };
 
 // Data Loading
+const isSyncing = ref(false);
+const showToast = ref(false);
+const toastMessage = ref('');
+
 const loadData = async () => {
   loading.value = true;
+  
+  // 1. Auto-Sync Logic (only if provider supports it)
+  if (provider.syncMissingGroupMembers) {
+      isSyncing.value = true;
+      try {
+          // Perform sync before loading groups so lists are up to date
+          const stats = await provider.syncMissingGroupMembers();
+          
+          if (stats.addedToInterest > 0 || stats.addedToBaptized > 0 || stats.removedFromInterest > 0) {
+              toastMessage.value = `Auto-Sync: +${stats.addedToInterest} Interessenten, +${stats.addedToBaptized} Getaufte (verschoben aus Interessenten: ${stats.removedFromInterest})`;
+              showToast.value = true;
+              setTimeout(() => showToast.value = false, 6000);
+          }
+      } catch (e) {
+          console.error('[Dashboard] Auto-Sync failed', e);
+      } finally {
+          isSyncing.value = false;
+      }
+  }
+
   try {
     const [groupsData, eventsData, settingsData, adminCfg] = await Promise.all([
       provider.getGroups(),

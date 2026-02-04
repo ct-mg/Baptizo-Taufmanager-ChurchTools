@@ -181,4 +181,122 @@ export class PersonService implements DataProvider {
         console.warn('createEvent not implemented', event);
         throw new Error('Method not implemented.');
     }
+
+    async syncMissingGroupMembers(): Promise<{ addedToInterest: number; addedToBaptized: number; removedFromInterest: number }> {
+        const settings = await getAdminSettings();
+        if (!settings) return { addedToInterest: 0, addedToBaptized: 0, removedFromInterest: 0 };
+
+        console.log('[Baptizo] Starting Auto-Sync of Group Members...');
+
+        // Stats
+        let stats = { addedToInterest: 0, addedToBaptized: 0, removedFromInterest: 0 };
+
+        try {
+            // 1. Fetch current members of target groups for efficient lookup
+            // Using internal fetch to get IDs
+            const interestGroup = await this.fetchGroupInternal(parseInt(settings.interestGroupId), 'Interest', settings);
+            const baptizedGroup = await this.fetchGroupInternal(parseInt(settings.baptizedGroupId), 'Baptized', settings);
+
+            const interestMemberIds = new Set(interestGroup.members.map(m => m.id));
+            const baptizedMemberIds = new Set(baptizedGroup.members.map(m => m.id));
+
+            // 2. Iterate ALL persons (Pagination)
+            let page = 1;
+            const limit = 100;
+            let hasMore = true;
+
+            while (hasMore) {
+                console.log(`[Baptizo] Scanning Page ${page} for candidates...`);
+                // Note: /persons endpoint returns a list of persons
+                // We need to request the specific fields to ensure they are included in the response
+                // churchtoolsClient automatically includes core fields, but custom fields might need 'group_id' or special handling?
+                // Actually, CT api returns "fields" object if not specified otherwise.
+                // But fields 184 etc might need to be computed or are custom.
+                // Let's hope basic /persons call returns all custom fields in 'fields'.
+                const response = await churchtoolsClient.get<{ data: any[], meta: any }>(`/persons?limit=${limit}&page=${page}`);
+                const persons = response.data || [];
+
+                if (persons.length === 0) {
+                    hasMore = false;
+                    break;
+                }
+
+                for (const p of persons) {
+                    const pid = p.id;
+                    const fields = p.fields || {};
+
+                    // Check Fields
+                    const hasSeminar = !!fields[settings.seminarDateId];
+                    const hasBaptism = !!fields[settings.baptismDateId]; // Field 187 => TAUFE
+                    const hasCertificate = !!fields[settings.certificateDateId];
+                    const hasIntegration = !!fields[settings.integratedDateId];
+
+                    // LOGIC:
+
+                    // Case A: Has Baptism Date (187) -> MUST be in Group 16 (Baptized)
+                    if (hasBaptism) {
+                        // Ensure in Group 16
+                        if (!baptizedMemberIds.has(pid)) {
+                            console.log(`[Baptizo] [SYNC] Adding ${p.firstName} ${p.lastName} to Baptized Group (${settings.baptizedGroupId})`);
+                            try {
+                                await churchtoolsClient.put(`/groups/${settings.baptizedGroupId}/members/${pid}`, {});
+                                stats.addedToBaptized++;
+                                baptizedMemberIds.add(pid); // Update local cache
+                            } catch (e) {
+                                console.error(`[Baptizo] Failed to add ${pid} to Baptized group`, e);
+                            }
+                        }
+
+                        // Ensure NOT in Group 13
+                        if (interestMemberIds.has(pid)) {
+                            console.log(`[Baptizo] [SYNC] Removing ${p.firstName} ${p.lastName} from Interest Group (${settings.interestGroupId}) because they are baptized.`);
+                            try {
+                                await churchtoolsClient.deleteApi(`/groups/${settings.interestGroupId}/members/${pid}`);
+                                stats.removedFromInterest++;
+                                interestMemberIds.delete(pid);
+                            } catch (e) {
+                                console.error(`[Baptizo] Failed to remove ${pid} from Interest group`, e);
+                            }
+                        }
+                    }
+                    // Case B: NO Baptism Date, but Has Other Milestones -> MUST be in Group 13 (Interest)
+                    else if (hasSeminar || hasCertificate || hasIntegration) {
+                        // If they are NOT in 13 and NOT in 16 (if they are in 16 without date, maybe leave them? Logic says "AND Not Baptized" -> checking group 16 membership or date? "AND NOT Baptized" usually means not in the baptized state/group. Let's assume if they are in 16 they are fine. Only add if in NEITHER).
+                        // Requirement: "WENN Feld 184, 190 oder 193 ein Datum hat UND Person NICHT in Gruppe 13 oder 16 ist -> POST /groups/13/members."
+
+                        const ininterest = interestMemberIds.has(pid);
+                        const inbaptized = baptizedMemberIds.has(pid);
+
+                        if (!ininterest && !inbaptized) {
+                            console.log(`[Baptizo] [SYNC] Found Lost candidate: ${p.firstName} ${p.lastName}. Adding to Interest Group (${settings.interestGroupId})`);
+                            try {
+                                await churchtoolsClient.put(`/groups/${settings.interestGroupId}/members/${pid}`, {});
+                                stats.addedToInterest++;
+                                interestMemberIds.add(pid);
+                            } catch (e) {
+                                console.error(`[Baptizo] Failed to add ${pid} to Interest group`, e);
+                            }
+                        }
+                    }
+                }
+
+                // Check pagination meta
+                if (response.meta && response.meta.pagination) {
+                    if (page >= response.meta.pagination.lastPage) {
+                        hasMore = false;
+                    }
+                } else {
+                    // Fallback if meta missing
+                    if (persons.length < limit) hasMore = false;
+                }
+                page++;
+            }
+
+        } catch (error) {
+            console.error('[Baptizo] Auto-Sync Failed:', error);
+        }
+
+        console.log('[Baptizo] Auto-Sync Complete. Stats:', stats);
+        return stats;
+    }
 }
