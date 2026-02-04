@@ -11,6 +11,9 @@
           <span v-if="!syncing">🔄 Globale Personen-Sync</span>
           <span v-else>⏳ Synchronisiere...</span>
         </button>
+        <button @click="findOnboardingField" class="ct-button ct-button--secondary" style="margin-left: 10px;">
+          🔍 Feld-Namen suchen
+        </button>
         <button @click="runMigration" class="ct-button ct-button--primary" :disabled="migrating" style="margin-left: 10px;">
           <span v-if="!migrating">🔄 Onboarding-Daten migrieren</span>
           <span v-else>⏳ Migriert...</span>
@@ -291,6 +294,17 @@ const runMigration = async () => {
     alert('Migration fehlgeschlagen! Siehe Console für Details.');
   } finally {
     migrating.value = false;
+  }
+};
+
+const findOnboardingField = async () => {
+  try {
+    const { findOnboardingFieldName } = await import('../services/findOnboardingField');
+    await findOnboardingFieldName();
+    alert('Feld-Suche abgeschlossen! Siehe Console für Details.');
+  } catch (error) {
+    console.error('[Admin] Field search failed:', error);
+    alert('Feld-Suche fehlgeschlagen! Siehe Console für Details.');
   }
 };
 </script>
