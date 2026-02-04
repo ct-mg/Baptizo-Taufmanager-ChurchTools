@@ -55,8 +55,11 @@ export class PersonService implements DataProvider {
             }
 
             // Map to BaptizoPerson
-            const members: BaptizoPerson[] = ctPersons.map((p: any) => {
-                // ChurchTools fields are at root level with naming convention taufmanager_*
+            const members: BaptizoPerson[] = ctPersons.map((m: any) => {
+                // Group members have person data nested in 'person' property!
+                const p = m.person || {};
+
+                // ChurchTools fields are at root level of person object
                 const fields: BaptizoFields = {
                     seminar_besucht_am: p.taufmanager_seminar || null,
                     getauft_am: p.taufmanager_taufe || null,
@@ -65,12 +68,11 @@ export class PersonService implements DataProvider {
                 };
 
                 return {
-                    id: p.personId || p.id,
-                    firstName: p.firstName,
-                    lastName: p.lastName,
-                    status: p.dbFields?.[settings.statusFieldId] === 'inactive' ? 'inactive' : 'active', // Example logic
-                    // Entry date fallback to created date or similar if not tracking specifically
-                    entry_date: p.meta?.createdDate || new Date().toISOString().split('T')[0],
+                    id: m.personId || p.id,
+                    firstName: p.firstName || 'Unknown',
+                    lastName: p.lastName || 'Unknown',
+                    status: m.groupMemberStatus === 'inactive' ? 'inactive' : 'active',
+                    entry_date: m.memberStartDate || new Date().toISOString().split('T')[0],
                     fields,
                     imageUrl: p.imageUrl || `https://ui-avatars.com/api/?name=${p.firstName}+${p.lastName}&background=random`
                 };
