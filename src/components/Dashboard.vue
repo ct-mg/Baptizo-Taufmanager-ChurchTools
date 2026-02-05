@@ -318,6 +318,14 @@
       @personRemoved="handlePersonRemoved"
     />
 
+    <!-- Person Detail Modal -->
+    <PersonDetailModal
+      v-if="showPersonModal && selectedPerson"
+      :person="selectedPerson"
+      @close="showPersonModal = false"
+      @update="handlePersonUpdated"
+    />
+
     <!-- EVENTS TAB -->
     <div v-else-if="currentTab === 'events'" class="events-content">
       <EventList :events="events" @create="handleCreateEvent" />
@@ -325,7 +333,7 @@
 
     <!-- SETTINGS TAB -->
     <div v-else-if="currentTab === 'settings'" class="settings-content">
-      <SettingsTab :settings="settings" @update="updateSettings" />
+      <SettingsTab :settings="settings || {}" @update="updateSettings" />
     </div>
 
     <!-- HILFE TAB -->
@@ -485,12 +493,6 @@
     </footer>
 
     <!-- Person Modal -->
-    <PersonDetailModal 
-      v-if="selectedPerson" 
-      :person="selectedPerson" 
-      @close="selectedPerson = null" 
-      @save="handleSavePerson"
-    />
     <!-- Toast Notification -->
     <Transition name="fade">
         <div v-if="showToast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-4 rounded-lg shadow-xl z-50 flex items-center gap-3 border border-gray-700">
@@ -583,7 +585,15 @@ const rollingMonths = ref(12);
 const selectedYears = ref<number[]>([2025]);
 const visibleSeries = ref({ interessenten: true, seminare: true, taufen: true });
 
-// Dynamic years: current year and 2 previous (e.g., 2024, 2025, 2026 in year 2026)
+// Settings State (already declared above: settings variable)
+// Removing duplicate settings declaration here.
+
+// Update Settings Handler (Consolidated)
+const updateSettings = (newSettings: BaptizoSettings) => {
+  settings.value = newSettings;
+  // Apply changes effectively (e.g. if theme changed, etc.)
+};
+
 const currentYear = new Date().getFullYear();
 const availableYears = [currentYear - 2, currentYear - 1, currentYear];
 
@@ -658,6 +668,7 @@ const toggleFaq = (index: number) => {
 const isSyncing = ref(false);
 const showToast = ref(false);
 const toastMessage = ref('');
+const showPersonModal = ref(false); // Added missing state
 
 const loadData = async () => {
   loading.value = true;
@@ -670,9 +681,9 @@ const loadData = async () => {
       provider.getSettings(),
       getAdminSettings()
     ]);
-    groups.value = groupsData;
-    events.value = eventsData;
-    settings.value = settingsData;
+    groups.value = groupsData || [];
+    events.value = eventsData || [];
+    settings.value = settingsData || { ...DEFAULT_SETTINGS };
     adminSettings.value = adminCfg;
   } catch (e) {
     console.error('Failed to load data', e);
@@ -682,25 +693,33 @@ const loadData = async () => {
 };
 
 const refreshData = () => loadData();
-const updateSettings = (s: BaptizoSettings) => { settings.value = s; };
+// updateSettings already defined above
+
 const openReportModal = () => alert("Bericht konfigurieren\n\nEmpfänger hinzufügen:\n- Pastor@example.com\n- Team@example.com\n\n(Simulation)");
 const handleCreateEvent = async (e: any) => { await provider.createEvent(e); await loadData(); };
-const openPersonModal = (p: BaptizoPerson) => { selectedPerson.value = p; };
-const handleSavePerson = async (p: BaptizoPerson) => { 
-  await provider.updatePerson(p); 
-  selectedPerson.value = null; 
-  await loadData(); 
+
+// Modal Handlers
+const openPersonModal = (p: BaptizoPerson) => { 
+  selectedPerson.value = p; 
+  showPersonModal.value = true;
 };
-const handleOnboarding = () => { showOnboardingModal.value = true; };
-const handleOffboarding = () => { showOffboardingModal.value = true; };
+
+const handlePersonUpdated = async () => {
+  await loadData();
+};
+
 const handlePersonAdded = async () => {
   showOnboardingModal.value = false;
-  await loadData(); // Reload to show new person
+  await loadData();
 };
+
 const handlePersonRemoved = async () => {
   showOffboardingModal.value = false;
-  await loadData(); // Reload to hide removed person
+  await loadData();
 };
+
+const handleOnboarding = () => { showOnboardingModal.value = true; };
+const handleOffboarding = () => { showOffboardingModal.value = true; };
 
 // Helper Functions
 const getDaysSince = (dateStr: string | undefined | null) => {

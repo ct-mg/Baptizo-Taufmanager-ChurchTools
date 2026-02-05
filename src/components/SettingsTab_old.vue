@@ -1,12 +1,16 @@
 <template>
   <div class="settings-container">
-    <!-- Header -->
+    <!-- Header (Pixel-Perfect Match to Personen/Termine) -->
     <div class="settings-header">
       <div class="filter-bar">
         <button 
           @click="currentTab = 'emails'" 
           :class="{ active: currentTab === 'emails' }"
         >E-Mail Vorlagen</button>
+        <button 
+          @click="currentTab = 'fields'" 
+          :class="{ active: currentTab === 'fields' }"
+        >Feldbezeichnungen</button>
         <button 
           @click="currentTab = 'links'" 
           :class="{ active: currentTab === 'links' }"
@@ -30,9 +34,6 @@
               <button @click="addTemplate('seminar')" class="add-btn">+ Hinzufügen</button>
             </div>
             <div class="template-list">
-              <div v-if="seminarTemplates.length === 0" class="empty-state">
-                Keine Vorlagen
-              </div>
               <div v-for="template in seminarTemplates" :key="template.id" class="template-card">
                 <div class="template-header" @click="toggleTemplate(template.id)">
                   <span>{{ template.name }}</span>
@@ -81,9 +82,6 @@
               <button @click="addTemplate('baptism')" class="add-btn">+ Hinzufügen</button>
             </div>
             <div class="template-list">
-              <div v-if="baptismTemplates.length === 0" class="empty-state">
-                Keine Vorlagen
-              </div>
               <div v-for="template in baptismTemplates" :key="template.id" class="template-card">
                 <div class="template-header" @click="toggleTemplate(template.id)">
                   <span>{{ template.name }}</span>
@@ -127,7 +125,22 @@
         </div>
       </div>
 
-      <!-- Tab 2: Links (Formerly Tab 3) -->
+      <!-- Tab 2: Feldbezeichnungen -->
+      <div v-if="currentTab === 'fields'" class="tab-pane">
+        <div class="fields-grid">
+          <div v-for="field in localSettings.customFieldLabels" :key="field.key" class="field-card">
+            <div class="field-header">
+              <span class="field-key">{{ field.key }}</span>
+            </div>
+            <div class="form-group">
+              <label>Anzeigename</label>
+              <input v-model="field.label" type="text" placeholder="z.B. 'Seminar besucht'" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Links -->
       <div v-if="currentTab === 'links'" class="tab-pane">
         <div class="links-grid">
           <!-- Link 1: Anmeldeformular -->
@@ -178,7 +191,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
-import { type BaptizoSettings, DEFAULT_SETTINGS } from '../types/baptizo-settings';
+import type { BaptizoSettings } from '../types/baptizo-settings';
 import { MockDataProvider } from '../services/mock-data-provider';
 
 interface EmailTemplate {
@@ -189,7 +202,6 @@ interface EmailTemplate {
   daysOffset: number;
   offsetType: 'before' | 'after';
   category: 'seminar' | 'baptism';
-  recipientType?: 'participant' | 'leader';
 }
 
 const props = defineProps<{
@@ -200,61 +212,31 @@ const emit = defineEmits<{
   (e: 'update', settings: BaptizoSettings): void;
 }>();
 
-const SettingsService = new MockDataProvider();
-
-// ULTRA-SAFE INITIALIZATION
-const initializeSettings = (source: BaptizoSettings | undefined): BaptizoSettings => {
-  try {
-    if (source) {
-      const parsed = JSON.parse(JSON.stringify(source));
-      // Force emailTemplates to be an array if it's missing or an object
-      if (!Array.isArray(parsed.emailTemplates)) {
-        parsed.emailTemplates = []; 
-      }
-      // RESTORE DEFAULTS IF EMPTY (User Request: "Wo sind die Vorlagen hin?")
-      if (parsed.emailTemplates.length === 0) {
-         parsed.emailTemplates = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.emailTemplates));
-      }
-      return parsed;
-    }
-  } catch (e) {
-    console.error('Settings JSON parse error:', e);
-  }
-  // Fallback to strict defaults if anything fails or source is null
-  return JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
-};
-
-const localSettings = ref<BaptizoSettings>(initializeSettings(props.settings));
-
+const provider = new MockDataProvider();
+const localSettings = ref<BaptizoSettings>({ ...props.settings });
 const currentTab = ref('emails');
 const expandedTemplate = ref<string | null>(null);
 const saving = ref(false);
 const saveMessage = ref('');
 
-// Watch specifically for settings becoming available
+// Watch for external changes
 watch(() => props.settings, (newSettings) => {
-  if (newSettings) {
-    localSettings.value = initializeSettings(newSettings);
-  }
+  localSettings.value = { ...newSettings };
 }, { deep: true });
 
-// Computed: Filter templates by category (Safely)
-const seminarTemplates = computed(() => {
-  const templates = localSettings.value.emailTemplates;
-  if (!Array.isArray(templates)) return [];
-  return templates.filter((t: any) => t.category === 'seminar');
-});
+// Computed: Filter templates by category
+const seminarTemplates = computed(() => 
+  (localSettings.value.emailTemplates as EmailTemplate[]).filter(t => t.category === 'seminar')
+);
 
-const baptismTemplates = computed(() => {
-  const templates = localSettings.value.emailTemplates;
-  if (!Array.isArray(templates)) return [];
-  return templates.filter((t: any) => t.category === 'baptism');
-});
+const baptismTemplates = computed(() => 
+  (localSettings.value.emailTemplates as EmailTemplate[]).filter(t => t.category === 'baptism')
+);
 
 // Format offset for display
 const formatOffset = (template: EmailTemplate) => {
   const prefix = template.offsetType === 'before' ? '-' : '+';
-  return `${prefix}${template.daysOffset}d`;
+  return `${prefix}${template.daysOffset}d`; // Added 'd' suffix for clarity
 };
 
 // Add new template
@@ -266,23 +248,15 @@ const addTemplate = (category: 'seminar' | 'baptism') => {
     body: '',
     daysOffset: 0,
     offsetType: 'before',
-    category,
-    recipientType: 'participant'
+    category
   };
-  
-  if (!localSettings.value.emailTemplates) {
-    localSettings.value.emailTemplates = [];
-  }
-  
   (localSettings.value.emailTemplates as EmailTemplate[]).push(newTemplate);
   expandedTemplate.value = newTemplate.id;
 };
 
 // Delete template
 const deleteTemplate = (id: string) => {
-  if (!localSettings.value.emailTemplates) return;
-  
-  const index = (localSettings.value.emailTemplates as EmailTemplate[]).findIndex((t: EmailTemplate) => t.id === id);
+  const index = (localSettings.value.emailTemplates as EmailTemplate[]).findIndex(t => t.id === id);
   if (index !== -1) {
     (localSettings.value.emailTemplates as EmailTemplate[]).splice(index, 1);
     if (expandedTemplate.value === id) {
@@ -294,7 +268,7 @@ const deleteTemplate = (id: string) => {
 // Save settings
 const saveSettings = async () => {
   saving.value = true;
-  await SettingsService.updateSettings(localSettings.value);
+  await provider.updateSettings(localSettings.value);
   emit('update', localSettings.value);
   saving.value = false;
   saveMessage.value = 'Gespeichert! ✓';
@@ -311,13 +285,15 @@ const toggleTemplate = (id: string) => {
 .settings-container {
   max-width: 1400px;
   margin: 0 auto;
+  /* padding removed - already in .settings-content from Dashboard.vue */
 }
 
+/* Header (Matching Personen/Termine) */
 .settings-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-top: 1.5rem;
+  align-items: center; /* ZWINGEND: Alle Buttons auf einer Linie */
+  margin-top: 1.5rem; /* Match Personen/Termine */
   margin-bottom: 1.5rem;
 }
 
@@ -346,15 +322,16 @@ const toggleTemplate = (id: string) => {
   font-weight: bold;
 }
 
+/* Primary Button (Save) */
 .ct-button {
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1rem; /* Match filter-bar button height */
   border-radius: 4px;
   cursor: pointer;
-  border: border;
   border: none;
   font-weight: bold;
-  font-size: 0.9rem;
+  font-size: 0.9rem; /* Match filter-bar font size */
   transition: all 0.2s;
+  margin: 0; /* Pflicht: Kein extra margin */
 }
 
 .ct-button--primary {
@@ -371,6 +348,8 @@ const toggleTemplate = (id: string) => {
   cursor: not-allowed;
 }
 
+/* Content Area - no bottom margin needed, footer handles spacing */
+
 .tab-pane {
   animation: fadeIn 0.3s ease;
 }
@@ -380,6 +359,7 @@ const toggleTemplate = (id: string) => {
   to { opacity: 1; }
 }
 
+/* 2-Column Email Templates Grid */
 .email-templates-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -389,7 +369,7 @@ const toggleTemplate = (id: string) => {
 .template-column {
   display: flex;
   flex-direction: column;
-  background: #2a2a2a;
+  background: #2a2a2a; /* Visual area background */
   padding: 1.5rem;
   border-radius: 8px;
 }
@@ -401,6 +381,7 @@ const toggleTemplate = (id: string) => {
   margin-bottom: 1rem;
 }
 
+/* Category Badges (Event-Style) */
 .category-badge {
   display: inline-block;
   padding: 4px 8px;
@@ -437,17 +418,11 @@ const toggleTemplate = (id: string) => {
   background: rgba(146, 201, 214, 0.1);
 }
 
+/* Template Cards */
 .template-list {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-}
-
-.empty-state {
-  text-align: center;
-  color: #666;
-  font-style: italic;
-  padding: 1rem;
 }
 
 .template-card {
@@ -484,6 +459,7 @@ const toggleTemplate = (id: string) => {
   border-top: 1px solid #444;
 }
 
+/* Form Groups */
 .form-group {
   margin-bottom: 1.5rem;
 }
@@ -496,6 +472,7 @@ const toggleTemplate = (id: string) => {
   font-size: 0.9rem;
 }
 
+/* Recipient Checkbox - Simple & Clean */
 .recipient-checkbox {
   margin-bottom: 1.5rem;
 }
@@ -544,29 +521,112 @@ const toggleTemplate = (id: string) => {
   margin-top: 0.5rem;
 }
 
+/* Timing Input Group */
 .timing-group .timing-input {
   display: grid;
   grid-template-columns: 100px 1fr;
   gap: 0.5rem;
 }
 
+/* Delete Button */
 .delete-btn {
-  width: auto;
-  background: #7383B2;
+  width: auto; /* Not full-width, just fits content */
+  background: #7383B2; /* Purple/Lila to match app design */
   color: white;
   border: none;
-  padding: 0.5rem 1.5rem;
+  padding: 0.5rem 1.5rem; /* Smaller padding */
   border-radius: 4px;
   cursor: pointer;
-  font-weight: normal;
+  font-weight: normal; /* Less bold */
   margin-top: 1rem;
   transition: all 0.2s;
 }
 
 .delete-btn:hover {
-  background: #5a6a99;
+  background: #5a6a99; /* Darker purple on hover */
 }
 
+/* Fields Content */
+.fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.field-card {
+  background: #2a2a2a;
+  padding: 1.5rem;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.field-card:hover {
+  background: #2f2f2f;
+}
+
+.field-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #444;
+}
+
+.field-key {
+  font-weight: bold;
+  color: #92C9D6;
+  font-size: 1rem;
+}
+
+.field-label-small {
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Form URL Card */
+.form-url-card {
+  background: #2a2a2a;
+  padding: 1.5rem; /* Match field-card padding */
+  border-radius: 8px;
+  max-width: 1400px; /* Full page width like other content */
+}
+
+.card-header h4 {
+  margin: 0 0 1.5rem 0;
+  color: #92C9D6;
+  font-size: 1rem; /* Match field-key font-size */
+  font-weight: bold;
+}
+
+.preview-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #444;
+}
+
+.preview-section label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.preview-link {
+  color: #92C9D6;
+  text-decoration: none;
+  word-break: break-all;
+  transition: color 0.2s;
+}
+
+.preview-link:hover {
+  color: #a8d9e5;
+  text-decoration: underline;
+}
+
+/* Links Grid */
 .links-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -613,6 +673,24 @@ const toggleTemplate = (id: string) => {
   font-size: 0.85rem;
 }
 
+/* Legacy selectors for backward compatibility */
+.fields-content,
+.general-content {
+  max-width: 800px;
+}
+
+.intro-text {
+  color: #aaa;
+  margin-bottom: 1.5rem;
+}
+
+.fields-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+/* Save Toast */
 .save-toast {
   position: fixed;
   bottom: 2rem;
