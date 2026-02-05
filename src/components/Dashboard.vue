@@ -1085,10 +1085,9 @@ const kpiBaptisms = computed(() => {
     endDate = new Date(years[years.length - 1], 11, 31);
   }
   
-  // Count ALL persons whose getauft_am is in range (typically in baptized group)
-  const baptGroup = groups.value.find(g => g.id === baptizedGroupId.value);
-  if (baptGroup) {
-    baptGroup.members.forEach(person => {
+  // Count ALL persons whose getauft_am is in range (from ALL groups, matching other KPIs)
+  groups.value.forEach(group => {
+    group.members.forEach(person => {
       if (person.fields.getauft_am) {
         const baptismDate = new Date(person.fields.getauft_am);
         if (baptismDate >= startDate && baptismDate <= endDate) {
@@ -1096,7 +1095,7 @@ const kpiBaptisms = computed(() => {
         }
       }
     });
-  }
+  });
   
   return count;
 });
