@@ -18,13 +18,13 @@ export class PersonService implements DataProvider {
             return [];
         }
 
-        const interestGroup = await this.fetchGroupInternal(parseInt(settings.interestGroupId), 'Taufinteressenten', settings);
-        const baptizedGroup = await this.fetchGroupInternal(parseInt(settings.baptizedGroupId), 'Getaufte', settings);
+        const interestGroup = await this.fetchGroupInternal(parseInt(settings.interestGroupId), 'Taufinteressenten');
+        const baptizedGroup = await this.fetchGroupInternal(parseInt(settings.baptizedGroupId), 'Getaufte');
 
         return [interestGroup, baptizedGroup];
     }
 
-    private async fetchGroupInternal(groupId: number, title: string, settings: any): Promise<BaptizoGroup> {
+    private async fetchGroupInternal(groupId: number, title: string): Promise<BaptizoGroup> {
         console.log(`[Baptizo] Versuche Daten zu laden für Gruppe: ${groupId} (${title})`);
 
         // Log masked token
@@ -246,8 +246,8 @@ export class PersonService implements DataProvider {
 
         try {
             // 1. Fetch current members of target groups for efficient lookup
-            const interestGroup = await this.fetchGroupInternal(parseInt(settings.interestGroupId), 'Interest', settings);
-            const baptizedGroup = await this.fetchGroupInternal(parseInt(settings.baptizedGroupId), 'Baptized', settings);
+            const interestGroup = await this.fetchGroupInternal(parseInt(settings.interestGroupId), 'Interest');
+            const baptizedGroup = await this.fetchGroupInternal(parseInt(settings.baptizedGroupId), 'Baptized');
 
             const interestMemberIds = new Set(interestGroup.members.map(m => m.id));
             const baptizedMemberIds = new Set(baptizedGroup.members.map(m => m.id));
