@@ -741,8 +741,8 @@ const handlePersonUpdated = async (updatedPerson: BaptizoPerson) => {
   try {
     // Optimistic UI: Close immediately
     showPersonModal.value = false;
-    showToast.value = true;
-    toastMessage.value = 'Wird gespeichert...';
+    // showToast.value = true;              <-- REMOVED per Ticket 2
+    // toastMessage.value = 'Wird gespeichert...';
     
     // Background Update
     loading.value = true;
@@ -750,8 +750,8 @@ const handlePersonUpdated = async (updatedPerson: BaptizoPerson) => {
     await loadData();
     
     // Success State
-    toastMessage.value = 'Erfolgreich gespeichert';
-    setTimeout(() => showToast.value = false, 3000);
+    // toastMessage.value = 'Erfolgreich gespeichert'; <-- REMOVED per Ticket 2
+    // setTimeout(() => showToast.value = false, 3000);
     selectedPerson.value = null;
   } catch (e) {
     console.error('Failed to update person', e);
