@@ -8,7 +8,13 @@
       
       <div class="modal-body">
         <div class="person-header">
-          <img :src="person.imageUrl" alt="Avatar" class="avatar-large" />
+          <div 
+            class="avatar-large"
+            :style="{ backgroundColor: getAvatarColor(person), color: getAvatarTextColor(getAvatarColor(person)) }"
+          >
+            <span v-if="!person.imageUrl || person.imageUrl.includes('ui-avatars') || person.imageUrl.includes('dicebear')" class="initials-large">{{ getInitials(person) }}</span>
+            <img v-else :src="person.imageUrl" alt="Avatar" class="avatar-img-large" />
+          </div>
           <div class="info-text">
             <div class="form-group status-group">
               <label>Status</label>
@@ -95,6 +101,33 @@ const isIntegrated = ref(!!props.person.fields.in_gemeinde_integriert);
 const integrationDate = ref(props.person.fields.in_gemeinde_integriert || '');
 
 // Helpers
+const BRAND_PALETTE = [
+  '#92C9D6', // Turquoise
+  '#7383B2', // Purple
+  '#FF9F43'  // Orange
+];
+
+const getAvatarColor = (person: BaptizoPerson) => {
+  const str = (person.firstName || '') + (person.lastName || '') + (person.id || 0);
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % BRAND_PALETTE.length;
+  return BRAND_PALETTE[index];
+};
+
+const getAvatarTextColor = (bgColor: string) => {
+  if (bgColor === '#92C9D6') return '#3C3C5B';
+  if (bgColor === '#FF9F43') return '#521D15';
+  return '#FFFFFF';
+};
+
+const getInitials = (person: BaptizoPerson) => {
+  const f = person.firstName?.charAt(0) || '';
+  const l = person.lastName?.charAt(0) || '';
+  return (f + l).toUpperCase();
+};
 const formatDate = (dateStr: string | null | undefined) => {
   if (!dateStr) return 'Unbekannt';
   const d = new Date(dateStr);
@@ -196,9 +229,31 @@ const showContact = () => {
 }
 
 .avatar-large {
-  width: 64px;
-  height: 64px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem; /* Reduced from 2.5rem */
+  font-weight: bold; 
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 4px solid rgba(255,255,255,0.1);
+}
+
+.avatar-img-large {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.initials-large {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .info-text {
