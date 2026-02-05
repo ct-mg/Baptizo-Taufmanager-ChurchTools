@@ -24,16 +24,17 @@
 
       <!-- Right: Action -->
       <div class="action-button">
-        <button @click="showCreateModal = true" class="ct-button ct-button--primary">
-          <span class="icon">➕</span> Neues Event anlegen
-        </button>
+          <button @click="seedMockData" style="display: none;">💾 Mock Sync</button>
+          <button class="ct-button ct-button--primary" @click="openCreateModal">
+            <span class="icon">➕</span> Neuen Termin anlegen
+          </button>
       </div>
     </div>
 
     <!-- Event List -->
     <div class="event-list">
       <div v-if="filteredEvents.length === 0" class="empty-state">
-        Keine Events gefunden.
+        Keine Termine gefunden.
       </div>
       <div v-else v-for="event in filteredEvents" :key="event.id" class="event-card" :class="{ ghost: isPast(event) }">
         <div class="event-date">
@@ -43,7 +44,7 @@
         
         <div class="event-details">
           <div class="header-row">
-            <h4>{{ event.title }} {{ getYear(event.date) }}</h4>
+            <h4>{{ event.title }} {{ getFullGermanMonth(event.date) }} {{ getYear(event.date) }}</h4>
             <span class="type-badge" :class="event.type">
               {{ event.type === 'seminar' ? 'SEMINAR' : 'TAUFE' }}
             </span>
@@ -62,32 +63,45 @@
       </div>
     </div>
 
-    <!-- Create Event Modal -->
-    <div v-if="showCreateModal" class="modal-overlay">
-      <div class="modal">
-        <h3>Neues Event</h3>
-        <div class="form-group">
-          <label>Titel</label>
-          <input v-model="newEvent.title" type="text" placeholder="z.B. Taufseminar April" />
+    <!-- Create/Edit Modal -->
+    <div v-if="showCreateModal" class="modal-overlay" @click.self="showCreateModal = false">
+      <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">{{ isEditing ? 'Termin bearbeiten' : 'Neuen Termin anlegen' }}</h2>
+            <button class="close-btn" @click="showCreateModal = false">&times;</button>
         </div>
-        <div class="form-group">
-          <label>Datum</label>
-          <input v-model="newEvent.date" type="date" />
+        
+        <div class="modal-body">
+            <div class="form-group">
+            <label>Titel</label>
+            <select v-model="modalEvent.type" class="input-field">
+                <option value="baptism">Taufe</option>
+                <option value="seminar">Taufseminar</option>
+            </select>
+            </div>
+
+            <div class="form-group">
+            <label>Datum</label>
+            <input type="date" v-model="modalEvent.date" class="input-field">
+            </div>
+
+            <div class="form-group">
+            <label>Leitung</label>
+            <input v-model="modalEvent.leader" type="text" placeholder="Name des Leiters" class="input-field" />
+            </div>
         </div>
-        <div class="form-group">
-          <label>Typ</label>
-          <select v-model="newEvent.type">
-            <option value="seminar">Taufseminar</option>
-            <option value="baptism">Taufe</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Leiter</label>
-          <input v-model="newEvent.leader" type="text" placeholder="Name des Leiters" />
-        </div>
-        <div class="modal-actions">
-          <button @click="showCreateModal = false" class="ct-button ct-button--secondary">Abbrechen</button>
-          <button @click="createEvent" class="ct-button ct-button--primary">Speichern</button>
+
+        <div class="modal-actions" :style="{ justifyContent: isEditing ? 'space-between' : 'flex-end' }">
+           <!-- Left: Delete (Only if Editing) -->
+           <button v-if="isEditing" class="ct-button ct-button--delete" @click="deleteEvent">
+             Löschen
+           </button>
+           
+           <!-- Right Group -->
+           <div style="display: flex; gap: 1rem;">
+             <button class="ct-button ct-button--secondary" @click="showCreateModal = false">Abbrechen</button>
+             <button class="ct-button ct-button--primary" @click="saveEvent">Speichern</button>
+           </div>
         </div>
       </div>
     </div>
@@ -97,55 +111,36 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { MockDataProvider } from '../services/mock-data-provider';
+import { EventService } from '../services/eventService';
 import type { BaptizoEvent } from '../types/baptizo-types';
 
 const dataProvider = new MockDataProvider();
+const eventService = new EventService();
 const events = ref<BaptizoEvent[]>([]);
-const showCreateModal = ref(false);
 
 // Filter State
 const filterType = ref<'all' | 'seminar' | 'baptism'>('all');
 const showPastEvents = ref(false);
-const archiveWeeks = ref(12); // Fixed to 12 weeks
+const archiveWeeks = ref(12);
 
-const newEvent = ref({
+// Modal State
+const showCreateModal = ref(false);
+const isEditing = ref(false);
+const editingId = ref<string | number | null>(null);
+
+const modalEvent = ref({
   title: '',
-  date: '',
-  type: 'seminar',
+  date: new Date().toISOString().split('T')[0],
+  type: 'baptism', // Default
   leader: ''
 });
 
-const loadEvents = async () => {
-  events.value = await dataProvider.getEvents();
-};
-
-// Logic
-const filteredEvents = computed(() => {
+// Helpers
+const isPast = (event: BaptizoEvent) => {
   const now = new Date();
-  // Reset time to midnight for accurate day comparison
   now.setHours(0, 0, 0, 0);
-
-  return events.value.filter(event => {
-    // 1. Type Filter
-    if (filterType.value !== 'all' && event.type !== filterType.value) return false;
-
-    // 2. Date Logic
-    const eventDate = new Date(event.date);
-    const diffTime = now.getTime() - eventDate.getTime();
-    const diffDays = diffTime / (1000 * 3600 * 24);
-
-    // Future events: Always show
-    if (eventDate >= now) return true;
-
-    // Past events: Show only if toggle ON AND within archive weeks
-    if (showPastEvents.value) {
-      const maxDays = archiveWeeks.value * 7;
-      return diffDays <= maxDays;
-    }
-
-    return false;
-  }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-});
+  return new Date(event.date) < now;
+};
 
 const getDay = (dateStr: string) => {
   const date = new Date(dateStr);
@@ -155,13 +150,14 @@ const getDay = (dateStr: string) => {
 const getGermanMonth = (dateStr: string) => {
   const date = new Date(dateStr);
   const month = date.toLocaleString('de-DE', { month: 'short' }).toUpperCase();
-  // Manual fix for typical English/German mismatches if locale fails or to be safe
-  const map: Record<string, string> = {
-    'MAR': 'MÄR', 'MAY': 'MAI', 'OCT': 'OKT', 'DEC': 'DEZ', 'MÄRZ': 'MÄR'
-  };
-  // Remove dot if present (e.g. "Mär.")
+  const map: Record<string, string> = { 'MAR': 'MÄR', 'MAY': 'MAI', 'OCT': 'OKT', 'DEC': 'DEZ', 'MÄRZ': 'MÄR' };
   let clean = month.replace('.', '');
   return map[clean] || clean;
+};
+
+const getFullGermanMonth = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return date.toLocaleString('de-DE', { month: 'long' });
 };
 
 const getYear = (dateStr: string) => {
@@ -169,33 +165,122 @@ const getYear = (dateStr: string) => {
   return "'" + date.getFullYear().toString().slice(-2);
 };
 
-const isPast = (event: BaptizoEvent) => {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  return new Date(event.date) < now;
+// Data Loading
+const refresh = async () => {
+  try {
+    const rawEvents = await eventService.getEvents();
+    
+    // De-duplication
+    const uniqueMap = new Map();
+    rawEvents.forEach(evt => {
+        const normalizedTitle = evt.title.trim().toLowerCase();
+        const key = `${evt.date}|${normalizedTitle}`;
+        if (!uniqueMap.has(key)) uniqueMap.set(key, evt);
+    });
+    
+    events.value = Array.from(uniqueMap.values());
+  } catch (e) {
+    console.error('Failed to load events', e);
+  }
 };
 
-const createEvent = async () => {
-  if (!newEvent.value.title || !newEvent.value.date) return;
-  
-  await dataProvider.createEvent({
-    title: newEvent.value.title,
-    date: newEvent.value.date,
-    type: newEvent.value.type as 'seminar' | 'baptism',
-    leader: newEvent.value.leader
-  });
-  
-  await loadEvents();
-  showCreateModal.value = false;
-  newEvent.value = { title: '', date: '', type: 'seminar', leader: '' };
+defineExpose({ refresh });
+
+// Computed
+const filteredEvents = computed(() => {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  return events.value.filter(event => {
+    if (filterType.value !== 'all' && event.type !== filterType.value) return false;
+    const eventDate = new Date(event.date);
+    
+    // Future: Always show
+    if (eventDate >= now) return true;
+    
+    // Past: Show only if toggle ON
+    if (!showPastEvents.value && eventDate < now) return false;
+    
+    return true; // Keep past event if toggle is ON
+  }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+});
+
+// Actions
+const openCreateModal = () => {
+    isEditing.value = false;
+    editingId.value = null;
+    modalEvent.value = {
+        title: '',
+        date: new Date().toISOString().split('T')[0],
+        type: 'baptism',
+        leader: ''
+    };
+    showCreateModal.value = true;
 };
 
 const editEvent = (event: BaptizoEvent) => {
-  alert(`Bearbeiten: ${event.title}\n(Feature folgt)`);
+    isEditing.value = true;
+    editingId.value = event.id;
+    
+    // Copy data to modal
+    modalEvent.value = {
+        title: event.title,
+        date: event.date,
+        type: event.type as 'baptism' | 'seminar',
+        leader: event.leader || ''
+    };
+    showCreateModal.value = true;
+};
+
+const saveEvent = async () => {
+  if (!modalEvent.value.date) return;
+  
+  try {
+      const title = modalEvent.value.type === 'baptism' ? 'Taufe' : 'Taufseminar';
+
+      if (isEditing.value && editingId.value) {
+          await eventService.updateEvent(editingId.value, {
+            title: title,
+            date: modalEvent.value.date,
+            type: modalEvent.value.type as 'seminar' | 'baptism',
+            leader: modalEvent.value.leader
+          });
+      } else {
+          await eventService.createEvent({
+            title: title,
+            date: modalEvent.value.date,
+            type: modalEvent.value.type as 'seminar' | 'baptism',
+            leader: modalEvent.value.leader
+          });
+      }
+      
+      await refresh();
+      showCreateModal.value = false;
+  } catch (e) {
+      alert('Fehler beim Speichern: ' + e);
+  }
+};
+
+const deleteEvent = async () => {
+    if (!editingId.value) return;
+    // Confirm removed per user request: "Sicherheitsfrage... muss WEG!!!"
+    
+    try {
+        await eventService.deleteEvent(editingId.value);
+        await refresh();
+        showCreateModal.value = false;
+    } catch (e) {
+        alert('Fehler beim Löschen: ' + e);
+    }
+};
+
+const seedMockData = async () => {
+    await dataProvider.seedMockData();
+    await refresh();
 };
 
 onMounted(() => {
-  loadEvents();
+  refresh();
 });
 </script>
 
@@ -204,14 +289,20 @@ onMounted(() => {
   /* Padding handled by parent container .events-content */
 }
 
-/* Header Controls */
-.events-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
-}
+  /* Header Controls */
+  .events-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .action-button {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
 
 /* Filter Bar */
 .filter-bar {
@@ -395,35 +486,87 @@ onMounted(() => {
   border-radius: 8px;
 }
 
-/* Modal Styles */
+/* Button Styles (Copied from PersonDetailModal/Dashboard) */
+.ct-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.ct-button--primary {
+  background-color: #92C9D6;
+  color: #3C3C5B;
+  border: 2px solid #92C9D6;
+}
+
+.ct-button--primary:hover {
+  background-color: #7ab3c2;
+  border-color: #7ab3c2;
+}
+
+.ct-button--secondary {
+  background-color: transparent;
+  color: #aaa;
+  border: 1px solid #444;
+}
+
+.ct-button--secondary:hover {
+  border-color: #fff;
+  color: #fff;
+}
+
+
+/* Modal Overlay */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.8);
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  backdrop-filter: blur(4px);
 }
 
-.modal {
+.modal-content {
   background: #2a2a2a;
   padding: 2rem;
   border-radius: 8px;
-  width: 400px;
+  width: 500px;
   max-width: 90%;
+  color: white;
   border: 1px solid #444;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
 }
 
-.modal h3 {
-  margin-top: 0;
-  color: #fff;
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 1.5rem;
+  border-bottom: none; /* Onboarding has no border */
+  padding: 0;
+}
+
+.modal-title {
+  margin: 0;
+  color: #92C9D6; /* Turquoise */
+  font-size: 24px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.modal-body {
+  padding: 0;
 }
 
 .form-group {
@@ -432,18 +575,25 @@ onMounted(() => {
 
 .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
-  color: #aaa;
   font-size: 0.9rem;
+  color: #aaa;
+  margin-bottom: 0.5rem;
+  font-weight: normal;
 }
 
-.form-group input, .form-group select {
+.input-field {
   width: 100%;
   padding: 0.75rem;
-  background: #1a1a1a;
+  background: #333;
   border: 1px solid #444;
-  color: #fff;
+  color: white;
   border-radius: 4px;
+  font-size: 1rem;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #92C9D6;
 }
 
 .modal-actions {
@@ -451,7 +601,26 @@ onMounted(() => {
   justify-content: flex-end;
   gap: 1rem;
   margin-top: 2rem;
+  padding: 0;
+  border-top: none;
+  background: transparent;
 }
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: white;
+}
+
 
 .ct-button {
   padding: 0.5rem 1rem;
@@ -475,9 +644,20 @@ onMounted(() => {
 }
 
 /* Ghost Look for Past Events */
-/* Ghost Look for Past Events */
 .event-card.ghost {
   opacity: 0.5;
   filter: grayscale(100%);
+}
+
+.ct-button--delete {
+  background-color: #7383B2;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  font-weight: bold;
+  border-radius: 4px;
+}
+
+.ct-button--delete:hover {
+  background-color: #8593c2;
 }
 </style>

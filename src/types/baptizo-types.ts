@@ -31,7 +31,7 @@ export interface BaptizoGroup {
 }
 
 export interface BaptizoEvent {
-    id: number;
+    id: number | string;
     title: string;
     date: string; // ISO Date YYYY-MM-DD
     type: 'seminar' | 'baptism';

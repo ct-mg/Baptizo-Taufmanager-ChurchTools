@@ -65,10 +65,10 @@
       </div>
     </header>
 
-    <!-- Config Warning -->
-    <div v-if="!loading && (!interestGroupId || !baptizedGroupId)" class="config-warning">
+    <!-- Config Warning (Hidden per user request) -->
+    <!-- <div v-if="!loading && (!interestGroupId || !baptizedGroupId)" class="config-warning">
       ⚠ Konfiguration fehlt. Bitte konfiguriere die IDs im <a href="#" @click.prevent="goToAdminEntryPoint">Admin-Bereich</a>.
-    </div>
+    </div> -->
 
     <!-- Tabs -->
     <div class="tabs">
@@ -334,7 +334,7 @@
 
     <!-- EVENTS TAB -->
     <div v-else-if="currentTab === 'events'" class="events-content">
-      <EventList :events="events" @create="handleCreateEvent" />
+      <EventList ref="eventListRef" @create="handleCreateEvent" />
     </div>
 
     <!-- SETTINGS TAB -->
@@ -572,6 +572,7 @@ const selectedPerson = ref<BaptizoPerson | null>(null);
 const adminSettings = ref<AdminSettings | null>(null);
 const showOnboardingModal = ref(false);
 const showOffboardingModal = ref(false);
+const eventListRef = ref<any>(null); // Reference to EventList component
 
 const interestGroupId = computed(() => adminSettings.value ? parseInt(adminSettings.value.interestGroupId || '0') : 0);
 const baptizedGroupId = computed(() => adminSettings.value ? parseInt(adminSettings.value.baptizedGroupId || '0') : 0);
@@ -683,12 +684,15 @@ const loadData = async () => {
   try {
     const [groupsData, eventsData, settingsData, adminCfg] = await Promise.all([
       provider.getGroups(),
-      provider.getEvents(),
       provider.getSettings(),
       getAdminSettings()
     ]);
     groups.value = groupsData || [];
-    events.value = eventsData || [];
+    // We do NOT load events here anymore for the EventList. 
+    // EventList manages its own data.
+    // However, if Dashboard needs events for something else, we might need it.
+    // Assuming for now Dashboard only needs Persons for KPIs/Charts.
+    events.value = []; // Clear events to avoid duplication if it was used
     settings.value = settingsData || { ...DEFAULT_SETTINGS };
     adminSettings.value = adminCfg;
   } catch (e) {
@@ -698,7 +702,13 @@ const loadData = async () => {
   }
 };
 
-const refreshData = () => loadData();
+const refreshData = async () => {
+  await loadData();
+  // Refresh EventList if active or available
+  if (eventListRef.value) {
+    await eventListRef.value.refresh();
+  }
+};
 // updateSettings already defined above
 
 const openReportModal = () => alert("Bericht konfigurieren\n\nEmpfänger hinzufügen:\n- Pastor@example.com\n- Team@example.com\n\n(Simulation)");

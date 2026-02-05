@@ -302,26 +302,6 @@ export class MockDataProvider implements DataProvider {
             }
         }
 
-        // Add some past events for testing archive logic
-        const pastDate1 = new Date(today.getTime() - 86400000 * 14); // 2 weeks ago
-        events.push({
-            id: idCounter++,
-            title: 'Vergangenes Seminar',
-            date: pastDate1.toISOString().split('T')[0],
-            type: 'seminar',
-            leader: 'Pastor Peter',
-            time: '14:00'
-        });
-
-        const pastDate2 = new Date(today.getTime() - 86400000 * 40); // ~6 weeks ago
-        events.push({
-            id: idCounter++,
-            title: 'Vergangene Taufe',
-            date: pastDate2.toISOString().split('T')[0],
-            type: 'baptism',
-            leader: 'Pastor Paul',
-            time: '10:00'
-        });
 
         this.events = events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }
