@@ -64,7 +64,7 @@ export class PersonService implements DataProvider {
                 console.warn(`[Baptizo] Verbindung steht, aber Gruppe ${groupId} hat keine Teilnehmer.`);
             }
 
-            // Map to BaptizoPerson - MUST fetch individual person details!
+            // Map to BaptizoPerson - Sequential for stability
             const members: BaptizoPerson[] = [];
 
             for (const [index, m] of ctPersons.entries()) {
@@ -76,12 +76,6 @@ export class PersonService implements DataProvider {
                 } catch (e) {
                     console.error(`[Baptizo] Failed to fetch person ${m.personId} in group ${groupId}`, e);
                     continue;
-                }
-
-                // DEBUG: Log first person to verify we got full data
-                if (index === 0) {
-                    console.log('[Baptizo] First FULL person detail:', personDetail);
-                    console.log('[Baptizo] Has taufmanager_seminar?', !!personDetail.taufmanager_seminar);
                 }
 
                 // ChurchTools custom fields are at root level of person detail
@@ -96,8 +90,25 @@ export class PersonService implements DataProvider {
 
                 // CRITICAL: Skip persons with offboarding date - they left the Taufmanager
                 if (personDetail.taufmanager_offboarding) {
-                    console.log(`[Baptizo] Skipping person ${personDetail.id} - offboarded on ${personDetail.taufmanager_offboarding}`);
                     continue;
+                }
+
+                // Entry date fallback logic:
+                // 1. taufmanager_onboaring (Explicit Date)
+                // 2. group member "comment" (Legacy Taufmanager stores entry date there)
+                // 3. group member "memberStartDate" (CT System Date)
+                let entryDate = personDetail.taufmanager_onboaring; // Prio 1
+
+                if (!entryDate && m.comment) {
+                    // Start date is often in comment for legacy reasons
+                    // Format check YYYY-MM-DD
+                    if (m.comment.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                        entryDate = m.comment;
+                    }
+                }
+
+                if (!entryDate) {
+                    entryDate = m.memberStartDate; // Fallback
                 }
 
                 members.push({
@@ -105,10 +116,12 @@ export class PersonService implements DataProvider {
                     firstName: personDetail.firstName || 'Unknown',
                     lastName: personDetail.lastName || 'Unknown',
                     status: m.groupMemberStatus === 'inactive' ? 'inactive' : 'active',
-                    // Use onboarding date as entry date (when they joined Taufmanager)
-                    entry_date: personDetail.taufmanager_onboaring || personDetail.taufmanager_seminar || m.memberStartDate || new Date().toISOString().split('T')[0],
+                    entry_date: entryDate,
                     fields,
-                    imageUrl: personDetail.imageUrl || `https://ui-avatars.com/api/?name=${personDetail.firstName}+${personDetail.lastName}&background=random`
+                    imageUrl: personDetail.imageUrl || `https://ui-avatars.com/api/?name=${personDetail.firstName}+${personDetail.lastName}&background=random`,
+                    email: personDetail.email || null,
+                    mobile: personDetail.mobile || null,
+                    phone: personDetail.phone || null
                 });
             }
 
@@ -178,14 +191,46 @@ export class PersonService implements DataProvider {
     }
 
     async updatePerson(updatedPerson: BaptizoPerson): Promise<void> {
-        // Wrapper for updatePersonFields, plus status update if needed
-        // Extract fields
+        console.log(`[Baptizo] Saving Person ${updatedPerson.id}...`);
+
+        // 1. Update Custom Fields (Dates etc.)
         await this.updatePersonFields(updatedPerson.id, updatedPerson.fields);
 
-        // TODO: Handle status change (active/inactive) or move to different group?
-        // In CT, moving groups is different from updating fields.
-        // For v1, if status changes, we might need logic. 
-        // For now, focus on fields.
+        if (updatedPerson.status && updatedPerson.status !== 'removed') {
+            await this.updatePersonStatus(updatedPerson.id, updatedPerson.status);
+        }
+    }
+
+    private async updatePersonStatus(personId: number, status: 'active' | 'inactive'): Promise<void> {
+        const settings = await getAdminSettings();
+        if (!settings) return;
+
+        // Map 'active'/'inactive' to CT Group Member Status IDs
+        // Usually: 1 = Active, 3 = Inactive (Standard ChurchTools)
+        // We verify this assumption or make it configurable later.
+        const statusId = status === 'active' ? 1 : 3; // 3 is commonly "Passive" or "Inactive"
+
+        const targetGroups = [
+            parseInt(settings.interestGroupId),
+            parseInt(settings.baptizedGroupId)
+        ];
+
+        for (const groupId of targetGroups) {
+            if (!groupId) continue;
+            try {
+                // Check if person is in this group
+                const groupResponse = await churchtoolsClient.get<any>(`/groups/${groupId}/members/${personId}`).catch(() => null);
+
+                if (groupResponse) {
+                    console.log(`[Baptizo] Updating status for person ${personId} in group ${groupId} to ${status} (${statusId})`);
+                    await churchtoolsClient.put(`/groups/${groupId}/members/${personId}`, {
+                        groupMemberStatusId: statusId
+                    });
+                }
+            } catch (e) {
+                console.warn(`[Baptizo] Failed to update status for person ${personId} in group ${groupId}`, e);
+            }
+        }
     }
 
     async deletePerson(id: number): Promise<void> {

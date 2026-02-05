@@ -81,7 +81,7 @@ const props = defineProps<{
   person: BaptizoPerson
 }>();
 
-const emit = defineEmits(['close', 'save']);
+const emit = defineEmits(['close', 'update']);
 
 // Local state
 const status = ref<BaptizoStatus>(props.person.status);
@@ -126,11 +126,14 @@ const save = () => {
       in_gemeinde_integriert: isIntegrated.value ? integrationDate.value : null,
     }
   };
-  emit('save', updatedPerson);
+  emit('update', updatedPerson);
+
 };
 
 const showContact = () => {
-  alert(`Kontakt: ${props.person.firstName} ${props.person.lastName}\nE-Mail: ${props.person.firstName.toLowerCase()}@example.com\nTel: 0123 456789`);
+  const email = props.person.email || 'Keine E-Mail';
+  const mobile = props.person.mobile || props.person.phone || 'Keine Nummer';
+  alert(`Kontakt für ${props.person.firstName} ${props.person.lastName}:\n\n📧 E-Mail: ${email}\n📱 Tel: ${mobile}`);
 };
 </script>
 

@@ -15,6 +15,8 @@ export interface BaptizoPerson {
     firstName: string;
     lastName: string;
     email?: string;
+    mobile?: string;
+    phone?: string;
     status: BaptizoStatus; // Status within the group (e.g. Leiter, Teilnehmer, etc. mapped to our logic)
     entry_date?: string; // ISO Date YYYY-MM-DD (When they entered the process/group)
     fields: BaptizoFields;

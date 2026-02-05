@@ -11,7 +11,13 @@
         :class="{ clickable: clickable }"
         @click="handleClick(person)"
       >
-        <img :src="person.imageUrl" alt="Avatar" class="avatar" />
+        <div 
+          class="avatar-circle" 
+          :style="{ backgroundColor: getAvatarColor(person) }"
+        >
+          <span v-if="!person.imageUrl || person.imageUrl.includes('ui-avatars') || person.imageUrl.includes('dicebear')" class="initials">{{ getInitials(person) }}</span>
+          <img v-else :src="person.imageUrl" alt="Avatar" class="avatar-img" />
+        </div>
         <div class="details">
           <span class="name">{{ person.firstName }} {{ person.lastName }}</span>
           <span class="status-badge" :class="type">{{ getStatusText(person) }}</span>
@@ -34,6 +40,30 @@ const props = withDefaults(defineProps<{
 });
 
 const emit = defineEmits(['click']);
+
+// BRAND PALETTE: Exact Chart Colors (Turquoise, Purple, Orange)
+const BRAND_PALETTE = [
+  '#92C9D6', // Turquoise (Interessenten)
+  '#7383B2', // Purple (Seminare)
+  '#FF9F43'  // Orange (Taufen)
+];
+
+const getAvatarColor = (person: BaptizoPerson) => {
+  // Use name hash for better distribution than numeric ID
+  const str = (person.firstName || '') + (person.lastName || '') + (person.id || 0);
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % BRAND_PALETTE.length;
+  return BRAND_PALETTE[index];
+};
+
+const getInitials = (person: BaptizoPerson) => {
+  const f = person.firstName?.charAt(0) || '';
+  const l = person.lastName?.charAt(0) || '';
+  return (f + l).toUpperCase();
+};
 
 const getStatusText = (p: BaptizoPerson & { subtitle?: string }) => {
   if (p.subtitle) return p.subtitle;
@@ -70,12 +100,30 @@ const handleClick = (person: BaptizoPerson) => {
 .person-item.clickable:hover {
   background-color: rgba(255, 255, 255, 0.05);
 }
-.avatar {
-  width: 32px;
-  height: 32px;
+
+/* Avatar Styling */
+.avatar-circle {
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   margin-right: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #1a1a1a; /* Match page background for better contrast on bright colors */
+  font-weight: bold;
+  font-size: 0.85rem;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.1); /* Subtle border */
 }
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .details {
   display: flex;
   flex-direction: column;

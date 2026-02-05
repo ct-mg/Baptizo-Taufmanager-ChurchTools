@@ -273,7 +273,13 @@
           <tr v-for="person in filteredPersons" :key="person.id" :class="{ inactive: person.status === 'inactive' }">
             <td>
               <div class="person-cell">
-                <img :src="person.imageUrl" class="avatar-small">
+                <div 
+                  class="avatar-small" 
+                  :style="{ backgroundColor: getAvatarColor(person) }"
+                >
+                  <span v-if="!person.imageUrl || person.imageUrl.includes('ui-avatars') || person.imageUrl.includes('dicebear')" class="initials-small">{{ getInitials(person) }}</span>
+                  <img v-else :src="person.imageUrl" alt="Avatar" class="avatar-img-small" />
+                </div>
                 {{ person.firstName }} {{ person.lastName }}
               </div>
             </td>
@@ -704,8 +710,50 @@ const openPersonModal = (p: BaptizoPerson) => {
   showPersonModal.value = true;
 };
 
-const handlePersonUpdated = async () => {
-  await loadData();
+// Branding Colors (Same as PersonList.vue)
+const BRAND_PALETTE = [
+  '#92C9D6', // Turquoise (Interessenten)
+  '#7383B2', // Purple (Seminare)
+  '#FF9F43'  // Orange (Taufen)
+];
+
+const getAvatarColor = (person: BaptizoPerson) => {
+  const str = (person.firstName || '') + (person.lastName || '') + (person.id || 0);
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % BRAND_PALETTE.length;
+  return BRAND_PALETTE[index];
+};
+
+const getInitials = (person: BaptizoPerson) => {
+  return (person.firstName?.charAt(0) || '') + (person.lastName?.charAt(0) || '');
+};
+
+const handlePersonUpdated = async (updatedPerson: BaptizoPerson) => {
+  try {
+    // Optimistic UI: Close immediately
+    showPersonModal.value = false;
+    showToast.value = true;
+    toastMessage.value = 'Wird gespeichert...';
+    
+    // Background Update
+    loading.value = true;
+    await provider.updatePerson(updatedPerson);
+    await loadData();
+    
+    // Success State
+    toastMessage.value = 'Erfolgreich gespeichert';
+    setTimeout(() => showToast.value = false, 3000);
+    selectedPerson.value = null;
+  } catch (e) {
+    console.error('Failed to update person', e);
+    alert('Fehler beim Speichern der Person.');
+    showPersonModal.value = true; // Re-open on error? Or just alert.
+  } finally {
+    loading.value = false;
+  }
 };
 
 const handlePersonAdded = async () => {
@@ -1037,45 +1085,59 @@ const kpiBaptisms = computed(() => {
   return count;
 });
 
-// Lists
+// Deduplicate all persons from all groups
+const uniquePersons = computed(() => {
+  const map = new Map();
+  groups.value.forEach(g => {
+    g.members.forEach(m => {
+      // If person exists, merge fields (robustness)
+      if (map.has(m.id)) {
+        const existing = map.get(m.id);
+        map.set(m.id, { ...existing, ...m, fields: { ...existing.fields, ...m.fields } });
+      } else {
+        map.set(m.id, m);
+      }
+    });
+  });
+  return Array.from(map.values());
+});
+
+// Lists (Robust: Source from uniquePersons, filter by Logic)
+
+// 1. Seminar Pending: In Interest Group flow (status active), No Seminar date
 const listSeminarPending = computed(() => {
-  const g = groups.value.find(g => g.id === interestGroupId.value);
-  if (!g) return [];
-  return g.members
-    .filter(m => !m.fields.seminar_besucht_am && filterByTime(m, 'entry'))
+  return uniquePersons.value
+    .filter(m => m.status === 'active' && !m.fields.seminar_besucht_am && !m.fields.getauft_am && filterByTime(m, 'entry'))
     .map(p => ({ ...p, subtitle: `Interesse: ${formatDate(p.entry_date)}` }));
 });
 
+// 2. Baptism Pending: Has Seminar, No Baptism
 const listBaptismPending = computed(() => {
-  const g = groups.value.find(g => g.id === interestGroupId.value);
-  if (!g) return [];
-  return g.members
-    .filter(m => m.fields.seminar_besucht_am && !m.fields.getauft_am && filterByTime(m, 'entry'))
+  return uniquePersons.value
+    .filter(m => m.status === 'active' && m.fields.seminar_besucht_am && !m.fields.getauft_am && filterByTime(m, 'entry'))
     .map(p => ({ ...p, subtitle: `Seminar: ${formatDate(p.fields.seminar_besucht_am)}` }));
 });
 
+// 3. Certificate Pending: Has Baptism, No Certificate
 const listCertificatePending = computed(() => {
-  const g = groups.value.find(g => g.id === baptizedGroupId.value);
-  if (!g) return [];
-  return g.members
-    .filter(m => m.fields.getauft_am && !m.fields.urkunde_ueberreicht && filterByTime(m, 'baptism'))
+  return uniquePersons.value
+    .filter(m => m.status === 'active' && m.fields.getauft_am && !m.fields.urkunde_ueberreicht && filterByTime(m, 'baptism'))
     .map(p => ({ ...p, subtitle: `Taufe: ${formatDate(p.fields.getauft_am)}` }));
 });
 
+// 4. Integration Pending: Has Certificate, No Integration
 const listIntegrationPending = computed(() => {
-  const g = groups.value.find(g => g.id === baptizedGroupId.value);
-  if (!g) return [];
-  return g.members
-    .filter(m => m.fields.getauft_am && m.fields.urkunde_ueberreicht && !m.fields.in_gemeinde_integriert && filterByTime(m, 'baptism'))
+  return uniquePersons.value
+    .filter(m => m.status === 'active' && m.fields.getauft_am && m.fields.urkunde_ueberreicht && !m.fields.in_gemeinde_integriert && filterByTime(m, 'baptism'))
     .map(p => ({ ...p, subtitle: `Taufe: ${formatDate(p.fields.getauft_am)}` }));
 });
 
 // All persons from all groups (for offboarding modal)
-const allPersons = computed(() => groups.value.flatMap(g => g.members));
+const allPersons = uniquePersons; // alias for compatibility
 
 // People Tab Filter (SORTED BY ONBOARDING DATE - FIFO)
 const filteredPersons = computed(() => {
-  let list = groups.value.flatMap(g => g.members);
+  let list = uniquePersons.value;
   if (peopleFilter.value === 'interested') list = list.filter(p => !p.fields.getauft_am);
   else if (peopleFilter.value === 'baptized') list = list.filter(p => p.fields.getauft_am);
   else if (peopleFilter.value === 'problems') {
@@ -1636,9 +1698,23 @@ onMounted(() => loadData());
 }
 
 .avatar-small {
-  width: 24px;
-  height: 24px;
+  width: 28px; /* Slightly larger for visibility */
+  height: 28px;
   border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  color: #1a1a1a; /* Match page background */
+  font-size: 0.75rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.avatar-img-small {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* Events & Settings */
