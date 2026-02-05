@@ -65,10 +65,11 @@ const addPerson = async () => {
     // Check if person exists
     await provider.getPerson(personId.value);
     
-    // Always overwrite onboarding date & clear offboarding date
+    // Always overwrite onboarding date & clear offboarding date, set status active
     await provider.updatePersonFields(personId.value, {
       taufmanager_onboaring: onboardingDate.value,
-      taufmanager_offboarding: null
+      taufmanager_offboarding: null,
+      taufmanager_status: 'active'
     });
     
     console.log(`[Baptizo] Person ${personId.value} onboarded on ${onboardingDate.value}`);
