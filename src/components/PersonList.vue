@@ -13,7 +13,7 @@
       >
         <div 
           class="avatar-circle" 
-          :style="{ backgroundColor: getAvatarColor(person) }"
+          :style="{ backgroundColor: getAvatarColor(person), color: getAvatarTextColor(getAvatarColor(person)) }"
         >
           <span v-if="!person.imageUrl || person.imageUrl.includes('ui-avatars') || person.imageUrl.includes('dicebear')" class="initials">{{ getInitials(person) }}</span>
           <img v-else :src="person.imageUrl" alt="Avatar" class="avatar-img" />
@@ -63,6 +63,12 @@ const getInitials = (person: BaptizoPerson) => {
   const f = person.firstName?.charAt(0) || '';
   const l = person.lastName?.charAt(0) || '';
   return (f + l).toUpperCase();
+};
+
+const getAvatarTextColor = (bgColor: string) => {
+  if (bgColor === '#92C9D6') return '#3C3C5B'; // Turquoise -> Dark Purple
+  if (bgColor === '#FF9F43') return '#521D15'; // Orange -> Dark Red/Brown
+  return '#FFFFFF'; // Purple/Default -> White
 };
 
 const getStatusText = (p: BaptizoPerson & { subtitle?: string }) => {

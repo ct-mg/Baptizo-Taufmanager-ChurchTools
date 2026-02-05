@@ -275,7 +275,7 @@
               <div class="person-cell">
                 <div 
                   class="avatar-small" 
-                  :style="{ backgroundColor: getAvatarColor(person) }"
+                  :style="{ backgroundColor: getAvatarColor(person), color: getAvatarTextColor(getAvatarColor(person)) }"
                 >
                   <span v-if="!person.imageUrl || person.imageUrl.includes('ui-avatars') || person.imageUrl.includes('dicebear')" class="initials-small">{{ getInitials(person) }}</span>
                   <img v-else :src="person.imageUrl" alt="Avatar" class="avatar-img-small" />
@@ -716,6 +716,12 @@ const BRAND_PALETTE = [
   '#7383B2', // Purple (Seminare)
   '#FF9F43'  // Orange (Taufen)
 ];
+
+const getAvatarTextColor = (bgColor: string) => {
+  if (bgColor === '#92C9D6') return '#3C3C5B'; // Turquoise -> Dark Purple
+  if (bgColor === '#FF9F43') return '#521D15'; // Orange -> Dark Red/Brown
+  return '#FFFFFF'; // Purple/Default -> White
+};
 
 const getAvatarColor = (person: BaptizoPerson) => {
   const str = (person.firstName || '') + (person.lastName || '') + (person.id || 0);
@@ -1698,17 +1704,18 @@ onMounted(() => loadData());
 }
 
 .avatar-small {
-  width: 28px; /* Slightly larger for visibility */
-  height: 28px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
   overflow: hidden;
   color: #1a1a1a; /* Match page background */
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: bold;
   flex-shrink: 0;
+  margin-right: 0.5rem; /* Gap to name */
 }
 
 .avatar-img-small {
