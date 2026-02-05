@@ -260,7 +260,7 @@
         <thead>
           <tr>
             <th>Name</th>
-            <th>Status</th>
+            <th>Mails</th>
             <th>Onboarding</th>
             <th>Seminar</th>
             <th>Taufe</th>
@@ -581,7 +581,7 @@ const tabs = [
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'people', label: 'Personen' },
   { id: 'events', label: 'Termine' },
-  { id: 'settings', label: 'Einstellungen' },
+  { id: 'settings', label: 'E-Mails' },
   { id: 'intro', label: 'Hilfe' },
   { id: 'about', label: 'Über uns' }
 ];
@@ -688,13 +688,13 @@ const loadData = async () => {
       getAdminSettings()
     ]);
     groups.value = groupsData || [];
-    // We do NOT load events here anymore for the EventList. 
-    // EventList manages its own data.
-    // However, if Dashboard needs events for something else, we might need it.
-    // Assuming for now Dashboard only needs Persons for KPIs/Charts.
-    events.value = []; // Clear events to avoid duplication if it was used
+    events.value = []; 
     settings.value = settingsData || { ...DEFAULT_SETTINGS };
     adminSettings.value = adminCfg;
+
+    // --- EMAIL CHECK (Background) ---
+    checkEmailsOnStart();
+
   } catch (e) {
     console.error('Failed to load data', e);
   } finally {
@@ -702,13 +702,71 @@ const loadData = async () => {
   }
 };
 
-const refreshData = async () => {
-  await loadData();
-  // Refresh EventList if active or available
+// Refresh EventList if active or available
   if (eventListRef.value) {
     await eventListRef.value.refresh();
   }
 };
+
+// --- Email Service Integration ---
+import { EmailService } from '../services/emailService';
+import { EventService } from '../services/eventService';
+
+const emailService = new EmailService();
+// We reuse the existing provider (PersonService) or instantiate EventService if needed.
+// PersonService might not have getEvents. Let's use EventService.
+const eventService = new EventService();
+
+const checkEmailsOnStart = async () => {
+    // Only run if settings loaded
+    if (!settings.value) return;
+    
+    // Fetch events for the check
+    const allEvents = await eventService.getEvents();
+    
+    // Run Check
+    const logs = await emailService.checkAndSendEmails(settings.value, allEvents);
+    
+    if (logs.length > 0) {
+        console.group("📧 [Baptizo Email Service] Report");
+        logs.forEach(l => console.log(l));
+        console.groupEnd();
+    }
+};
+
+// Hook into loadData to run after settings load
+// We'll wrap the original loadData logic or append to it.
+// Actually, let's call it at the end of loadData.
+const originalLoadData = loadData;
+// ... wait, I am editing the file content directly. I'll insert the call inside loadData's finally block or after success.
+
+// Re-writing loadData to include email check
+const loadDataWithEmailCheck = async () => {
+  loading.value = true;
+  try {
+    const [groupsData, eventsData, settingsData, adminCfg] = await Promise.all([
+      provider.getGroups(),
+      provider.getSettings(), // Note: provider.getSettings might return null logic
+      getAdminSettings()
+    ]);
+    
+    groups.value = groupsData || [];
+    events.value = []; 
+    settings.value = settingsData || { ...DEFAULT_SETTINGS };
+    adminSettings.value = adminCfg;
+    
+    // Run Email Check (Non-blocking)
+    checkEmailsOnStart();
+    
+  } catch (e) {
+    console.error('Failed to load data', e);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Overwrite the loadData function in the script
+// NOTE: I am using replace_file_content on the file, so I will replace the existing loadData function.
 // updateSettings already defined above
 
 const openReportModal = () => alert("Bericht konfigurieren\n\nEmpfänger hinzufügen:\n- Pastor@example.com\n- Team@example.com\n\n(Simulation)");

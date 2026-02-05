@@ -2,7 +2,7 @@
   <div class="modal-overlay" @click.self="$emit('close')">
     <div class="modal-content">
       <div class="modal-header">
-        <h2 class="person-name">{{ person.firstName }} {{ person.lastName }}</h2>
+        <h2 class="person-name">{{ localPerson.firstName }} {{ localPerson.lastName }}</h2>
         <button class="close-btn" @click="$emit('close')">&times;</button>
       </div>
       
@@ -10,10 +10,10 @@
         <div class="person-header">
           <div 
             class="avatar-large"
-            :style="{ backgroundColor: getAvatarColor(person), color: getAvatarTextColor(getAvatarColor(person)) }"
+            :style="{ backgroundColor: getAvatarColor(localPerson), color: getAvatarTextColor(getAvatarColor(localPerson)) }"
           >
-            <span v-if="!person.imageUrl || person.imageUrl.includes('ui-avatars') || person.imageUrl.includes('dicebear')" class="initials-large">{{ getInitials(person) }}</span>
-            <img v-else :src="person.imageUrl" alt="Avatar" class="avatar-img-large" />
+            <span v-if="!localPerson.imageUrl || localPerson.imageUrl.includes('ui-avatars') || localPerson.imageUrl.includes('dicebear')" class="initials-large">{{ getInitials(localPerson) }}</span>
+            <img v-else :src="localPerson.imageUrl" alt="Avatar" class="avatar-img-large" />
           </div>
           <div class="info-text">
             <div class="form-group status-group">
@@ -23,7 +23,7 @@
                 <option value="inactive">Inaktiv</option>
               </select>
             </div>
-            <p class="meta-info">Onboarding: {{ formatDate(person.entry_date) }}</p>
+            <p class="meta-info">Onboarding: {{ formatDate(localPerson.entry_date) }}</p>
           </div>
         </div>
 
@@ -70,7 +70,8 @@
 
       <div class="modal-footer">
         <button class="ct-button ct-button--contact" @click="toggleContactInfo">
-          {{ showContactInfo ? 'Kontakt verbergen' : 'Kontaktdaten' }}
+            <span v-if="isLoadingContact">Lade...</span>
+            <span v-else>{{ showContactInfo ? 'Kontakt verbergen' : 'Kontaktdaten' }}</span>
         </button>
         <div class="action-buttons">
           <button class="ct-button ct-button--secondary" @click="$emit('close')">Abbrechen</button>
@@ -79,14 +80,19 @@
       </div>
 
       <div v-if="showContactInfo" class="contact-card">
-        <div class="contact-row">
-          <span class="contact-label-small">E-Mail:</span>
-          <span class="contact-value">{{ person.email || 'Keine E-Mail' }}</span>
+        <div v-if="isLoadingContact" class="loading-contact">
+            Lade Daten aus ChurchTools...
         </div>
-        <div class="contact-row">
-          <span class="contact-label-small">Tel:</span>
-          <span class="contact-value">{{ person.mobile || person.phone || 'Keine Nummer' }}</span>
-        </div>
+        <template v-else>
+            <div class="contact-row">
+            <span class="contact-label-small">E-Mail:</span>
+            <span class="contact-value">{{ localPerson.email || 'Keine E-Mail' }}</span>
+            </div>
+            <div class="contact-row">
+            <span class="contact-label-small">Tel:</span>
+            <span class="contact-value">{{ localPerson.mobile || localPerson.phone || 'Keine Nummer' }}</span>
+            </div>
+        </template>
       </div>
     </div>
   </div>
@@ -95,15 +101,20 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import type { BaptizoPerson, BaptizoStatus } from '../types/baptizo-types';
+import { PersonService } from '../services/personService';
 
 const props = defineProps<{
   person: BaptizoPerson
 }>();
 
 const emit = defineEmits(['close', 'update']);
+const provider = new PersonService();
 
 // Local state
+const localPerson = ref<BaptizoPerson>({ ...props.person }); // Copy for local mutations/updates
 const showContactInfo = ref(false);
+const isLoadingContact = ref(false);
+
 const status = ref<BaptizoStatus>(props.person.status);
 const hasSeminar = ref(!!props.person.fields.seminar_besucht_am);
 const seminarDate = ref(props.person.fields.seminar_besucht_am || '');
@@ -121,8 +132,8 @@ const BRAND_PALETTE = [
   '#FF9F43'  // Orange
 ];
 
-const getAvatarColor = (person: BaptizoPerson) => {
-  const str = (person.firstName || '') + (person.lastName || '') + (person.id || 0);
+const getAvatarColor = (p: BaptizoPerson) => {
+  const str = (p.firstName || '') + (p.lastName || '') + (p.id || 0);
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash);
@@ -137,9 +148,9 @@ const getAvatarTextColor = (bgColor: string) => {
   return '#FFFFFF';
 };
 
-const getInitials = (person: BaptizoPerson) => {
-  const f = person.firstName?.charAt(0) || '';
-  const l = person.lastName?.charAt(0) || '';
+const getInitials = (p: BaptizoPerson) => {
+  const f = p.firstName?.charAt(0) || '';
+  const l = p.lastName?.charAt(0) || '';
   return (f + l).toUpperCase();
 };
 const formatDate = (dateStr: string | null | undefined) => {
@@ -163,10 +174,10 @@ const updateDate = (field: 'seminar' | 'baptism' | 'certificate' | 'integration'
 
 const save = () => {
   const updatedPerson: BaptizoPerson = {
-    ...props.person,
+    ...localPerson.value, // Use localPerson as base to preserve any fetched updates (like email)
     status: status.value,
     fields: {
-      ...props.person.fields,
+      ...localPerson.value.fields,
       seminar_besucht_am: hasSeminar.value ? seminarDate.value : null,
       getauft_am: isBaptized.value ? baptismDate.value : null,
       urkunde_ueberreicht: hasCertificate.value ? certificateDate.value : null,
@@ -174,11 +185,31 @@ const save = () => {
     }
   };
   emit('update', updatedPerson);
-
 };
 
-const toggleContactInfo = () => {
+const toggleContactInfo = async () => {
   showContactInfo.value = !showContactInfo.value;
+  
+  // Lazy refresh from CT when opening
+  if (showContactInfo.value) {
+      isLoadingContact.value = true;
+      try {
+          const freshData = await provider.getPerson(localPerson.value.id);
+          // Update contact fields
+          if (freshData) {
+              localPerson.value.email = freshData.email || null;
+              localPerson.value.mobile = freshData.mobile || null;
+              localPerson.value.phone = freshData.phone || null;
+              // Check if imageUrl changed?
+              if (freshData.imageUrl) localPerson.value.imageUrl = freshData.imageUrl;
+              console.log('[Baptizo] Refreshed contact data for', localPerson.value.firstName);
+          }
+      } catch (e) {
+          console.error('[Baptizo] Failed to refresh contact info', e);
+      } finally {
+          isLoadingContact.value = false;
+      }
+  }
 };
 </script>
 
@@ -422,5 +453,13 @@ const toggleContactInfo = () => {
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+.loading-contact {
+    color: #92C9D6;
+    font-style: italic;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 0.5rem;
 }
 </style>

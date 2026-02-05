@@ -4,23 +4,48 @@
     <div class="settings-header">
       <div class="filter-bar">
         <button 
-          @click="currentTab = 'emails'" 
+          @click="switchTab('emails')" 
           :class="{ active: currentTab === 'emails' }"
-        >E-Mail Vorlagen</button>
+        >Erstellen</button>
         <button 
-          @click="currentTab = 'links'" 
-          :class="{ active: currentTab === 'links' }"
-        >Links</button>
+          @click="switchTab('placeholders')" 
+          :class="{ active: currentTab === 'placeholders' }"
+        >Platzhalter</button>
+        <button 
+          @click="openPlaceholders" 
+          :class="{ active: placeholderActive }"
+        >
+          Mehr Platzhalter
+        </button>
       </div>
       
-      <button @click="saveSettings" class="ct-button ct-button--primary" :disabled="saving">
-        <span v-if="!saving">Einstellungen speichern</span>
-        <span v-else>Speichert...</span>
-      </button>
+      <div class="header-actions">
+          <!-- Email Toggle (Auto-Save, Tooltip) -->
+          <div class="toggle-container tooltip-trigger" @click="toggleEmailSending">
+              <div class="toggle-switch" :class="{ active: localSettings.emailSendingEnabled }">
+                <div class="toggle-knob"></div>
+              </div>
+              <label class="toggle-label">Mailversand</label>
+              
+              <!-- Tooltip -->
+              <div class="custom-tooltip">Automatischer Versand nur an Personen mit Status 'Aktiv'</div>
+          </div>
+
+          <button 
+            @click="saveSettings(false)" 
+            class="ct-button settings-save-btn" 
+            :class="saveButtonClass"
+            :disabled="!isDirty && !saving"
+          >
+            <!-- Show 'Speichert...' only if triggered via button -->
+            <span v-if="!saving">Einstellungen speichern</span>
+            <span v-else>Speichert...</span>
+          </button>
+      </div>
     </div>
 
     <div class="settings-content">
-      <!-- Tab 1: E-Mail Vorlagen (2-Column Grid) -->
+      <!-- Tab 1: E-Mail Vorlagen (Two Columns) -->
       <div v-if="currentTab === 'emails'" class="tab-pane">
         <div class="email-templates-grid">
           <!-- LEFT COLUMN: Taufseminar Mails -->
@@ -41,13 +66,13 @@
                 <div v-if="expandedTemplate === template.id" class="template-body">
                   <div class="form-group">
                     <label>Name</label>
-                    <input v-model="template.name" type="text" />
+                    <input v-model="template.name" type="text" class="standard-input" />
                   </div>
                   <div class="form-group timing-group">
                     <label>Zeitpunkt</label>
                     <div class="timing-input">
-                      <input v-model.number="template.daysOffset" type="number" min="0" />
-                      <select v-model="template.offsetType">
+                      <input v-model.number="template.daysOffset" type="number" min="0" class="standard-input" />
+                      <select v-model="template.offsetType" class="standard-input">
                         <option value="before">Tage vor Event</option>
                         <option value="after">Tage nach Event</option>
                       </select>
@@ -61,12 +86,11 @@
                   </div>
                   <div class="form-group">
                     <label>Betreff</label>
-                    <input v-model="template.subject" type="text" />
+                    <input v-model="template.subject" type="text" class="standard-input" />
                   </div>
                   <div class="form-group">
                     <label>Inhalt</label>
-                    <textarea v-model="template.body" rows="6"></textarea>
-                    <p class="help-text">Verfügbare Platzhalter: {name}, {uhrzeit}, {ort}, {leader}</p>
+                    <textarea v-model="template.body" rows="8" class="body-textarea"></textarea>
                   </div>
                   <button @click="deleteTemplate(template.id)" class="delete-btn">Löschen</button>
                 </div>
@@ -92,13 +116,13 @@
                 <div v-if="expandedTemplate === template.id" class="template-body">
                   <div class="form-group">
                     <label>Name</label>
-                    <input v-model="template.name" type="text" />
+                    <input v-model="template.name" type="text" class="standard-input" />
                   </div>
                   <div class="form-group timing-group">
                     <label>Zeitpunkt</label>
                     <div class="timing-input">
-                      <input v-model.number="template.daysOffset" type="number" min="0" />
-                      <select v-model="template.offsetType">
+                      <input v-model.number="template.daysOffset" type="number" min="0" class="standard-input" />
+                      <select v-model="template.offsetType" class="standard-input">
                         <option value="before">Tage vor Event</option>
                         <option value="after">Tage nach Event</option>
                       </select>
@@ -112,12 +136,11 @@
                   </div>
                   <div class="form-group">
                     <label>Betreff</label>
-                    <input v-model="template.subject" type="text" />
+                    <input v-model="template.subject" type="text" class="standard-input" />
                   </div>
                   <div class="form-group">
                     <label>Inhalt</label>
-                    <textarea v-model="template.body" rows="6"></textarea>
-                    <p class="help-text">Verfügbare Platzhalter: {name}, {uhrzeit}, {ort}, {leader}</p>
+                    <textarea v-model="template.body" rows="8" class="body-textarea"></textarea>
                   </div>
                   <button @click="deleteTemplate(template.id)" class="delete-btn">Löschen</button>
                 </div>
@@ -127,70 +150,98 @@
         </div>
       </div>
 
-      <!-- Tab 2: Links (Formerly Tab 3) -->
-      <div v-if="currentTab === 'links'" class="tab-pane">
-        <div class="links-grid">
-          <!-- Link 1: Anmeldeformular -->
-          <div class="link-card">
-            <div class="link-header">
-              <span class="link-icon">📋</span>
-              <h4>Anmeldeformular</h4>
+      <!-- Tab 2: Interne Platzhalter (Stacked) -->
+      <div v-if="currentTab === 'placeholders'" class="tab-pane">
+        <div class="placeholders-stack">
+            <!-- Section 1: Links -->
+            <div class="section-container">
+              <div class="section-header">
+                 <p class="section-desc">Konfiguriere permanente Links für deine E-Mails</p>
+              </div>
+              <div class="links-grid">
+                <div v-for="p in linkPlaceholders" :key="p.id" class="link-card">
+                  <div class="form-group dense">
+                     <input v-model="p.label" type="text" placeholder="Titel" class="standard-input" />
+                  </div>
+                  <div class="form-group dense">
+                    <input v-model="p.value" type="url" placeholder="URL eingeben..." class="standard-input" />
+                  </div>
+                  <div class="form-group dense">
+                    <input v-model="p.key" type="text" placeholder="{{...}}" class="code-input standard-input" />
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="form-group">
-              <label>URL</label>
-              <input v-model="localSettings.registrationFormUrl" type="url" placeholder="https://yourchurch.church.tools/..." />
-              <p class="help-text">Platzhalter in Mails: <code>{link_anmeldung}</code></p>
+    
+            <!-- Section 2: Custom -->
+            <div class="section-container">
+              <div class="section-header">
+                 <p class="section-desc">Konfiguriere variable Termine oder festen Text für deine E-Mails</p>
+              </div>
+              <div class="links-grid">
+                 <div v-for="p in textPlaceholders" :key="p.id" class="link-card">
+                  <div class="form-group dense">
+                     <input v-model="p.label" type="text" placeholder="Titel" class="standard-input" />
+                  </div>
+                  <div class="form-group dense">
+                    <input 
+                      v-if="isDynamic(p.id)" 
+                      :value="getDynamicValue(p.id)" 
+                      type="text" 
+                      disabled 
+                      class="standard-input dynamic-value" 
+                      title="Wird automatisch berechnet"
+                    />
+                    <input 
+                      v-else 
+                      v-model="p.value" 
+                      type="text" 
+                      placeholder="Wert eingeben..." 
+                      class="standard-input" 
+                    />
+                  </div>
+                  <div class="form-group dense">
+                    <input v-model="p.key" type="text" placeholder="{{...}}" class="code-input standard-input" />
+                  </div>
+                 </div>
+              </div>
             </div>
-          </div>
-
-          <!-- Link 2: Kleingruppen -->
-          <div class="link-card">
-            <div class="link-header">
-              <span class="link-icon">👥</span>
-              <h4>Kleingruppen</h4>
-            </div>
-            <div class="form-group">
-              <label>URL</label>
-              <input v-model="localSettings.smallGroupsUrl" type="url" placeholder="https://yourchurch.church.tools/smallgroups" />
-              <p class="help-text">Platzhalter in Mails: <code>{link_kleingruppen}</code></p>
-            </div>
-          </div>
-
-          <!-- Link 3: Taufinfo -->
-          <div class="link-card">
-            <div class="link-header">
-              <span class="link-icon">🌊</span>
-              <h4>Taufinfo & FAQ</h4>
-            </div>
-            <div class="form-group">
-              <label>URL</label>
-              <input v-model="localSettings.baptismInfoUrl" type="url" placeholder="https://yourchurch.de/taufe" />
-              <p class="help-text">Platzhalter in Mails: <code>{link_taufinfo}</code></p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
     
     <div v-if="saveMessage" class="save-toast">{{ saveMessage }}</div>
+    
+    <!-- Custom Unsaved Changes Modal (Matches EventList) -->
+    <div v-if="showUnsavedModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Ungespeicherte Änderungen</h2>
+                <button class="close-btn" @click="showUnsavedModal = false">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <p>Du hast Änderungen vorgenommen, die noch nicht gespeichert wurden. Möchtest du speichern?</p>
+            </div>
+
+            <div class="modal-actions">
+                <button @click="discardAndSwitch" class="ct-button ct-button--secondary">Verwerfen</button>
+                <div style="display: flex; gap: 1rem;">
+                    <button @click="showUnsavedModal = false" class="ct-button ct-button--secondary">Abbrechen</button>
+                    <button @click="saveAndSwitch" class="ct-button ct-button--primary">Speichern</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
-import { type BaptizoSettings, DEFAULT_SETTINGS } from '../types/baptizo-settings';
+import { ref, watch, computed, onMounted } from 'vue';
+import { type BaptizoSettings, DEFAULT_SETTINGS, type EmailTemplate } from '../types/baptizo-settings';
 import { MockDataProvider } from '../services/mock-data-provider';
-
-interface EmailTemplate {
-  id: string;
-  name: string;
-  subject: string;
-  body: string;
-  daysOffset: number;
-  offsetType: 'before' | 'after';
-  category: 'seminar' | 'baptism';
-  recipientType?: 'participant' | 'leader';
-}
+import { EventService } from '../services/eventService';
 
 const props = defineProps<{
   settings: BaptizoSettings;
@@ -201,63 +252,181 @@ const emit = defineEmits<{
 }>();
 
 const SettingsService = new MockDataProvider();
+const eventService = new EventService();
 
-// ULTRA-SAFE INITIALIZATION
+const nextBaptismDate = ref<string>('Berechne...');
+const nextSeminarDate = ref<string>('Berechne...');
+
+// --- Initialization & Migration ---
 const initializeSettings = (source: BaptizoSettings | undefined): BaptizoSettings => {
+  let parsed: BaptizoSettings;
   try {
-    if (source) {
-      const parsed = JSON.parse(JSON.stringify(source));
-      // Force emailTemplates to be an array if it's missing or an object
-      if (!Array.isArray(parsed.emailTemplates)) {
-        parsed.emailTemplates = []; 
-      }
-      // RESTORE DEFAULTS IF EMPTY (User Request: "Wo sind die Vorlagen hin?")
-      if (parsed.emailTemplates.length === 0) {
-         parsed.emailTemplates = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.emailTemplates));
-      }
-      return parsed;
-    }
+    parsed = source ? JSON.parse(JSON.stringify(source)) : JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
   } catch (e) {
     console.error('Settings JSON parse error:', e);
+    parsed = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
   }
-  // Fallback to strict defaults if anything fails or source is null
-  return JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+  if (!Array.isArray(parsed.emailTemplates)) parsed.emailTemplates = []; 
+  if (!Array.isArray(parsed.placeholders)) parsed.placeholders = []; 
+  if (parsed.emailTemplates.length === 0) parsed.emailTemplates = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.emailTemplates));
+  if (parsed.placeholders.length === 0) parsed.placeholders = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.placeholders));
+  
+  if (parsed.emailSendingEnabled === undefined) parsed.emailSendingEnabled = false;
+
+  // MIGRATION: Replace old placeholders if found in existing data
+  parsed.emailTemplates.forEach(t => {
+      if (t.body.includes('{{name}}')) {
+          t.body = t.body.replace(/{{name}}/g, '{{person.firstName}}');
+      }
+      if (t.body.includes('{{leader}}')) {
+          t.body = t.body.replace(/{{leader}}/g, '{{person.firstName}}');
+      }
+      if (t.body.includes('{{uhrzeit}}') || t.body.includes('{{ort}}')) {
+          t.body = t.body.replace(' um {{uhrzeit}} am {{ort}}', ' um 10:00 Uhr im Gemeindezentrum');
+          t.body = t.body.replace('{{uhrzeit}} am {{ort}}', '10:00 Uhr im Gemeindezentrum');
+          t.body = t.body.replace('{{uhrzeit}}', '10:00 Uhr');
+          t.body = t.body.replace('{{ort}}', 'Gemeindezentrum');
+      }
+  });
+
+  return parsed;
 };
 
+// --- State ---
 const localSettings = ref<BaptizoSettings>(initializeSettings(props.settings));
+const originalSettings = ref<string>(''); // For dirty checking
 
 const currentTab = ref('emails');
+const pendingTab = ref<string | null>(null); // For modal redirection
+const showUnsavedModal = ref(false);
+
 const expandedTemplate = ref<string | null>(null);
 const saving = ref(false);
 const saveMessage = ref('');
+const placeholderActive = ref(false);
 
-// Watch specifically for settings becoming available
+// --- Dirty Checking ---
+const isDirty = computed(() => {
+    return JSON.stringify(localSettings.value) !== originalSettings.value;
+});
+
+// Calculate button class based on dirty state
+const saveButtonClass = computed(() => {
+    if (isDirty.value) return 'ct-button--primary'; // Solid/Bright when dirty
+    return 'ct-button--ghost'; // Grey filled when clean
+});
+
+
+// Update original when props change (initially)
 watch(() => props.settings, (newSettings) => {
   if (newSettings) {
-    localSettings.value = initializeSettings(newSettings);
+    const initialized = initializeSettings(newSettings);
+    localSettings.value = initialized;
+    originalSettings.value = JSON.stringify(initialized);
   }
-}, { deep: true });
+}, { deep: true, immediate: true });
 
-// Computed: Filter templates by category (Safely)
-const seminarTemplates = computed(() => {
-  const templates = localSettings.value.emailTemplates;
-  if (!Array.isArray(templates)) return [];
-  return templates.filter((t: any) => t.category === 'seminar');
+
+// --- Tab Switching with Custom Modal ---
+const switchTab = (newTab: string) => {
+    if (currentTab.value === newTab) return;
+    
+    // Check if dirty
+    if (isDirty.value) {
+        pendingTab.value = newTab;
+        showUnsavedModal.value = true;
+    } else {
+        currentTab.value = newTab;
+    }
+};
+
+const saveAndSwitch = async () => {
+    await saveSettings(false);
+    showUnsavedModal.value = false;
+    if (pendingTab.value) {
+        currentTab.value = pendingTab.value;
+        pendingTab.value = null;
+    }
+};
+
+const discardAndSwitch = () => {
+    // Reset to original
+    if (originalSettings.value) {
+        localSettings.value = JSON.parse(originalSettings.value);
+    }
+    showUnsavedModal.value = false;
+    if (pendingTab.value) {
+        currentTab.value = pendingTab.value;
+        pendingTab.value = null;
+    }
+};
+
+// Auto-Save Toggle (Silent)
+const toggleEmailSending = async () => {
+    localSettings.value.emailSendingEnabled = !localSettings.value.emailSendingEnabled;
+    await saveSettings(true); // Silent save
+};
+
+
+onMounted(async () => {
+    try {
+        const events = await eventService.getEvents();
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        const upcomingBaptisms = events
+            .filter(e => {
+                const title = e.title.toLowerCase();
+                 return title.includes('taufe') && !title.includes('seminar') && new Date(e.date) >= now;
+            })
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            
+        if (upcomingBaptisms.length > 0) {
+            nextBaptismDate.value = new Date(upcomingBaptisms[0].date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        } else {
+            nextBaptismDate.value = 'Kein Termin gefunden';
+        }
+
+        const upcomingSeminars = events
+           .filter(e => {
+               const title = e.title.toLowerCase();
+               return title.includes('seminar') && new Date(e.date) >= now;
+           })
+           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+           
+        if (upcomingSeminars.length > 0) {
+            nextSeminarDate.value = new Date(upcomingSeminars[0].date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        } else {
+            nextSeminarDate.value = 'Kein Termin gefunden';
+        }
+    } catch (e) {
+        console.error('Error fetching events:', e);
+        nextBaptismDate.value = 'Fehler';
+        nextSeminarDate.value = 'Fehler';
+    }
 });
 
-const baptismTemplates = computed(() => {
-  const templates = localSettings.value.emailTemplates;
-  if (!Array.isArray(templates)) return [];
-  return templates.filter((t: any) => t.category === 'baptism');
-});
+const isDynamic = (id: string) => {
+    return id === 'p_date_baptism' || id === 'p_date_seminar';
+};
 
-// Format offset for display
+const getDynamicValue = (id: string) => {
+    if (id === 'p_date_baptism') return nextBaptismDate.value;
+    if (id === 'p_date_seminar') return nextSeminarDate.value;
+    return '';
+};
+
+
+const seminarTemplates = computed(() => (localSettings.value.emailTemplates || []).filter(t => t.category === 'seminar'));
+const baptismTemplates = computed(() => (localSettings.value.emailTemplates || []).filter(t => t.category === 'baptism'));
+const linkPlaceholders = computed(() => (localSettings.value.placeholders || []).filter(p => p.type === 'link'));
+const textPlaceholders = computed(() => (localSettings.value.placeholders || []).filter(p => p.type === 'text'));
+
 const formatOffset = (template: EmailTemplate) => {
   const prefix = template.offsetType === 'before' ? '-' : '+';
   return `${prefix}${template.daysOffset}d`;
 };
 
-// Add new template
 const addTemplate = (category: 'seminar' | 'baptism') => {
   const newTemplate: EmailTemplate = {
     id: Date.now().toString(),
@@ -269,41 +438,42 @@ const addTemplate = (category: 'seminar' | 'baptism') => {
     category,
     recipientType: 'participant'
   };
-  
-  if (!localSettings.value.emailTemplates) {
-    localSettings.value.emailTemplates = [];
-  }
-  
-  (localSettings.value.emailTemplates as EmailTemplate[]).push(newTemplate);
+  if (!localSettings.value.emailTemplates) localSettings.value.emailTemplates = [];
+  localSettings.value.emailTemplates.push(newTemplate);
   expandedTemplate.value = newTemplate.id;
 };
 
-// Delete template
 const deleteTemplate = (id: string) => {
   if (!localSettings.value.emailTemplates) return;
-  
-  const index = (localSettings.value.emailTemplates as EmailTemplate[]).findIndex((t: EmailTemplate) => t.id === id);
+  const index = localSettings.value.emailTemplates.findIndex((t) => t.id === id);
   if (index !== -1) {
-    (localSettings.value.emailTemplates as EmailTemplate[]).splice(index, 1);
-    if (expandedTemplate.value === id) {
-      expandedTemplate.value = null;
-    }
+    localSettings.value.emailTemplates.splice(index, 1);
+    if (expandedTemplate.value === id) expandedTemplate.value = null;
   }
 };
 
-// Save settings
-const saveSettings = async () => {
-  saving.value = true;
+const saveSettings = async (silent = false) => {
+  if (!silent) saving.value = true;
+  
   await SettingsService.updateSettings(localSettings.value);
   emit('update', localSettings.value);
-  saving.value = false;
-  saveMessage.value = 'Gespeichert! ✓';
-  setTimeout(() => saveMessage.value = '', 3000);
+  originalSettings.value = JSON.stringify(localSettings.value); // Reset dirty state
+  
+  if (!silent) {
+      saving.value = false;
+      saveMessage.value = 'Gespeichert! ✓';
+      setTimeout(() => saveMessage.value = '', 3000);
+  }
 };
 
-// Toggle template expansion
 const toggleTemplate = (id: string) => {
   expandedTemplate.value = expandedTemplate.value === id ? null : id;
+};
+
+const openPlaceholders = () => {
+  placeholderActive.value = true;
+  setTimeout(() => { placeholderActive.value = false; }, 200);
+  window.open('https://churchtools.academy/de/help/verwaltung/platzhalter/35-platzhalter-in-churchtools/', '_blank'); 
 };
 </script>
 
@@ -319,6 +489,8 @@ const toggleTemplate = (id: string) => {
   align-items: center;
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 10;
 }
 
 .filter-bar {
@@ -346,29 +518,163 @@ const toggleTemplate = (id: string) => {
   font-weight: bold;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; 
+}
+
+/* Toggle Styles & Tooltip */
+.toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid #555;
+  border-radius: 4px;
+  transition: all 0.2s;
+  cursor: pointer;
+  user-select: none;
+  position: relative; 
+  /* Force same box size properties as buttons */
+  height: 40px; 
+  box-sizing: border-box;
+}
+
+.toggle-container:hover {
+    border-color: #888;
+}
+
+.toggle-label {
+  font-size: 0.85rem;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 34px;
+  height: 18px;
+  background: #555;
+  border-radius: 9px;
+  transition: background 0.3s;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.toggle-switch.active {
+  background: #92C9D6;
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: #ddd;
+  border-radius: 50%;
+  transition: all 0.3s;
+}
+
+.toggle-switch.active .toggle-knob {
+  left: 18px;
+  background: #fff;
+}
+
+/* Tooltip Implementation */
+.custom-tooltip {
+  visibility: hidden;
+  background-color: #222;
+  color: #efefef;
+  text-align: center;
+  border-radius: 6px;
+  padding: 8px 12px;
+  position: absolute;
+  z-index: 9999; 
+  top: 130%; 
+  right: 0; 
+  width: 280px; 
+  box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+  border: 1px solid #444;
+  font-size: 0.85rem;
+  font-weight: normal;
+  line-height: 1.4;
+}
+
+.custom-tooltip::after {
+  content: "";
+  position: absolute;
+  bottom: 100%; 
+  right: 20px; 
+  margin-left: -5px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent #444 transparent;
+}
+
+.toggle-container:hover .custom-tooltip {
+  visibility: visible;
+}
+
+
 .ct-button {
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
-  border: border;
   border: none;
   font-weight: bold;
   font-size: 0.9rem;
   transition: all 0.2s;
+  
+  /* Dimensions to match Toggle */
+  height: 40px; 
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* Primary = Dirty State */
 .ct-button--primary {
   background: #92C9D6;
   color: #3C3C5B;
+  border: 2px solid #92C9D6; 
 }
 
 .ct-button--primary:hover {
   background: #7ab8c5;
+  border-color: #7ab8c5;
 }
 
-.ct-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+/* Ghost => Changed to Disabled/Grey Filled as requested */
+.ct-button--ghost {
+  background: #333; /* Dark Grey Filled */
+  color: #aaa;      /* Grey Text */
+  border: 2px solid transparent; /* Transparent border to maintain size */
+}
+
+.ct-button--ghost:hover {
+  filter: brightness(1.1); /* Subtle hover */
+}
+
+.ct-button--secondary {
+  background: transparent; 
+  color: #aaa;
+  border: 1px solid #444;
+}
+.ct-button--secondary:hover {
+  border-color: #fff;
+  color: #fff;
+}
+.ct-button--text {
+    background: transparent;
+    color: #ccc;
+}
+.ct-button--text:hover {
+    color: white;
 }
 
 .tab-pane {
@@ -383,6 +689,12 @@ const toggleTemplate = (id: string) => {
 .email-templates-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.placeholders-stack {
+  display: flex;
+  flex-direction: column;
   gap: 2rem;
 }
 
@@ -423,7 +735,7 @@ const toggleTemplate = (id: string) => {
 
 .add-btn {
   background: none;
-  border: 1px dashed #444;
+  border: 1px solid #444;
   color: #92C9D6;
   padding: 0.5rem 1rem;
   border-radius: 4px;
@@ -485,45 +797,27 @@ const toggleTemplate = (id: string) => {
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.5rem; 
+  display: block; 
 }
+
+/* Dense form group for placeholders */
+.form-group.dense {
+    margin-bottom: 0.5rem;
+}
+.form-group.dense:last-child {
+    margin-bottom: 0;
+}
+
 
 .form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: #ccc;
-  font-weight: 500;
-  font-size: 0.9rem;
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #ccc;
+    font-size: 0.9rem;
 }
 
-.recipient-checkbox {
-  margin-bottom: 1.5rem;
-}
-
-.recipient-checkbox label {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-  font-weight: normal;
-  color: #ccc;
-}
-
-.recipient-checkbox input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  accent-color: #7383B2;
-  margin: 0;
-}
-
-.recipient-checkbox label:hover {
-  color: #fff;
-}
-
-.form-group input,
-.form-group textarea,
-.form-group select {
+.standard-input {
   width: 100%;
   padding: 0.75rem;
   background: #1a1a1a;
@@ -532,16 +826,36 @@ const toggleTemplate = (id: string) => {
   border-radius: 4px;
   font-family: inherit;
   font-size: 0.95rem;
+  transition: border-color 0.2s;
 }
 
-.form-group textarea {
+.standard-input:focus,
+.body-textarea:focus {
+  outline: none;
+  border-color: #92C9D6; 
+}
+
+.dynamic-value {
+  background: #333 !important;
+  color: #ccc !important;
+  font-style: italic;
+  border: 1px solid #444 !important; 
+  cursor: default;
+}
+
+.code-input {
+  font-family: 'Courier New', monospace;
+  color: #FF9F43 !important;
+}
+
+.body-textarea {
   resize: vertical;
-}
-
-.help-text {
-  font-size: 0.85rem;
-  color: #888;
-  margin-top: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  background: #1a1a1a;
+  border: 1px solid #444;
+  color: #fff;
+  border-radius: 4px;
 }
 
 .timing-group .timing-input {
@@ -549,6 +863,21 @@ const toggleTemplate = (id: string) => {
   grid-template-columns: 100px 1fr;
   gap: 0.5rem;
 }
+
+.recipient-checkbox {
+  margin-bottom: 1.5rem;
+}
+.recipient-checkbox label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.recipient-checkbox input {
+    width: 20px;
+    height: 20px;
+    accent-color: #92C9D6;
+}
+
 
 .delete-btn {
   width: auto;
@@ -567,6 +896,26 @@ const toggleTemplate = (id: string) => {
   background: #5a6a99;
 }
 
+.section-container {
+  display: flex;
+  flex-direction: column;
+  background: #2a2a2a;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.section-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.section-desc {
+  margin: 0;
+  color: #92C9D6; 
+  font-size: 1.0rem; 
+  font-weight: normal; 
+}
+
 .links-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -575,42 +924,13 @@ const toggleTemplate = (id: string) => {
 
 .link-card {
   background: #2a2a2a;
-  padding: 1.5rem;
+  padding: 1.0rem; /* Reduced from 1.5rem */
   border-radius: 8px;
-  transition: all 0.2s;
+  border: 1px solid #444;
 }
 
 .link-card:hover {
-  background: #2f2f2f;
-}
-
-.link-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #444;
-}
-
-.link-icon {
-  font-size: 1.5rem;
-}
-
-.link-header h4 {
-  margin: 0;
-  color: #92C9D6;
-  font-size: 1rem;
-  font-weight: bold;
-}
-
-.help-text code {
-  background: #1a1a1a;
-  color: #FF9F43;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-family: 'Courier New', monospace;
-  font-size: 0.85rem;
+  border-color: #555;
 }
 
 .save-toast {
@@ -636,5 +956,79 @@ const toggleTemplate = (id: string) => {
     transform: translateX(0);
     opacity: 1;
   }
+}
+
+/* Modal Overlay matches EventList */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7); 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999999;
+}
+
+.modal-content {
+  background: #2a2a2a;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 500px;
+  max-width: 90%;
+  color: white;
+  border: 1px solid #444;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 0;
+}
+
+.modal-title {
+  margin: 0;
+  color: #92C9D6; 
+  font-size: 1.1rem; /* Reduced from 1.25rem */
+  font-weight: 700;
+}
+
+.modal-body {
+  padding: 0;
+  margin-bottom: 2rem;
+}
+
+.modal-body p {
+    color: #ccc;
+    font-size: 0.9rem; 
+    line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: space-between; 
+  align-items: center;
+  padding: 0;
+  background: transparent;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: white;
 }
 </style>
