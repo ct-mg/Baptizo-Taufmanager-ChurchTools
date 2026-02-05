@@ -69,10 +69,23 @@
       </div>
 
       <div class="modal-footer">
-        <button class="ct-button ct-button--contact" @click="showContact">Kontaktdaten</button>
+        <button class="ct-button ct-button--contact" @click="toggleContactInfo">
+          {{ showContactInfo ? 'Kontakt verbergen' : 'Kontaktdaten' }}
+        </button>
         <div class="action-buttons">
           <button class="ct-button ct-button--secondary" @click="$emit('close')">Abbrechen</button>
           <button class="ct-button ct-button--primary" @click="save">Speichern</button>
+        </div>
+      </div>
+
+      <div v-if="showContactInfo" class="contact-card">
+        <div class="contact-row">
+          <span class="contact-label-small">E-Mail:</span>
+          <span class="contact-value">{{ person.email || 'Keine E-Mail' }}</span>
+        </div>
+        <div class="contact-row">
+          <span class="contact-label-small">Tel:</span>
+          <span class="contact-value">{{ person.mobile || person.phone || 'Keine Nummer' }}</span>
         </div>
       </div>
     </div>
@@ -90,6 +103,7 @@ const props = defineProps<{
 const emit = defineEmits(['close', 'update']);
 
 // Local state
+const showContactInfo = ref(false);
 const status = ref<BaptizoStatus>(props.person.status);
 const hasSeminar = ref(!!props.person.fields.seminar_besucht_am);
 const seminarDate = ref(props.person.fields.seminar_besucht_am || '');
@@ -163,10 +177,8 @@ const save = () => {
 
 };
 
-const showContact = () => {
-  const email = props.person.email || 'Keine E-Mail';
-  const mobile = props.person.mobile || props.person.phone || 'Keine Nummer';
-  alert(`Kontakt für ${props.person.firstName} ${props.person.lastName}:\n\n📧 E-Mail: ${email}\n📱 Tel: ${mobile}`);
+const toggleContactInfo = () => {
+  showContactInfo.value = !showContactInfo.value;
 };
 </script>
 
@@ -373,5 +385,42 @@ const showContact = () => {
 
 .ct-button--contact:hover {
   background-color: #8593c2;
+}
+
+.contact-card {
+  margin-top: 1rem;
+  background: #222;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #444;
+  animation: slideDown 0.2s ease-out;
+}
+
+.contact-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: #ddd;
+  font-size: 0.9rem; /* Reduced to match checkboxes */
+}
+
+.contact-row:last-child {
+  margin-bottom: 0;
+}
+
+.contact-label-small {
+  color: #aaa;
+  width: 50px; /* Fixed width for alignment */
+}
+
+.contact-value {
+  font-weight: 500;
+  color: #fff;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>
