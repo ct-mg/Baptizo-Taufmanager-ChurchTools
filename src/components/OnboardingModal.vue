@@ -2,15 +2,15 @@
   <div class="modal-overlay" @click.self="$emit('close')">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Person zu Taufmanager hinzufügen</h2>
+        <h2>Taufmanager Onboarding</h2>
         <button class="close-btn" @click="$emit('close')">&times;</button>
       </div>
       
       <div class="modal-body">
-        <p class="info-text">Wähle eine Person aus ChurchTools, um sie zum Taufmanager hinzuzufügen.</p>
+        <!-- Info Text removed -->
         
         <div class="form-group">
-          <label>Person-ID (ChurchTools)</label>
+          <label>Personen ID (nur Nummer)</label>
           <input 
             v-model.number="personId" 
             type="number" 
@@ -62,52 +62,21 @@ const addPerson = async () => {
   error.value = '';
   
   try {
-    // First, fetch person to check if they already have an offboarding date
-    let personDetail: any;
-    try {
-      personDetail = await provider.getPerson(personId.value);
-    } catch (e) {
-      console.error(`[Baptizo] Failed to fetch person ${personId.value}`, e);
-      error.value = 'Person konnte nicht gefunden werden. Bitte ID prüfen.';
-      loading.value = false;
-      return;
-    }
+    // Check if person exists
+    await provider.getPerson(personId.value);
     
-    // Check if person has offboarding date (was previously removed)
-    if (personDetail.taufmanager_offboarding) {
-      const confirmed = confirm(
-        `Diese Person wurde am ${personDetail.taufmanager_offboarding} offboarded.\n\n` +
-        `Möchten Sie die Person wieder zum Taufmanager hinzufügen?\n\n` +
-        `Das alte Offboarding-Datum wird gelöscht, aber das ursprüngliche Onboarding-Datum (${personDetail.taufmanager_onboaring || 'nicht gesetzt'}) bleibt erhalten.`
-      );
-      
-      if (!confirmed) {
-        loading.value = false;
-        emit('close');
-        return;
-      }
-      
-      // Clear offboarding date but keep original onboarding
-      await provider.updatePersonFields(personId.value, {
-        taufmanager_offboarding: null
-        // Intentionally NOT updating onboarding - keep original date!
-      });
-      
-      console.log(`[Baptizo] Person ${personId.value} re-onboarded (offboarding cleared, keeping original onboarding)`);
-    } else {
-      // New onboarding - set onboarding date
-      await provider.updatePersonFields(personId.value, {
-        taufmanager_onboaring: onboardingDate.value
-      });
-      
-      console.log(`[Baptizo] Person ${personId.value} onboarded on ${onboardingDate.value}`);
-    }
+    // Always overwrite onboarding date & clear offboarding date
+    await provider.updatePersonFields(personId.value, {
+      taufmanager_onboaring: onboardingDate.value,
+      taufmanager_offboarding: null
+    });
     
+    console.log(`[Baptizo] Person ${personId.value} onboarded on ${onboardingDate.value}`);
     emit('personAdded');
     emit('close');
   } catch (e: any) {
     console.error('[Baptizo] Onboarding failed:', e);
-    error.value = `Fehler: ${e.message || 'Person konnte nicht hinzugefügt werden'}`;
+    error.value = `Fehler: ${e.message || 'Person konnte nicht gefunden werden'}`;
   } finally {
     loading.value = false;
   }
@@ -148,7 +117,8 @@ const addPerson = async () => {
 .modal-header h2 {
   margin: 0;
   color: #92C9D6;
-  font-size: 20px;
+  font-size: 24px;
+  font-weight: 700;
 }
 
 .close-btn {
