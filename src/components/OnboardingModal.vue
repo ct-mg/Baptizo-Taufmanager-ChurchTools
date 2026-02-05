@@ -78,7 +78,7 @@ const addPerson = async () => {
       const confirmed = confirm(
         `Diese Person wurde am ${personDetail.taufmanager_offboarding} offboarded.\n\n` +
         `Möchten Sie die Person wieder zum Taufmanager hinzufügen?\n\n` +
-        `Das alte Offboarding-Datum wird gelöscht, aber das ursprüngliche Onboarding-Datum (${personDetail.taufmanager_onboarding || 'nicht gesetzt'}) bleibt erhalten.`
+        `Das alte Offboarding-Datum wird gelöscht, aber das ursprüngliche Onboarding-Datum (${personDetail.taufmanager_onboaring || 'nicht gesetzt'}) bleibt erhalten.`
       );
       
       if (!confirmed) {
@@ -97,7 +97,7 @@ const addPerson = async () => {
     } else {
       // New onboarding - set onboarding date
       await provider.updatePersonFields(personId.value, {
-        taufmanager_onboarding: onboardingDate.value
+        taufmanager_onboaring: onboardingDate.value
       });
       
       console.log(`[Baptizo] Person ${personId.value} onboarded on ${onboardingDate.value}`);

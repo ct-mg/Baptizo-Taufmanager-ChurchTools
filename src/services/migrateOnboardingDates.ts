@@ -12,7 +12,7 @@ export async function migrateOnboardingDates(): Promise<{ updated: number; skipp
     try {
         const testPerson: any = await churchtoolsClient.get(`/persons/1`);
         console.log('[Migration] Test person fields:', {
-            taufmanager_onboarding: testPerson.taufmanager_onboarding,
+            taufmanager_onboaring: testPerson.taufmanager_onboaring,
             taufmanager_seminar: testPerson.taufmanager_seminar,
             taufmanager_taufe: testPerson.taufmanager_taufe,
             allFields: Object.keys(testPerson).filter(k => k.startsWith('taufmanager'))
@@ -83,7 +83,7 @@ export async function migrateOnboardingDates(): Promise<{ updated: number; skipp
                 const personDetail: any = await churchtoolsClient.get(`/persons/${m.personId}`);
 
                 const seminarDate = personDetail.taufmanager_seminar;
-                const currentOnboarding = personDetail.taufmanager_onboarding;
+                const currentOnboarding = personDetail.taufmanager_onboaring;
 
                 console.log(`[Migration] Person ${m.personId} (${personDetail.firstName} ${personDetail.lastName}):`);
                 console.log(`  - seminar: ${seminarDate}`);
@@ -113,7 +113,7 @@ export async function migrateOnboardingDates(): Promise<{ updated: number; skipp
 
                 // Update person in ChurchTools
                 const patchData = {
-                    taufmanager_onboarding: newOnboarding
+                    taufmanager_onboaring: newOnboarding
                 };
 
                 console.log('[Migration]   → Sending PATCH:', patchData);
@@ -124,9 +124,9 @@ export async function migrateOnboardingDates(): Promise<{ updated: number; skipp
 
                 // READ BACK to verify
                 const verifyPerson: any = await churchtoolsClient.get(`/persons/${m.personId}`);
-                console.log('[Migration]   → VERIFICATION: taufmanager_onboarding =', verifyPerson.taufmanager_onboarding);
+                console.log('[Migration]   → VERIFICATION: taufmanager_onboaring =', verifyPerson.taufmanager_onboaring);
 
-                if (verifyPerson.taufmanager_onboarding === newOnboarding) {
+                if (verifyPerson.taufmanager_onboaring === newOnboarding) {
                     console.log(`[Migration]   ✓✓✓ VERIFIED - Data persisted in ChurchTools!`);
                     updated++;
                 } else {

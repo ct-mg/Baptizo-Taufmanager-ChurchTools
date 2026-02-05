@@ -183,7 +183,7 @@ export class MockDataProvider implements DataProvider {
                         urkunde_ueberreicht: null, // Will be set later if baptized
                         in_gemeinde_integriert: null, // Will be set later if baptized
                         // Onboarding 2-20 days BEFORE seminar (for chart separation)
-                        taufmanager_onboarding: seminarDate ? new Date(new Date(seminarDate).getTime() - (2 + (id % 19)) * 86400000).toISOString().split('T')[0] : entryDate.toISOString().split('T')[0],
+                        taufmanager_onboaring: seminarDate ? new Date(new Date(seminarDate).getTime() - (2 + (id % 19)) * 86400000).toISOString().split('T')[0] : entryDate.toISOString().split('T')[0],
                         taufmanager_offboarding: null // Will be set for 2 persons later
                     },
                     imageUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${id}`,
