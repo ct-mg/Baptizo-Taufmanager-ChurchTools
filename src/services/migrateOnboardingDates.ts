@@ -68,16 +68,8 @@ export async function migrateOnboardingDates(): Promise<{ updated: number; skipp
 
         console.log(`[Migration] Total members in group ${groupId}: ${allMembers.length}`);
 
-        // Process each member - LIMIT TO FIRST 3 FOR TESTING
-        const testLimit = 3;
-        let processedCount = 0;
-
+        // Process each member
         for (const m of allMembers) {
-            if (processedCount >= testLimit) {
-                console.log(`[Migration] ⚠️  STOPPING AFTER ${testLimit} FOR TESTING - Remove this limit when field name is confirmed!`);
-                break;
-            }
-
             try {
                 // Fetch full person details (EXACT SAME AS personService.ts line 75)
                 const personDetail: any = await churchtoolsClient.get(`/persons/${m.personId}`);
@@ -134,8 +126,6 @@ export async function migrateOnboardingDates(): Promise<{ updated: number; skipp
                     errors++;
                 }
 
-                processedCount++;
-
             } catch (personError) {
                 console.error(`[Migration] Error processing person ${m.personId}:`, personError);
                 errors++;
@@ -144,7 +134,7 @@ export async function migrateOnboardingDates(): Promise<{ updated: number; skipp
     }
 
     console.log(`[Migration] ========================================`);
-    console.log(`[Migration] TEST RUN Complete!`);
+    console.log(`[Migration] Migration Complete!`);
     console.log(`[Migration] ✓ Updated: ${updated}`);
     console.log(`[Migration] ⊘ Skipped: ${skipped}`);
     console.log(`[Migration] ✗ Errors: ${errors}`);
