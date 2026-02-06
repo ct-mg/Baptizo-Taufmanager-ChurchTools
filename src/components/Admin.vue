@@ -7,17 +7,21 @@
         <h1 class="app-title">BAPTIZO TAUFMANAGER</h1>
       </div>
       <div class="actions">
+        <!-- 
         <button @click="runSync" class="ct-button ct-button--primary" :disabled="syncing">
           <span v-if="!syncing">🔄 Globale Personen-Sync</span>
           <span v-else>⏳ Synchronisiere...</span>
-        </button>
+        </button> 
+        -->
+        <!-- 
         <button @click="findOnboardingField" class="ct-button ct-button--secondary" style="margin-left: 10px;">
           🔍 Feld-Namen suchen
         </button>
         <button @click="runMigration" class="ct-button ct-button--primary" :disabled="migrating" style="margin-left: 10px;">
           <span v-if="!migrating">🔄 Onboarding-Daten migrieren</span>
           <span v-else>⏳ Migriert...</span>
-        </button>
+        </button> 
+        -->
         <button @click="navigateBack" class="ct-button ct-button--report">
           <span class="icon">←</span> ZURÜCK ZUM DASHBOARD
         </button>
@@ -35,15 +39,15 @@
         </button>
       </div>
 
-      <!-- Section A: CONTAINER (Gruppen) -->
+      <!-- Section: Gruppen -->
       <div class="config-section">
         <div class="section-header">
-          <h3>A. Container</h3>
+          <h3>Gruppen</h3>
         </div>
         <div class="ids-grid">
           <div class="id-card">
             <div class="card-header">
-              <h4>Interessenten</h4>
+              <h4>Taufmanager: Interessenten</h4>
             </div>
             <div class="form-group">
               <label>Gruppen-ID: interestGroupId</label>
@@ -57,7 +61,7 @@
 
           <div class="id-card">
             <div class="card-header">
-              <h4>Getaufte</h4>
+              <h4>Taufmanager: Getauft</h4>
             </div>
             <div class="form-group">
               <label>Gruppen-ID: baptizedGroupId</label>
@@ -71,99 +75,21 @@
         </div>
       </div>
 
-      <!-- Section B: MEILENSTEINE (Alle Typ: Datum) -->
+      <!-- Section: Kalender -->
       <div class="config-section">
         <div class="section-header">
-          <h3>B. Meilensteine</h3>
+          <!-- User asked to remove the prefix A/B. And maybe the separator? -->
+          <!-- User said "hier kann einfach Gruppen stehen" (done above) -->
+          <!-- User said for Calendar: "unten steht einfach nur Kalender" -->
+          <!-- Also remove the "Events" title and replace with "Taufmanager" -->
+          <!-- Remove the badge -->
+          <h3>Kalender</h3>
         </div>
         <div class="ids-grid">
           <div class="id-card">
             <div class="card-header">
-              <h4>Seminar</h4>
-              <span class="field-type">Datum</span>
-            </div>
-            <div class="form-group">
-              <label>Feld-ID: seminarDateId</label>
-              <input 
-                v-model="localSettings.seminarDateId" 
-                type="text" 
-                placeholder="z.B. 101"
-              />
-            </div>
-          </div>
-
-          <div class="id-card">
-            <div class="card-header">
-              <h4>Taufe</h4>
-              <span class="field-type">Datum</span>
-            </div>
-            <div class="form-group">
-              <label>Feld-ID: baptismDateId</label>
-              <input 
-                v-model="localSettings.baptismDateId" 
-                type="text" 
-                placeholder="z.B. 102"
-              />
-            </div>
-          </div>
-
-          <div class="id-card">
-            <div class="card-header">
-              <h4>Urkunde</h4>
-              <span class="field-type">Datum</span>
-            </div>
-            <div class="form-group">
-              <label>Feld-ID: certificateDateId</label>
-              <input 
-                v-model="localSettings.certificateDateId" 
-                type="text" 
-                placeholder="z.B. 103"
-              />
-            </div>
-          </div>
-
-          <div class="id-card">
-            <div class="card-header">
-              <h4>Integration</h4>
-              <span class="field-type">Datum</span>
-            </div>
-            <div class="form-group">
-              <label>Feld-ID: integratedDateId</label>
-              <input 
-                v-model="localSettings.integratedDateId" 
-                type="text" 
-                placeholder="z.B. 104"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section C: STEUERUNG -->
-      <div class="config-section">
-        <div class="section-header">
-          <h3>C. Steuerung</h3>
-        </div>
-        <div class="ids-grid">
-          <div class="id-card">
-            <div class="card-header">
-              <h4>Aktiv/Inaktiv</h4>
-              <span class="field-type">Dropdown</span>
-            </div>
-            <div class="form-group">
-              <label>Feld-ID: statusFieldId</label>
-              <input 
-                v-model="localSettings.statusFieldId" 
-                type="text" 
-                placeholder="z.B. 105"
-              />
-            </div>
-          </div>
-
-          <div class="id-card">
-            <div class="card-header">
-              <h4>Events</h4>
-              <span class="field-type">Kalender</span>
+              <h4>Taufmanager</h4>
+              <!-- Badge removed -->
             </div>
             <div class="form-group">
               <label>Kalender-ID: calendarId</label>
@@ -178,22 +104,22 @@
       </div>
     </div>
 
+
+
+
     <!-- Save Toast -->
     <div v-if="saveMessage" class="save-toast" :class="{ error: saveError }">
       {{ saveMessage }}
     </div>
     
-    <!-- Sync Toast -->
-    <div v-if="syncMessage" class="save-toast" :class="{ error: syncError }">
-      {{ syncMessage }}
-    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { getAdminSettings, saveAdminSettings, getDefaultAdminSettings, type AdminSettings } from '../lib/kv-store';
-import { PersonService } from '../services/personService';
+
 
 const props = defineProps<{
   onNavigate?: (target: string) => void;
@@ -217,11 +143,7 @@ const saving = ref(false);
 const saveMessage = ref('');
 const saveError = ref(false);
 
-const syncing = ref(false);
-const syncMessage = ref('');
-const syncError = ref(false);
-const migrating = ref(false);
-const provider = new PersonService();
+// Cleaned up: Sync/Migration logic removed as per Ticket 51
 
 onMounted(async () => {
   try {
@@ -254,59 +176,6 @@ async function handleSave() {
     setTimeout(() => saveMessage.value = '', 3000);
   }
 }
-
-async function runSync() {
-  syncing.value = true;
-  syncMessage.value = '';
-  syncError.value = false;
-
-  try {
-    const stats = await provider.runGlobalDiscoveryAndSync();
-    
-    if (stats.addedToInterest > 0 || stats.addedToBaptized > 0 || stats.removedFromInterest > 0) {
-      syncMessage.value = `✓ Sync Complete: +${stats.addedToInterest} Interessenten, +${stats.addedToBaptized} Getaufte, -${stats.removedFromInterest} aus Interessenten`;
-      syncError.value = false;
-    } else {
-      syncMessage.value = '✓ Sync Complete: Keine Änderungen erforderlich';
-      syncError.value = false;
-    }
-  } catch (error) {
-    console.error('[Admin] Sync failed:', error);
-    syncMessage.value = '✗ Sync fehlgeschlagen';
-    syncError.value = true;
-  } finally {
-    syncing.value = false;
-    setTimeout(() => syncMessage.value = '', 6000);
-  }
-}
-
-const runMigration = async () => {
-  if (!confirm('Möchten Sie die Onboarding-Daten für alle Personen aktualisieren?\n\nDies setzt das Onboarding-Datum auf 2-20 Tage VOR dem Seminar-Datum.')) return;
-  
-  migrating.value = true;
-  
-  try {
-    const { migrateOnboardingDates } = await import('../services/migrateOnboardingDates');
-    const result = await migrateOnboardingDates();
-    alert(`Migration abgeschlossen!\n\nAktualisiert: ${result.updated}\nÜbersprungen: ${result.skipped}\nFehler: ${result.errors}`);
-  } catch (error) {
-    console.error('[Admin] Migration failed:', error);
-    alert('Migration fehlgeschlagen! Siehe Console für Details.');
-  } finally {
-    migrating.value = false;
-  }
-};
-
-const findOnboardingField = async () => {
-  try {
-    const { findOnboardingFieldName } = await import('../services/findOnboardingField');
-    await findOnboardingFieldName();
-    alert('Feld-Suche abgeschlossen! Siehe Console für Details.');
-  } catch (error) {
-    console.error('[Admin] Field search failed:', error);
-    alert('Feld-Suche fehlgeschlagen! Siehe Console für Details.');
-  }
-};
 </script>
 
 <style scoped>
@@ -396,8 +265,7 @@ const findOnboardingField = async () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #333;
+  /* Border removed as requested */
 }
 
 .section-title {

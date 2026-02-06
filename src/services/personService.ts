@@ -67,7 +67,7 @@ export class PersonService implements DataProvider {
             // Map to BaptizoPerson - Sequential for stability
             const members: BaptizoPerson[] = [];
 
-            for (const [index, m] of ctPersons.entries()) {
+            for (const m of ctPersons) {
                 // Group member has personId but person object is just a summary
                 // Must fetch full person details to get custom fields!
                 let personDetail: any;
@@ -223,7 +223,8 @@ export class PersonService implements DataProvider {
 
                 if (groupResponse) {
                     console.log(`[Baptizo] Updating status for person ${personId} in group ${groupId} to ${status} (${statusId})`);
-                    await churchtoolsClient.put(`/groups/${groupId}/members/${personId}`, {
+                    // API FIX: Use PATCH for updates (PUT is deprecated)
+                    await churchtoolsClient.patch(`/groups/${groupId}/members/${personId}`, {
                         groupMemberStatusId: statusId
                     });
                 }
@@ -440,10 +441,12 @@ export class PersonService implements DataProvider {
                         if (!baptizedMemberIds.has(pid)) {
                             console.log(`[Baptizo] [SYNC] Found Baptized (ID ${pid}): adding to Group ${settings.baptizedGroupId}`);
                             try {
-                                const response = await churchtoolsClient.put(`/groups/${settings.baptizedGroupId}/members/${pid}`, {
+                                // API FIX: Use POST to add member (PUT is deprecated)
+                                const response = await churchtoolsClient.post(`/groups/${settings.baptizedGroupId}/members`, {
+                                    personId: pid,
                                     groupMemberStatusId: 1 // 1 = active member
                                 });
-                                console.log(`[Baptizo] PUT response for ${pid}:`, response);
+                                console.log(`[Baptizo] POST response for ${pid}:`, response);
                                 stats.addedToBaptized++;
                                 baptizedMemberIds.add(pid);
                             } catch (e) {
@@ -471,10 +474,12 @@ export class PersonService implements DataProvider {
                         if (!ininterest && !inbaptized) {
                             console.log(`[Baptizo] [SYNC] Found Lost candidate: ${personDetail.firstName} ${personDetail.lastName}. Adding to Interest Group (${settings.interestGroupId})`);
                             try {
-                                const response = await churchtoolsClient.put(`/groups/${settings.interestGroupId}/members/${pid}`, {
+                                // API FIX: Use POST to add member (PUT is deprecated)
+                                const response = await churchtoolsClient.post(`/groups/${settings.interestGroupId}/members`, {
+                                    personId: pid,
                                     groupMemberStatusId: 1 // 1 = active member
                                 });
-                                console.log(`[Baptizo] PUT response for ${pid}:`, response);
+                                console.log(`[Baptizo] POST response for ${pid}:`, response);
                                 stats.addedToInterest++;
                                 interestMemberIds.add(pid);
                             } catch (e) {
