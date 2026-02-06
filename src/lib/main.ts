@@ -34,59 +34,18 @@ async function initializeChurchToolsClient(): Promise<void> {
     }
 
     const baseUrl = window.settings?.base_url ?? import.meta.env.VITE_BASE_URL;
-
-    // Safety check: Ensure base URL is defined
-    if (!baseUrl) {
-        const errorMsg = 'Error: VITE_BASE_URL is not defined in .env file. Please create a .env file in the root directory with: VITE_BASE_URL=https://baptizo.church.tools/';
-        console.error(errorMsg);
-        throw new Error(errorMsg);
-    }
-
     churchtoolsClient.setBaseUrl(baseUrl);
 
-    // Auto-login in development mode using Token
-    if (import.meta.env.MODE === 'development') {
-        const token = import.meta.env.VITE_LOGIN_TOKEN;
-        if (token) {
-            console.log('[Baptizo] Using Token-Auth. Testing header formats...');
-
-            // @ts-ignore
-            if (!churchtoolsClient.ax) {
-                console.warn('[Baptizo] ⚠ Could not access internal axios instance');
-                return;
-            }
-
-            const tryHeader = async (prefix: string, name: string) => {
-                const headerVal = prefix ? `${prefix} ${token.trim()}` : token.trim();
-                // @ts-ignore
-                churchtoolsClient.ax.defaults.headers.common['Authorization'] = headerVal;
-                try {
-                    await churchtoolsClient.get('/whoami');
-                    console.log(`[Baptizo] ✅ SUCCESS with format: ${name}`);
-                    return true;
-                } catch (e) {
-                    console.log(`[Baptizo] ❌ Failed with format: ${name} (401)`);
-                    return false;
-                }
-            };
-
-            // Try 1: Standard 'Login <token>'
-            if (await tryHeader('Login', 'Login <token>')) return;
-
-            // Try 2: 'Bearer <token>'
-            if (await tryHeader('Bearer', 'Bearer <token>')) return;
-
-            // Try 3: Raw token
-            if (await tryHeader('', 'Raw Token')) return;
-
-            console.error('[Baptizo] ❌ ALL AUTH FORMATS FAILED. Please check if token is valid.');
-        } else {
-            console.warn('[Baptizo] ⚠ No VITE_LOGIN_TOKEN provided in .env');
-        }
+    // Auto-login in development mode
+    const username = import.meta.env.VITE_USERNAME;
+    const password = import.meta.env.VITE_PASSWORD;
+    if (import.meta.env.MODE === 'development' && username && password) {
+        await churchtoolsClient.post('/login', { username, password });
     }
 
     isInitialized = true;
 }
+
 
 /**
  * Extension instance returned by renderExtension
