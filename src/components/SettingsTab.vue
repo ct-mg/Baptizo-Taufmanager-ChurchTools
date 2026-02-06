@@ -59,8 +59,12 @@
                 Keine Vorlagen
               </div>
               <div v-for="template in seminarTemplates" :key="template.id" class="template-card">
-                <div class="template-header" @click="toggleTemplate(template.id)">
-                  <span>{{ template.name }}</span>
+                <div class="template-header header-seminar" @click="toggleTemplate(template.id)">
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                     <svg v-if="expandedTemplate === template.id" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                     <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                     <span>{{ template.name }}</span>
+                  </div>
                   <span class="offset-badge">{{ formatOffset(template) }}</span>
                 </div>
                 <div v-if="expandedTemplate === template.id" class="template-body">
@@ -109,8 +113,12 @@
                 Keine Vorlagen
               </div>
               <div v-for="template in baptismTemplates" :key="template.id" class="template-card">
-                <div class="template-header" @click="toggleTemplate(template.id)">
-                  <span>{{ template.name }}</span>
+                <div class="template-header header-baptism" @click="toggleTemplate(template.id)">
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                     <svg v-if="expandedTemplate === template.id" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                     <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                     <span>{{ template.name }}</span>
+                  </div>
                   <span class="offset-badge">{{ formatOffset(template) }}</span>
                 </div>
                 <div v-if="expandedTemplate === template.id" class="template-body">
@@ -714,13 +722,17 @@ const openPlaceholders = () => {
 }
 
 .category-badge {
-  display: inline-block;
-  padding: 4px 8px;
+  display: inline-flex;       /* Flex for centering */
+  align-items: center;        /* Vertical Center */
+  justify-content: center;    /* Horizontal Center */
+  padding: 0 1.5rem;          /* Wider padding */
+  height: 40px;               /* Button Height */
   border-radius: 4px;
   font-weight: bold;
   text-transform: uppercase;
-  font-size: 0.8rem;
+  font-size: 0.9rem;          /* Button Font Size */
   letter-spacing: 0.05em;
+  box-sizing: border-box;
 }
 
 .category-badge.seminar {
@@ -764,46 +776,70 @@ const openPlaceholders = () => {
 
 .template-card {
   background: #2a2a2a;
-  border: 1px solid #444;
+  border: none; /* Removed as requested */
   border-radius: 4px;
   overflow: hidden;
 }
 
 .template-header {
-  padding: 0.75rem 1rem;
-  background: #333;
+  padding: 0.6rem 1.25rem; /* Further reduced height */
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
   transition: background 0.2s;
+  font-size: 1rem; /* Reduced from 1.1rem ("Tick zu groß") */
+  font-weight: normal; 
+  color: white;
+}
+
+.template-header.header-seminar {
+  background: rgba(115, 131, 178, 0.15); /* Soft Purple */
+  /* border-bottom removed */
+}
+
+.template-header.header-baptism {
+  background: rgba(255, 159, 67, 0.15); /* Soft Orange */
+  /* border-bottom removed */
 }
 
 .template-header:hover {
-  background: #3a3a3a;
+  filter: brightness(1.2);
 }
 
 .offset-badge {
-  background: #444;
-  padding: 0.2rem 0.5rem;
+  /* background removed (set by parent) */
+  color: #fff;
+  padding: 0.3rem 0.6rem;
   border-radius: 4px;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-family: monospace;
+  font-weight: bold;
+  border: none;
+}
+
+.header-seminar .offset-badge {
+  background: #3C3C5B; /* Deep Purple */
+}
+
+.header-baptism .offset-badge {
+  background: #FF9F43; /* Orange */
+  color: #251D15; /* User Dictated Hex for Text */
 }
 
 .template-body {
-  padding: 1rem;
-  border-top: 1px solid #444;
+  padding: 0.5rem; /* Compact padding */
+  /* border-top removed to avoid disconnect */
 }
 
 .form-group {
-  margin-bottom: 1.5rem; 
+  margin-bottom: 0.8rem; /* Compact margin */
   display: block; 
 }
 
 /* Dense form group for placeholders */
 .form-group.dense {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
 }
 .form-group.dense:last-child {
     margin-bottom: 0;
@@ -812,14 +848,14 @@ const openPlaceholders = () => {
 
 .form-group label {
     display: block;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.3rem; /* Tighter label spacing */
     color: #ccc;
     font-size: 0.9rem;
 }
 
 .standard-input {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.6rem; /* Slightly smaller input padding */
   background: #1a1a1a;
   border: 1px solid #444;
   color: #fff;
@@ -851,7 +887,7 @@ const openPlaceholders = () => {
 .body-textarea {
   resize: vertical;
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.6rem; /* Slightly smaller textarea padding */
   background: #1a1a1a;
   border: 1px solid #444;
   color: #fff;
@@ -865,7 +901,7 @@ const openPlaceholders = () => {
 }
 
 .recipient-checkbox {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.8rem;
 }
 .recipient-checkbox label {
     display: flex;
@@ -881,19 +917,19 @@ const openPlaceholders = () => {
 
 .delete-btn {
   width: auto;
-  background: #7383B2;
+  background: #3C3C5B !important; /* Dark Purple FORCE */
   color: white;
   border: none;
-  padding: 0.5rem 1.5rem;
+  padding: 0.4rem 1.2rem; /* Compact button padding */
   border-radius: 4px;
   cursor: pointer;
   font-weight: normal;
-  margin-top: 1rem;
+  margin-top: 0.25rem; /* Tighter margin */
   transition: all 0.2s;
 }
 
 .delete-btn:hover {
-  background: #5a6a99;
+  background: #4b4b6e !important;
 }
 
 .section-container {

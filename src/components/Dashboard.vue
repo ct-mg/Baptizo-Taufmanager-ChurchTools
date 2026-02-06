@@ -30,7 +30,11 @@
           @click="goToAdminEntryPoint" 
           class="ct-button ct-button--report"
         >
-          <span class="icon">🔐</span> ADMIN
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          Admin
         </button>
         
         <select v-if="settings.multiSiteMode" class="location-filter">
@@ -49,11 +53,24 @@
         </div>
         
         <button @click="openReportModal" class="ct-button ct-button--report">
-          <span class="icon">📄</span> Report erstellen
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          Report erstellen
         </button>
       <button @click="refreshData" class="ct-button ct-button--primary">
-          <span class="icon">↻</span> Refresh
-        </button>
+          <!-- Scaled up Refresh Icon (SVG) -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span style="margin-left: 6px;">Refresh</span>
+      </button>
         <button 
           v-if="user?.is_admin || user?.meta?.is_admin" 
           @click="currentTab = 'settings'" 
@@ -248,11 +265,24 @@
           <button @click="peopleFilter = 'problems'" :class="{ active: peopleFilter === 'problems' }">Fokus</button>
         </div>
         <div class="management-buttons">
-          <button @click="handleOnboarding" class="ct-button ct-button--primary">
-            <span class="icon">➕</span> Onboarding
+          <button @click="handleOnboarding" class="ct-button ct-button--onboarding">
+            <span class="icon">
+              <!-- Plus SVG -->
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </span> Onboarding
           </button>
-          <button @click="handleOffboarding" class="ct-button ct-button--secondary">
-            <span class="icon">📦</span> Offboarding
+          <button @click="handleOffboarding" class="ct-button ct-button--offboarding">
+            <span class="icon">
+              <!-- LogOut SVG -->
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+            </span> Offboarding
           </button>
         </div>
       </div>
@@ -266,7 +296,7 @@
             <th>Taufe</th>
             <th>Urkunde</th>
             <th>Integriert</th>
-            <th>Aktion</th>
+            <th style="text-align: right;"></th>
           </tr>
         </thead>
         <tbody>
@@ -301,7 +331,7 @@
               <span v-if="person.fields.in_gemeinde_integriert" class="badge success">Ja</span>
               <span v-else class="badge pending">Nein</span>
             </td>
-            <td>
+            <td style="text-align: right;">
               <button class="edit-btn" @click="openPersonModal(person)">Bearbeiten</button>
             </td>
           </tr>
@@ -348,7 +378,7 @@
       <section class="help-hero">
         <!-- Intro Card -->
         <div class="intro-card">
-          <div class="title-badge">Baptizo Taufmanager</div>
+          <div class="help-title-badge">Baptizo Taufmanager</div>
           <p class="intro-text">
             Organisiert den gesamten Taufprozess deiner Gemeinde – vom ersten Interesse bis zur Integration. 
             Unser Plugin führt deine Leiter smart durch alle Schritte: Anmeldung, Taufseminar, Taufe, Follow-up – strukturiert, automatisiert und nachvollziehbar.
@@ -359,32 +389,69 @@
         <!-- Benefits Grid -->
         <div class="benefits-grid">
           <div class="benefit-card">
-            <div class="benefit-icon">✔️</div>
+            <div class="benefit-icon">
+              <!-- Clarity (Eye) -->
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </div>
             <h3>Klarheit</h3>
             <p>Du siehst jederzeit, wo sich eine Person im Prozess befindet.</p>
           </div>
           <div class="benefit-card">
-            <div class="benefit-icon">📋</div>
+            <div class="benefit-icon">
+              <!-- Structure (Clipboard/Layout) -->
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+              </svg>
+            </div>
             <h3>Struktur</h3>
             <p>Durchdachtes Gruppenkonzept und Event-Management.</p>
           </div>
           <div class="benefit-card">
-            <div class="benefit-icon">⚡</div>
+            <div class="benefit-icon">
+              <!-- Automation (Zap) -->
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </div>
             <h3>Automatisierung</h3>
             <p>E-Mails und Erinnerungen laufen automatisch.</p>
           </div>
           <div class="benefit-card">
-            <div class="benefit-icon">🎯</div>
+            <div class="benefit-icon">
+              <!-- Relief (Target/User Check) -->
+               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
             <h3>Entlastung</h3>
             <p>Leiter werden eigenständig an Tasks erinnert.</p>
           </div>
           <div class="benefit-card">
-            <div class="benefit-icon">📊</div>
+            <div class="benefit-icon">
+              <!-- Reporting (Bar Chart) -->
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+            </div>
             <h3>Reporting</h3>
             <p>Drop-offs und Status auf einen Blick.</p>
           </div>
           <div class="benefit-card">
-            <div class="benefit-icon">🏢</div>
+            <div class="benefit-icon">
+              <!-- Multisite (Building/Layers) -->
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                 <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                 <polyline points="2 17 12 22 22 17"></polyline>
+                 <polyline points="2 12 12 17 22 12"></polyline>
+              </svg>
+            </div>
             <h3>Multisite-fähig</h3>
             <p>Für Gemeinden mit mehreren Standorten.</p>
           </div>
@@ -394,7 +461,7 @@
       <!-- FAQ Section -->
       <section class="faq-section">
         <div class="faq-title-card">
-          <div class="title-badge">Häufige Fragen & Antworten (FAQs)</div>
+          <div class="help-title-badge">Häufige Fragen & Antworten (FAQs)</div>
           <p class="faq-subtitle">
             Schnelle Hilfe zu den wichtigsten Themen – von Onboarding bis Mailversand.<br>
             Nicht gefunden, was du suchst? <a @click="currentTab = 'about'" class="faq-contact-link">Kontaktiere uns gerne</a>.
@@ -409,7 +476,15 @@
           >
             <div class="faq-question" @click="toggleFaq(index)">
               <span>{{ faq.question }}</span>
-              <span class="faq-arrow">{{ faq.open ? '▼' : '▶' }}</span>
+              <span class="faq-arrow">
+                <!-- Chevron Down if Open, Right if Closed -->
+                <svg v-if="faq.open" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </span>
             </div>
             <div v-if="faq.open" class="faq-answer">
               {{ faq.answer }}
@@ -421,66 +496,93 @@
 
     <!-- ÜBER UNS TAB -->
     <div v-else-if="currentTab === 'about'" class="about-content">
-      <!-- Section 1: UNSERE VISION -->
-      <div class="about-card">
-        <h2 class="about-headline vision">UNSERE VISION</h2>
-        <p class="about-text">
-          Wir existieren, um Gemeinden dabei zu unterstützen, ihren Missionsauftrag kraftvoll zu erfüllen. 
-          Unser Anliegen: Das kraftvolle Zeichen der Wassertaufe sichtbarer machen - regelmäßig und ohne großen Aufwand.
-        </p>
-        
-        <!-- Stats Grid -->
-        <div class="stats-grid">
-          <div class="stat-item">
-            <div class="stat-icon">⏱️</div>
-            <div class="stat-value">15 Minuten</div>
-            <div class="stat-label">für den Aufbau</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-icon">🌊</div>
-            <div class="stat-value">10.000+</div>
-            <div class="stat-label">sichere Taufen</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-icon">🌍</div>
-            <div class="stat-value">250+</div>
-            <div class="stat-label">Kunden in acht Ländern</div>
+      <div class="about-grid">
+        <!-- Left Column: Vision -->
+        <div class="about-column-left">
+          <div class="about-card vision">
+            <h2 class="about-headline vision">UNSERE VISION</h2>
+            <p class="about-text">
+              Wir existieren, um Gemeinden dabei zu unterstützen, ihren Missionsauftrag kraftvoll zu erfüllen. 
+              Unser Anliegen: Das kraftvolle Zeichen der Wassertaufe sichtbarer machen - regelmäßig und ohne großen Aufwand.
+            </p>
+            
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-icon">
+                  <!-- Clock SVG -->
+                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </div>
+                <div class="stat-value">15 Minuten</div>
+                <div class="stat-label">für den Aufbau</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-icon">
+                  <!-- Waves SVG -->
+                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"></path>
+                    <path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"></path>
+                    <path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"></path>
+                  </svg>
+                </div>
+                <div class="stat-value">10.000+</div>
+                <div class="stat-label">sichere Taufen</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-icon">
+                  <!-- Globe SVG -->
+                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                  </svg>
+                </div>
+                <div class="stat-value">250+</div>
+                <div class="stat-label">Kunden in acht Ländern</div>
+              </div>
+            </div>
+
+            <!-- Contact Info (Moved here) -->
+            <div class="contact-grid">
+              <div class="contact-item">
+                <span class="contact-label">WEB</span>
+                <a href="https://www.baptizo.church" target="_blank" class="contact-link">www.baptizo.church</a>
+              </div>
+              <div class="contact-item">
+                <span class="contact-label">EMAIL</span>
+                <a href="mailto:mail@baptizo.church" class="contact-link">mail@baptizo.church</a>
+              </div>
+              <div class="contact-item">
+                <span class="contact-label">TEL</span>
+                <span class="contact-text">0160 976 876 10</span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Section 2: UNSER HERZ -->
-      <div class="about-card">
-        <h2 class="about-headline heart">UNSER HERZ</h2>
-        <p class="about-text">Mit unserer Lösung ist Kirche bereit, wenn es die Menschen sind.</p>
-        <blockquote class="about-quote">
-          Mehr Taufen. Mehr Zeugnisse. Mehr Wachstum.
-        </blockquote>
-      </div>
+        <!-- Right Column: Heart & Mission -->
+        <div class="about-column-right">
+          <!-- Section 2: UNSER HERZ -->
+          <div class="about-card">
+            <h2 class="about-headline heart">UNSER HERZ</h2>
+            <p class="about-text">Mit unserer Lösung ist Kirche bereit, wenn es die Menschen sind.</p>
+            <blockquote class="about-quote">
+              Mehr Taufen. Mehr Zeugnisse. Mehr Wachstum.
+            </blockquote>
+          </div>
 
-      <!-- Section 3: MISSION & KONTAKT -->
-      <div class="about-card">
-        <h2 class="about-headline mission">UNSERE MISSION</h2>
-        <p class="about-text">
-          Zu Gottes Ehre träumen wir davon, ganz Europa mit 1000 mobilen Taufbecken zu fluten.
-        </p>
-        <blockquote class="about-quote">
-          Weil jede Taufe zählt!
-        </blockquote>
-        
-        <!-- Contact Info -->
-        <div class="contact-grid">
-          <div class="contact-item">
-            <span class="contact-label">WEB</span>
-            <a href="https://www.baptizo.church" target="_blank" class="contact-link">www.baptizo.church</a>
-          </div>
-          <div class="contact-item">
-            <span class="contact-label">EMAIL</span>
-            <a href="mailto:mail@baptizo.church" class="contact-link">mail@baptizo.church</a>
-          </div>
-          <div class="contact-item">
-            <span class="contact-label">TEL</span>
-            <span class="contact-text">0160 976 876 10</span>
+          <!-- Section 3: MISSION -->
+          <div class="about-card">
+            <h2 class="about-headline mission">UNSERE MISSION</h2>
+            <p class="about-text">
+              Zu Gottes Ehre träumen wir davon, ganz Europa mit 1000 mobilen Taufbecken zu fluten.
+            </p>
+            <blockquote class="about-quote">
+              Weil jede Taufe zählt!
+            </blockquote>
           </div>
         </div>
       </div>
@@ -592,14 +694,6 @@ const rollingMonths = ref(12);
 const selectedYears = ref<number[]>([2025]);
 const visibleSeries = ref({ interessenten: true, seminare: true, taufen: true });
 
-// Settings State (already declared above: settings variable)
-// Removing duplicate settings declaration here.
-
-// Update Settings Handler (Consolidated)
-const updateSettings = (newSettings: BaptizoSettings) => {
-  settings.value = newSettings;
-  // Apply changes effectively (e.g. if theme changed, etc.)
-};
 
 const currentYear = new Date().getFullYear();
 const availableYears = [currentYear - 2, currentYear - 1, currentYear];
@@ -627,42 +721,37 @@ const handleMultiSiteToggle = () => {
 const faqs = ref([
   {
     question: 'Wie starte ich den Prozess für eine neue Person?',
-    answer: 'Gehe in den Tab "Personen" und klicke auf "+ Onboarding". Wähle eine Person aus der ChurchTools-Datenbank.',
+    answer: 'Navigiere zum Tab "Personen" und klicke oben rechts auf den Button "+ Onboarding". Dort kannst du eine Person direkt aus der ChurchTools-Datenbank suchen und importieren. Wähle einfach den Namen aus – das System übernimmt automatisch das Profilbild und erste Stammdaten.',
     open: false
   },
   {
-    question: 'Wann werden E-Mails versendet?',
-    answer: 'Die E-Mails (Einladungen, Infos, Glückwünsche) werden vollautomatisch basierend auf den Einstellungen im Tab "Einstellungen" versendet.',
+    question: 'Wann und wie werden E-Mails versendet?',
+    answer: 'Der E-Mail-Versand wird über den Tab "E-Mails" gesteuert. Wichtig: Der automatische Versand erfolgt nur, wenn der Schalter "Mailversand" aktiviert ist. Das System prüft dann täglich (beim Öffnen der App), ob für ein Event (z.B. Taufseminar oder Taufe) eine E-Mail-Vorlage fällig ist. E-Mails gehen grundsätzlich nur an Personen, die im Dashboard den Status "Aktiv" haben.',
     open: false
   },
   {
-    question: 'Wie trage ich eine Taufe ein?',
-    answer: 'Gehe zur Person, klicke auf "Bearbeiten" und setze den Haken bei "Taufe" inklusive Datum. Alternativ im Tab "Termine" das Event bearbeiten.',
+    question: 'Wie trage ich eine Taufe oder ein Seminar ein?',
+    answer: 'Suche die Person in der Liste (Tab "Personen") und klicke auf "Bearbeiten". Dort findest du Checkboxen für die einzelnen Schritte (Seminar, Taufe, Urkunde, Integration). Wenn du einen Haken setzt, wird automatisch das heutige Datum eingetragen – du kannst dieses Datum aber auch manuell anpassen, falls das Ereignis schon stattgefunden hat.',
     open: false
   },
   {
-    question: 'Was bedeutet der Status "Fokus"?',
-    answer: 'Dieser Filter zeigt dir Personen, die Aufmerksamkeit brauchen (z.B. lange keine Aktivität oder fehlende Urkunde).',
+    question: 'Was bedeutet der Filter "Fokus"?',
+    answer: 'Der "Fokus"-Filter ist dein intelligenter Assistent. Er zeigt dir gezielt Personen an, bei denen der Prozess ins Stocken geraten ist – zum Beispiel, weil sie zwar das Seminar besucht haben, aber noch keinen Tauftermin haben, oder weil die Integration nach der Taufe noch aussteht. Nutze diesen Filter, um niemanden zu vergessen.',
     open: false
   },
   {
-    question: 'Wie funktioniert das Dashboard-Chart?',
-    answer: 'Du kannst Zeiträume (12/24/36 Monate) wählen oder einzelne Jahre vergleichen. Klicke auf die Legende unten, um Datenreihen ein/auszublenden.',
+    question: 'Wie nutze ich das Chart auf dem Dashboard?',
+    answer: 'Das Diagramm visualisiert deine Tauf-Statistiken über die Zeit. Du kannst oben rechts zwischen einer rollierenden Ansicht (letzte 12, 24 oder 36 Monate) und einer festen Jahresansicht wechseln. Klicke auf die farbigen Punkte in der Legende unter dem Chart, um einzelne Datenreihen (Interessenten, Seminarteilnehmer, Getaufte) ein- oder auszublenden.',
     open: false
   },
   {
     question: 'Was passiert beim "Offboarding"?',
-    answer: 'Die Person wird aus den aktiven Listen entfernt und archiviert. Sie erhält keine automatischen Mails mehr.',
+    answer: 'Das Offboarding dient dazu, den Prozess sauber abzuschließen. Wenn eine Person integriert ist oder kein Interesse mehr hat, kannst du sie über den Button "Offboarding" aus dem aktiven Dashboard entfernen. Ihre Daten bleiben in ChurchTools erhalten, aber sie taucht hier nicht mehr in den offenen Listen auf und erhält keine weiteren automatischen Tauf-Mails.',
     open: false
   },
   {
-    question: 'Kann ich die E-Mail-Texte ändern?',
-    answer: 'Ja, im Reiter "Einstellungen" unter "E-Mail Vorlagen" kannst du alle Texte anpassen.',
-    open: false
-  },
-  {
-    question: 'Wer sieht diese Daten?',
-    answer: 'Alle Nutzer mit Berechtigung für dieses Plugin. Die Daten werden sicher in ChurchTools gespeichert.',
+    question: 'Kann ich die Texte der automatischen E-Mails anpassen?',
+    answer: 'Ja, absolut. Im Reiter "E-Mails" findest du links alle konfigurierten Vorlagen für Seminare und Taufen. Klicke auf eine Vorlage, um Betreff, Inhalt, Zeitpunkt und Empfänger (Person oder Leiter) anzupassen. Du kannst dort auch komplett neue Vorlagen für spezielle Situationen erstellen.',
     open: false
   }
 ]);
@@ -675,46 +764,15 @@ const toggleFaq = (index: number) => {
 const isSyncing = ref(false);
 const showToast = ref(false);
 const toastMessage = ref('');
-const showPersonModal = ref(false); // Added missing state
+const showPersonModal = ref(false);
 
-const loadData = async () => {
-  loading.value = true;
-  
-  // Load group data, events, and settings (NO auto-sync)
-  try {
-    const [groupsData, eventsData, settingsData, adminCfg] = await Promise.all([
-      provider.getGroups(),
-      provider.getSettings(),
-      getAdminSettings()
-    ]);
-    groups.value = groupsData || [];
-    events.value = []; 
-    settings.value = settingsData || { ...DEFAULT_SETTINGS };
-    adminSettings.value = adminCfg;
-
-    // --- EMAIL CHECK (Background) ---
-    checkEmailsOnStart();
-
-  } catch (e) {
-    console.error('Failed to load data', e);
-  } finally {
-    loading.value = false;
-  }
-};
-
-// Refresh EventList if active or available
-  if (eventListRef.value) {
-    await eventListRef.value.refresh();
-  }
-};
+// Note: loadData and refreshData are defined below with Service Integration
 
 // --- Email Service Integration ---
 import { EmailService } from '../services/emailService';
 import { EventService } from '../services/eventService';
 
 const emailService = new EmailService();
-// We reuse the existing provider (PersonService) or instantiate EventService if needed.
-// PersonService might not have getEvents. Let's use EventService.
 const eventService = new EventService();
 
 const checkEmailsOnStart = async () => {
@@ -734,26 +792,21 @@ const checkEmailsOnStart = async () => {
     }
 };
 
-// Hook into loadData to run after settings load
-// We'll wrap the original loadData logic or append to it.
-// Actually, let's call it at the end of loadData.
-const originalLoadData = loadData;
-// ... wait, I am editing the file content directly. I'll insert the call inside loadData's finally block or after success.
-
-// Re-writing loadData to include email check
-const loadDataWithEmailCheck = async () => {
+const loadData = async () => {
   loading.value = true;
   try {
-    const [groupsData, eventsData, settingsData, adminCfg] = await Promise.all([
+    // Parallel fetch
+    const [groupsData, settingsData, adminCfg, eventsDataRes] = await Promise.all([
       provider.getGroups(),
-      provider.getSettings(), // Note: provider.getSettings might return null logic
-      getAdminSettings()
+      provider.getSettings(),
+      getAdminSettings(),
+      eventService.getEvents()
     ]);
     
     groups.value = groupsData || [];
-    events.value = []; 
     settings.value = settingsData || { ...DEFAULT_SETTINGS };
     adminSettings.value = adminCfg;
+    events.value = eventsDataRes || [];
     
     // Run Email Check (Non-blocking)
     checkEmailsOnStart();
@@ -765,17 +818,42 @@ const loadDataWithEmailCheck = async () => {
   }
 };
 
+const refreshData = async () => {
+  await loadData();
+  if (eventListRef.value) {
+    await eventListRef.value.refresh();
+  }
+};
+
+const updateSettings = async (newSettings: BaptizoSettings) => {
+  try {
+    await provider.saveSettings(newSettings);
+    settings.value = newSettings;
+    await loadData();
+  } catch (e) {
+    console.error('Failed to save settings', e);
+  }
+};
+
 // Overwrite the loadData function in the script
 // NOTE: I am using replace_file_content on the file, so I will replace the existing loadData function.
 // updateSettings already defined above
 
-const openReportModal = () => alert("Bericht konfigurieren\n\nEmpfänger hinzufügen:\n- Pastor@example.com\n- Team@example.com\n\n(Simulation)");
+const openReportModal = () => alert("🚧 Feature in Entwicklung");
 const handleCreateEvent = async (e: any) => { await provider.createEvent(e); await loadData(); };
 
 // Modal Handlers
 const openPersonModal = (p: BaptizoPerson) => { 
   selectedPerson.value = p; 
   showPersonModal.value = true;
+};
+
+const handlePersonAdded = async () => {
+  await loadData();
+  showOnboardingModal.value = false;
+  showToast.value = true;
+  toastMessage.value = 'Person erfolgreich hinzugefügt';
+  setTimeout(() => showToast.value = false, 3000);
 };
 
 // Branding Colors (Same as PersonList.vue)
@@ -830,10 +908,6 @@ const handlePersonUpdated = async (updatedPerson: BaptizoPerson) => {
   }
 };
 
-const handlePersonAdded = async () => {
-  showOnboardingModal.value = false;
-  await loadData();
-};
 
 const handlePersonRemoved = async () => {
   showOffboardingModal.value = false;
@@ -1743,6 +1817,13 @@ onMounted(() => loadData());
 /* Fixed column widths for stability */
 .people-table th:nth-child(1),
 .people-table td:nth-child(1) { width: 25%; }
+
+/* Center Status Columns (2-7) */
+.people-table th:nth-child(n+2):nth-child(-n+7),
+.people-table td:nth-child(n+2):nth-child(-n+7) {
+  text-align: center;
+}
+
 .people-table th:nth-child(2),
 .people-table td:nth-child(2) { width: 10%; }
 .people-table th:nth-child(3),
@@ -1862,11 +1943,11 @@ onMounted(() => loadData());
 }
 
 .benefit-card {
-  background: #2a2a2a;
+  background: #2a2a2a; /* Card background */
   padding: 1.5rem;
-  border-radius: 8px;
+  border-radius: 8px; /* Standardized to 8px */
   text-align: center;
-  transition: all 0.3s;
+  transition: transform 0.2s;
 }
 
 .benefit-card:hover {
@@ -1875,8 +1956,12 @@ onMounted(() => loadData());
 }
 
 .benefit-icon {
-  font-size: 2.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60px;
   margin-bottom: 1rem;
+  color: #fff; /* White as requested */
 }
 
 .benefit-card h3 {
@@ -1940,6 +2025,21 @@ onMounted(() => loadData());
   overflow: hidden;
 }
 
+/* FAQ Title Override */
+.faq-title-card .help-title-badge {
+    color: #FF9F43;
+    border-color: #FF9F43;
+    background: rgba(255, 159, 67, 0.1); /* Optional Tint */
+}
+
+/* FAQ Link Override */
+.faq-contact-link, .faq-contact-link a {
+    color: #FF9F43 !important;
+}
+.faq-contact-link a:hover {
+    color: #ffd6ad !important;
+}
+
 .faq-question {
   background: #2a2a2a;
   padding: 1.25rem 1.5rem;
@@ -1953,26 +2053,29 @@ onMounted(() => loadData());
 }
 
 .faq-question:hover {
-  background: #3C3C5B;
-  color: #fff;
+  background: rgba(255, 159, 67, 0.1); /* Orange Tint */
+  color: #FF9F43; /* Orange Text */
 }
 
 .faq-arrow {
-  color: #7383B2;
+  color: #FF9F43; /* Orange Always */
   font-size: 0.9rem;
-  transition: transform 0.3s;
+  /* transition removed to avoid "weird spinning" */
+  display: flex;
+  align-items: center;
 }
 
 .faq-item.active .faq-arrow {
-  transform: rotate(90deg);
+  color: #FF9F43; /* explicit */
+  /* transform: rotate(90deg) REMOVED */
 }
 
 .faq-answer {
-  background: #2a2a2a; /* Gray box for answer */
+  background: rgba(255, 159, 67, 0.1); /* Subtle Orange Tint */
   padding: 1.25rem 1.5rem;
   color: #ccc;
   line-height: 1.6;
-  border-top: 1px solid #444;
+  border-top: 1px solid rgba(255, 159, 67, 0.2); /* Matching border */
   animation: slideDown 0.3s ease;
 }
 
@@ -2048,16 +2151,65 @@ onMounted(() => loadData());
 
 /* About Content (Über uns Tab) */
 .about-content {
-  max-width: 900px;
+  max-width: 1400px; /* Full Width */
   margin: 2rem auto 0;
   padding: 0 20px;
 }
 
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: stretch;
+}
+
+.about-column-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.about-column-right {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
 .about-card {
   background: #2d2d44;
-  padding: 2rem;
-  border-radius: 12px;
-  margin-bottom: 2rem;
+  padding: 1.5rem; /* Reduced padding from 2rem to 1.5rem */
+  border-radius: 8px;
+  /* margin-bottom removed */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Ensure flex children in right column share height */
+.about-column-right .about-card {
+  flex: 1;
+  height: auto; /* Allow flex to control height */
+}
+
+/* ... */
+
+/* Contact Grid - Distributed */
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Equal distribution */
+  gap: 1.5rem;
+  margin-top: 3rem; /* More space from top */
+  text-align: left;
+}
+
+.contact-item {
+  display: flex;
+  flex-direction: column; /* Label top, Value bottom */
+  gap: 0.25rem;
+}
+
+.about-card.vision {
+   /* Specific for left card if needed */
 }
 
 .about-headline {
@@ -2091,7 +2243,8 @@ onMounted(() => loadData());
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
-  margin-top: 2rem;
+  margin-top: auto; /* Push to bottom */
+  padding: 2rem 0; /* Increased padding (was 10px) */
 }
 
 .stat-item {
@@ -2099,15 +2252,26 @@ onMounted(() => loadData());
 }
 
 .stat-icon {
-  font-size: 3rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60px;
   margin-bottom: 0.5rem;
+  color: #fff;
+}
+
+/* Ensure SVG is centered in the flex container */
+.stat-icon svg {
+  display: block; 
 }
 
 .stat-value {
   font-size: 2rem;
-  font-weight: 800;
-  color: #92C9D6;
+  font-weight: 700;
+  color: #fff !important;
+  font-style: italic;
   margin-bottom: 0.5rem;
+  font-family: inherit;
 }
 
 .stat-label {
@@ -2123,7 +2287,7 @@ onMounted(() => loadData());
   font-style: italic;
   color: #fff;
   text-align: center;
-  margin: 2rem 0 0 0;
+  margin: 0; 
   padding: 0;
   border-left: none;
 }
@@ -2134,47 +2298,41 @@ onMounted(() => loadData());
   margin-bottom: 1.5rem;
 }
 
-/* Contact Grid */
+/* Contact Grid - Distributed 3 Columns */
 .contact-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, 1fr); /* 1/3 each */
   gap: 1.5rem;
-  margin-top: 1.5rem;
+  margin-top: 2rem;
+  text-align: center;
 }
 
 .contact-item {
   display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
   align-items: center;
-  gap: 0.75rem;
 }
 
 .contact-label {
-  font-size: 0.7rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 800;
   text-transform: uppercase;
-  color: #7383B2;
+  color: #7383B2; /* Muted Purple/Blue */
   letter-spacing: 0.1em;
-  min-width: 50px;
-  flex-shrink: 0;
 }
 
-.contact-link {
-  color: #92C9D6;
+.contact-link, .contact-text {
+  color: #92C9D6; /* Turquoise as requested */
+  font-weight: 500;
   text-decoration: none;
-  transition: all 0.2s;
   font-size: 0.95rem;
 }
 
 .contact-link:hover {
-  color: #a8d9e5;
   text-decoration: underline;
+  color: #fff; /* White on hover */
 }
-
-.contact-text {
-  color: #ccc;
-  font-size: 0.95rem;
-}
-
 /* Responsive for About section */
 @media (max-width: 768px) {
   .stats-grid,
@@ -2196,5 +2354,52 @@ onMounted(() => loadData());
   text-decoration: underline;
   color: #742A2A;
   cursor: pointer;
+}
+
+/* Force Help Title Style */
+.help-title-badge {
+  display: inline-block;
+  background: rgba(146, 201, 214, 0.1);
+  color: #92C9D6;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 1.5rem !important; /* Force increase */
+  font-weight: bold !important;  /* BOLD as requested */
+  text-transform: uppercase !important; /* UPPERCASE as requested */
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.05em;
+  line-height: 1.4;
+}
+
+/* Offboarding Button Accent - SOLID PURPLE */
+.ct-button--offboarding {
+  background: #3C3C5B !important; /* Deep Purple */
+  color: white !important;
+  border: none !important;
+  transition: all 0.2s;
+}
+
+.ct-button--offboarding:hover {
+  background: #4b4b6e !important;
+}
+
+.ct-button--offboarding .icon {
+  color: white !important;
+}
+
+/* Onboarding Button Accent - SOLID TURQUOISE */
+.ct-button--onboarding {
+  background: #92C9D6 !important; /* Turquoise */
+  color: #3C3C5B !important; /* Deep Purple Text */
+  border: none !important;
+  transition: all 0.2s;
+}
+
+.ct-button--onboarding:hover {
+  background: #a8d5e0 !important;
+}
+
+.ct-button--onboarding .icon {
+  color: #3C3C5B !important;
 }
 </style>

@@ -7,16 +7,52 @@
       </div>
       
       <div class="modal-body">
-        <!-- Info Text removed -->
         
-        <div class="form-group">
-          <label>Personen ID (nur Nummer)</label>
-          <input 
-            v-model.number="personId" 
-            type="number" 
-            placeholder="z.B. 123"
-            class="input-field"
-          >
+        <!-- Search Input -->
+        <div class="form-group" v-if="!selectedPerson">
+          <label>Person suchen (Name)</label>
+          <div class="search-wrapper">
+              <input 
+                v-model="searchQuery" 
+                @input="onSearch"
+                type="text" 
+                placeholder="Name eingeben..."
+                class="input-field search-input"
+                autofocus
+              >
+              <div v-if="isSearching" class="search-spinner"></div>
+          </div>
+          
+          <!-- Search Results Dropdown -->
+          <div v-if="searchResults.length > 0 && searchQuery.length > 2" class="search-results">
+              <div 
+                v-for="person in searchResults" 
+                :key="person.id" 
+                class="search-result-item"
+                @click="selectPerson(person)"
+              >
+                  <img :src="person.imageUrl" class="result-avatar" />
+                  <div class="result-info">
+                      <div class="result-name">{{ person.firstName }} {{ person.lastName }}</div>
+                      <div class="result-meta">ID: {{ person.id }}</div>
+                  </div>
+              </div>
+          </div>
+          <div v-else-if="searchQuery.length > 2 && !isSearching && searchResults.length === 0" class="no-results">
+              Keine Person gefunden
+          </div>
+        </div>
+
+        <!-- Selected Person Preview -->
+        <div v-else class="selected-person-card">
+            <div class="selected-header">
+                <img :src="selectedPerson.imageUrl" class="selected-avatar" />
+                <div class="selected-info">
+                    <div class="selected-name">{{ selectedPerson.firstName }} {{ selectedPerson.lastName }}</div>
+                    <div class="selected-id">ID: {{ selectedPerson.id }}</div>
+                </div>
+                <button class="remove-btn" @click="clearSelection">✕</button>
+            </div>
         </div>
         
         <div class="form-group">
@@ -29,12 +65,11 @@
         </div>
         
         <div v-if="error" class="error-message">{{ error }}</div>
-        <div v-if="loading" class="loading-message">Lädt Person...</div>
       </div>
       
       <div class="modal-footer">
         <button class="ct-button ct-button--secondary" @click="$emit('close')">Abbrechen</button>
-        <button class="ct-button ct-button--primary" @click="addPerson" :disabled="!personId || loading">
+        <button class="ct-button ct-button--primary" @click="addPerson" :disabled="!selectedPerson || loading">
           Person hinzufügen
         </button>
       </div>
@@ -45,34 +80,71 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { PersonService } from '../services/personService';
+import type { BaptizoPerson } from '../types/baptizo-types';
 
 const emit = defineEmits(['close', 'personAdded']);
 
-const personId = ref<number | null>(null);
 const onboardingDate = ref(new Date().toISOString().split('T')[0]);
 const loading = ref(false);
 const error = ref('');
 
+// Search State
+const searchQuery = ref('');
+const searchResults = ref<BaptizoPerson[]>([]);
+const isSearching = ref(false);
+const selectedPerson = ref<BaptizoPerson | null>(null);
+let searchTimeout: any = null;
+
 const provider = new PersonService();
 
+const onSearch = () => {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    
+    if (searchQuery.value.length < 3) {
+        searchResults.value = [];
+        return;
+    }
+
+    searchTimeout = setTimeout(async () => {
+        isSearching.value = true;
+        searchResults.value = await provider.searchPersons(searchQuery.value);
+        isSearching.value = false;
+    }, 300);
+};
+
+const selectPerson = (person: BaptizoPerson) => {
+    selectedPerson.value = person;
+    searchQuery.value = '';
+    searchResults.value = [];
+};
+
+const clearSelection = () => {
+    selectedPerson.value = null;
+    searchQuery.value = '';
+};
+
 const addPerson = async () => {
-  if (!personId.value) return;
+  if (!selectedPerson.value) return;
   
   loading.value = true;
   error.value = '';
   
   try {
-    // Check if person exists
-    await provider.getPerson(personId.value);
+    const pid = selectedPerson.value.id;
+    
+    // Check if person exists (refresh detail) - technically we already have partial data, but let's ensure we can fetch full
+    // But since selectedPerson comes from search, it might be partial. getPerson guarantees full details.
+    // However, updatePersonFields technically doesn't need getPerson first if just updating.
+    // But to be safe and consistent with logic:
     
     // Always overwrite onboarding date & clear offboarding date, set status active
-    await provider.updatePersonFields(personId.value, {
+    await provider.updatePersonFields(pid, {
       taufmanager_onboaring: onboardingDate.value,
       taufmanager_offboarding: null,
       taufmanager_status: 'active'
     });
     
-    console.log(`[Baptizo] Person ${personId.value} onboarded on ${onboardingDate.value}`);
+    console.log(`[Baptizo] Person ${pid} onboarded on ${onboardingDate.value}`);
     emit('personAdded');
     emit('close');
   } catch (e: any) {
@@ -154,10 +226,17 @@ const addPerson = async () => {
 .input-field {
   width: 100%;
   background: #1a1a1a;
-  border: 1px solid #444;
+  border: 1px solid #444; /* Subtle border */
   color: white;
   padding: 0.5rem;
   border-radius: 4px;
+  outline: none !important; /* Remove browser default blue outline */
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-field:focus {
+  border-color: #92C9D6; /* Feature Color */
+  box-shadow: 0 0 0 2px rgba(146, 201, 214, 0.2); /* Subtle glow matching theme */
 }
 
 .error-message {
@@ -213,5 +292,105 @@ const addPerson = async () => {
 
 .ct-button--secondary:hover {
   background-color: #555;
+}
+
+/* Search Styles */
+.search-wrapper {
+    position: relative;
+}
+.search-input {
+    width: 100%;
+}
+.search-spinner {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    width: 16px; 
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.search-results {
+    background: #222;
+    border: 1px solid #444;
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 0.5rem;
+}
+.search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #333;
+}
+.search-result-item:hover {
+    background: #333;
+}
+.result-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+.result-name {
+    font-weight: bold;
+    color: #eee;
+}
+.result-meta {
+    font-size: 0.8rem;
+    color: #888;
+}
+.no-results {
+    padding: 10px;
+    color: #888;
+    text-align: center;
+    font-style: italic;
+}
+
+/* Selected Person Card */
+.selected-person-card {
+    background: #252535;
+    border: 1px solid #3d3d5c;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+.selected-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.selected-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+}
+.selected-info {
+    flex: 1;
+}
+.selected-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #92C9D6;
+}
+.selected-id {
+    color: #777;
+    font-size: 0.9rem;
+}
+.remove-btn {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+.remove-btn:hover {
+    color: white;
 }
 </style>

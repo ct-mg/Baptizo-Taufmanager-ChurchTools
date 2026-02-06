@@ -281,6 +281,40 @@ export class PersonService implements DataProvider {
         throw new Error('Method not implemented.');
     }
 
+    async searchPersons(query: string): Promise<BaptizoPerson[]> {
+        if (!query || query.length < 3) return [];
+        console.log(`[Baptizo] Searching persons with query: '${query}'`);
+
+        try {
+            // Use ChurchTools /persons endpoint with query
+            const response = await churchtoolsClient.get<any>(`/persons?query=${encodeURIComponent(query)}&limit=10`);
+            const persons = Array.isArray(response) ? response : (response.data || []);
+
+            return persons.map((p: any) => ({
+                id: p.id,
+                firstName: p.firstName || 'Unknown',
+                lastName: p.lastName || 'Unknown',
+                status: 'active', // Default for search results (we don't know group status yet)
+                entry_date: null,
+                fields: { // Empty fields for search result
+                    seminar_besucht_am: null,
+                    getauft_am: null,
+                    urkunde_ueberreicht: null,
+                    in_gemeinde_integriert: null,
+                    taufmanager_onboaring: null,
+                    taufmanager_offboarding: null
+                },
+                imageUrl: p.imageUrl || `https://ui-avatars.com/api/?name=${p.firstName}+${p.lastName}&background=random`,
+                email: p.email || null,
+                mobile: p.mobile || null,
+                phone: p.phone || null
+            }));
+        } catch (error) {
+            console.error('[Baptizo] Search failed:', error);
+            return [];
+        }
+    }
+
     async runGlobalDiscoveryAndSync(): Promise<{ addedToInterest: number; addedToBaptized: number; removedFromInterest: number }> {
         const settings = await getAdminSettings();
         if (!settings) return { addedToInterest: 0, addedToBaptized: 0, removedFromInterest: 0 };

@@ -27,9 +27,8 @@
           </div>
         </div>
 
-        <hr class="divider">
-
-        <div class="grid-layout">
+        <!-- Boxed Attributes Section -->
+        <div class="attributes-box">
           <!-- Row 1: Seminar -->
           <div class="grid-row">
             <label class="checkbox-label">
@@ -69,6 +68,8 @@
       </div>
 
       <div class="modal-footer">
+        <!-- ... -->
+
         <button class="ct-button ct-button--contact" @click="toggleContactInfo">
             <span v-if="isLoadingContact">Lade...</span>
             <span v-else>{{ showContactInfo ? 'Kontakt verbergen' : 'Kontaktdaten' }}</span>
@@ -329,17 +330,16 @@ const toggleContactInfo = async () => {
   margin: 0;
 }
 
-.divider {
-  border: 0;
-  border-top: 1px solid #444;
-  margin: 1.5rem 0;
-}
-
-/* Grid Layout for Form */
-.grid-layout {
+/* Attributes Box */
+.attributes-box {
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
+  margin-top: 1rem;
 }
 
 .grid-row {
@@ -358,6 +358,14 @@ const toggleContactInfo = async () => {
   font-weight: 500;
 }
 
+.checkbox-label input[type="checkbox"] {
+  accent-color: #3C3C5B !important; /* Dark Baptizo Purple */
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  border: 1px solid #92C9D6; /* Suggestion from user description, though accent-color might override */
+}
+
 .date-input {
   background: #444;
   border: 1px solid #666;
@@ -372,8 +380,8 @@ const toggleContactInfo = async () => {
   justify-content: space-between;
   align-items: center;
   margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid #444;
+  padding-top: 0; /* Removed padding */
+  border-top: none; /* Removed border */
 }
 
 .action-buttons {
@@ -409,13 +417,13 @@ const toggleContactInfo = async () => {
 }
 
 .ct-button--contact {
-  background-color: #7383B2;
+  background-color: #3C3C5B !important; /* Dark Purple FORCE */
   color: white;
   padding: 0.4rem 0.8rem;
 }
 
 .ct-button--contact:hover {
-  background-color: #8593c2;
+  background-color: #4b4b6e !important;
 }
 
 .contact-card {

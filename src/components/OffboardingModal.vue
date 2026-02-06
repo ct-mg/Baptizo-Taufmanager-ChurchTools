@@ -264,7 +264,7 @@ const removePersons = async () => {
 
 .person-item.selected {
   background: #3C3C5B;
-  border-left: 3px solid #92C9D6;
+  /* border-left removed */
 }
 
 /* AVATAR STYLES */
@@ -311,13 +311,13 @@ const removePersons = async () => {
 /* MINI BADGES (S T U I) */
 .badges-container {
   display: flex;
-  gap: 4px;
+  gap: 8px; /* Slightly more space */
 }
 
 .badge-mini {
   width: 24px;
   height: 24px;
-  border-radius: 4px;
+  border-radius: 50%; /* Circle */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -376,8 +376,7 @@ const removePersons = async () => {
   justify-content: flex-end;
   gap: 1rem;
   margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid #444;
+  /* border-top removed */
 }
 
 .ct-button {

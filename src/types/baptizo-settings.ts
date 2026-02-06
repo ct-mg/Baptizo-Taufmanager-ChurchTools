@@ -111,6 +111,16 @@ export const DEFAULT_SETTINGS: BaptizoSettings = {
             offsetType: 'after' as const,
             category: 'seminar' as const,
             recipientType: 'leader' as const
+        },
+        {
+            id: 'leader_reminder_baptism',
+            name: 'Leader-Reminder Taufe',
+            subject: 'Reminder: Bitte Taufmanager pflegen (Taufe)',
+            body: 'Hallo {{person.firstName}}, die Taufe ist vorbei. Bitte logge dich jetzt in den Baptizo Taufmanager ein und hake ab, wer getauft wurde.',
+            daysOffset: 1,
+            offsetType: 'after' as const,
+            category: 'baptism' as const,
+            recipientType: 'leader' as const
         }
     ],
     customFieldLabels: [

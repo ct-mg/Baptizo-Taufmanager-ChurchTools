@@ -26,7 +26,14 @@
       <div class="action-button">
           <button @click="seedMockData" style="display: none;">💾 Mock Sync</button>
           <button class="ct-button ct-button--primary" @click="openCreateModal">
-            <span class="icon">➕</span> Neuen Termin anlegen
+            <span class="icon">
+              <!-- Plus SVG -->
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </span> 
+            Neuen Termin anlegen
           </button>
       </div>
     </div>
@@ -589,6 +596,17 @@ onMounted(() => {
   color: white;
   border-radius: 4px;
   font-size: 1rem;
+}
+
+/* Delete Button */
+.ct-button--delete {
+  background-color: #3C3C5B !important; /* Dark Baptizo Purple FORCE */
+  color: white;
+  margin-right: auto; /* Push to left */
+}
+
+.ct-button--delete:hover {
+  background-color: #4b4b6e !important;
 }
 
 .input-field:focus {
