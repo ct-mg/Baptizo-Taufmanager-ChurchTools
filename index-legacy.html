@@ -1,24 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>ChurchTools Extension</title>
-    </head>
-    <body>
-        <div id="app"></div>
-        <script type="module">
-            import { renderExtension, loadEntryPoint } from './src/index.ts';
 
-            // Load and render the main entry point
-            (async () => {
-                try {
-                    const entryPoint = await loadEntryPoint('main');
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChurchTools Extension</title>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script type="module">
+        import { renderExtension, loadEntryPoint } from './src/index.ts';
+
+        // Load and render the main entry point
+        (async () => {
+            try {
+                // ChurchTools convention: extension point id matches entry point name
+                const entryPoint = await loadEntryPoint('main');
+                if (entryPoint) {
                     await renderExtension('app', entryPoint, {});
-                } catch (error) {
-                    console.error('Failed to load extension:', error);
+                    console.log('[Legacy] Extension rendered successfully');
+                } else {
+                    throw new Error('Entry point "main" not found');
                 }
-            })();
-        </script>
-    </body>
+            } catch (error) {
+                console.error('Failed to load extension:', error);
+                document.getElementById('app').innerHTML = `<p style="color: red; padding: 20px;">Fehler beim Laden der App: ${error.message}</p>`;
+            }
+        })();
+    </script>
+</body>
+
 </html>
