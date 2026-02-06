@@ -340,7 +340,10 @@ export class MockDataProvider implements DataProvider {
 
     async createEvent(event: Omit<BaptizoEvent, 'id'>): Promise<BaptizoEvent> {
         await new Promise((resolve) => setTimeout(resolve, 300));
-        const newEvent = { ...event, id: Math.max(0, ...this.events.map(e => e.id)) + 1 };
+        const maxId = this.events.length > 0
+            ? Math.max(...this.events.map(e => typeof e.id === 'number' ? e.id : parseInt(String(e.id), 10)))
+            : 0;
+        const newEvent = { ...event, id: maxId + 1 };
         this.events.push(newEvent);
         return newEvent;
     }

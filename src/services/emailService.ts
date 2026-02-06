@@ -1,5 +1,5 @@
 import { type BaptizoSettings, type EmailTemplate } from '../types/baptizo-settings';
-import { type BaptizoEvent, type BaptizoPerson } from '../types/baptizo-types';
+import { type BaptizoEvent } from '../types/baptizo-types';
 
 /* 
  * Mock Service Interface - strictly following the rule:
