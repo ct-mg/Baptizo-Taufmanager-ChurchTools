@@ -1,19 +1,30 @@
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig, loadEnv, type LibraryFormats } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { resolve } from 'path';
-import { copyFileSync } from "fs";
+import { copyFileSync, unlinkSync } from 'fs';
 import manifest from './manifest.json';
 
 // Configuration for legacy mode (index-legacy.html)
 // This serves the main entry point directly without the test environment
 export default ({ mode }: { mode: string }) => {
-    process.env = { ...process.env, ...loadEnv(mode, process.cwd()) };
+    // Load env files properly
+    const env = loadEnv(mode, process.cwd(), '');
+    process.env = { ...process.env, ...env };
 
     const key = manifest.key;
 
     return defineConfig({
-        // Use relative path for legacy mode so it works regardless of the CT path
-        base: './',
+        // Explicitly set envDir to project root
+        envDir: process.cwd(),
+        // Explicitly define env vars for client
+        define: {
+            'import.meta.env.VITE_BASE_URL': JSON.stringify(env.VITE_BASE_URL || 'https://baptizo.church.tools/'),
+            'import.meta.env.VITE_USERNAME': JSON.stringify(env.VITE_USERNAME || ''),
+            'import.meta.env.VITE_PASSWORD': JSON.stringify(env.VITE_PASSWORD || ''),
+            'import.meta.env.VITE_LOGIN_TOKEN': JSON.stringify(env.VITE_LOGIN_TOKEN || ''),
+        },
+        // Use root path for legacy mode
+        base: `/ccm/${key}/`,
         build: {
             rollupOptions: {
                 input: {
@@ -68,9 +79,11 @@ export default ({ mode }: { mode: string }) => {
                     try {
                         copyFileSync(distIndexLegacy, distIndex);
                         // remove the index-legacy.html file
-                        import('fs').then(fs => {
-                            fs.unlinkSync(distIndexLegacy);
-                        });
+                        try {
+                            unlinkSync(distIndexLegacy);
+                        } catch (e) {
+                            console.error('Failed to unlink index-legacy.html:', e);
+                        }
                         console.log('✓ Renamed index-legacy.html to index.html in dist/');
                     } catch (error) {
                         console.error('Failed to rename index-legacy.html:', error);

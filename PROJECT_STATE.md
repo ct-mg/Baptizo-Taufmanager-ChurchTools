@@ -8,12 +8,13 @@
 -   **Integration:** `@churchtools/churchtools-client`, `@churchtools/extension-points`
 
 ## Current Status
--   **Phase:** Security & Key Consolidation (v1.0.0)
--   **Deployment:** `deploy:legacy` for production-like environments.
--   **Environment:** Centralized `.env` for local development (Credentials based).
--   **Key:** `baptizotaufmanager` (system-wide consistency).
+-   **Phase:** Feature Completion & Handoff (v1.1.0)
+-   **Deployment:** `deploy:legacy` für Produktion verifiziert.
+-   **Key:** `baptizotaufmanager` (konsistent).
+-   **Nächster Task:** Monitoring & Multi-Site support (Vorbereitung).
 
 ## Recent Changes
+-  - **Feb 2026**: Admin Navigation Fix: Umstellung auf internen Vue-State (`showAdminView`). Double-Header entfernt. Integration von App-Settings in KV-Store. Legacy-Build (`build:legacy`) synchronisiert und aktualisiert.
 -   Fixed critical typo in field names (`taufmanager_onboaring` -> `taufmanager_onboarding`) in `personService.ts` and migration scripts.
 -   Consolidated environment variables: `.env` instead of `.env.development`.
 -   Implemented credential-based login for local development.

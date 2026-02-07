@@ -7,5 +7,6 @@
 - [x] Consolidate environment variables (.env)
 - [x] Update extension key to `baptizotaufmanager`
 - [x] Implement credential-based development login
+- [x] Produktions-Fix: Admin-Button Navigation (interner State)
 - [ ] Implement Multi-Site support (future)
 - [ ] Add real data provider (currently Mock)

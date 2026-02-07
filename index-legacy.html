@@ -10,22 +10,15 @@
 <body>
     <div id="app"></div>
     <script type="module">
-        import { renderExtension, loadEntryPoint } from './src/index.ts';
+        import { renderExtension, loadEntryPoint } from '/src/index.ts';
 
         // Load and render the main entry point
         (async () => {
             try {
-                // ChurchTools convention: extension point id matches entry point name
                 const entryPoint = await loadEntryPoint('main');
-                if (entryPoint) {
-                    await renderExtension('app', entryPoint, {});
-                    console.log('[Legacy] Extension rendered successfully');
-                } else {
-                    throw new Error('Entry point "main" not found');
-                }
+                await renderExtension('app', entryPoint, {});
             } catch (error) {
                 console.error('Failed to load extension:', error);
-                document.getElementById('app').innerHTML = `<p style="color: red; padding: 20px;">Fehler beim Laden der App: ${error.message}</p>`;
             }
         })();
     </script>
