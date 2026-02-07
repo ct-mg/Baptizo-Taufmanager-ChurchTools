@@ -125,7 +125,6 @@ const events = ref<BaptizoEvent[]>([]);
 // Filter State
 const filterType = ref<'all' | 'seminar' | 'baptism'>('all');
 const showPastEvents = ref(false);
-const archiveWeeks = ref(12);
 
 // Modal State
 const showCreateModal = ref(false);
@@ -285,9 +284,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.event-list-container {
-  /* Padding handled by parent container .events-content */
-}
 
   /* Header Controls */
   .events-header {

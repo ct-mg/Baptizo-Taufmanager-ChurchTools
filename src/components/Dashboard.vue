@@ -662,8 +662,7 @@ const showOnboardingModal = ref(false);
 const showOffboardingModal = ref(false);
 const eventListRef = ref<any>(null); // Reference to EventList component
 
-const interestGroupId = computed(() => adminSettings.value ? parseInt(adminSettings.value.interestGroupId || '0') : 0);
-const baptizedGroupId = computed(() => adminSettings.value ? parseInt(adminSettings.value.baptizedGroupId || '0') : 0);
+
 
 const tabs = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -2194,9 +2193,6 @@ onMounted(() => loadData());
   gap: 0.25rem;
 }
 
-.about-card.vision {
-   /* Specific for left card if needed */
-}
 
 .about-headline {
   font-size: 1.5rem;
