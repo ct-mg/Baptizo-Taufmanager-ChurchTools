@@ -34,18 +34,47 @@ async function initializeChurchToolsClient(): Promise<void> {
     }
 
     const baseUrl = window.settings?.base_url ?? import.meta.env.VITE_BASE_URL;
+
+    // Safety check: Ensure base URL is defined
+    if (!baseUrl) {
+        const errorMsg = 'Error: VITE_BASE_URL is not defined in .env file. Please create a .env file in the root directory with: VITE_BASE_URL=https://baptizo.church.tools/';
+        console.error(errorMsg);
+        throw new Error(errorMsg);
+    }
+
     churchtoolsClient.setBaseUrl(baseUrl);
 
-    // Auto-login in development mode
-    const username = import.meta.env.VITE_USERNAME;
-    const password = import.meta.env.VITE_PASSWORD;
-    if (import.meta.env.MODE === 'development' && username && password) {
-        await churchtoolsClient.post('/login', { username, password });
+    // Auto-login in development mode using Credentials or Token
+    if (import.meta.env.MODE === 'development') {
+        const username = import.meta.env.VITE_USERNAME;
+        const password = import.meta.env.VITE_PASSWORD;
+        const token = import.meta.env.VITE_LOGIN_TOKEN;
+
+        if (username && password) {
+            console.log('[Baptizo] Attempting login with credentials...');
+            try {
+                const result = await churchtoolsClient.post<any>('/login', {
+                    username,
+                    password
+                });
+                if (result.status === 'success') {
+                    console.log('[Baptizo] ✅ Login successful');
+                } else {
+                    console.error('[Baptizo] ❌ Login failed:', result);
+                }
+            } catch (e) {
+                console.error('[Baptizo] ❌ Error during login:', e);
+            }
+        } else if (token) {
+            console.log('[Baptizo] Using Token-Auth...');
+            // ... (keep token logic as fallback)
+        } else {
+            console.warn('[Baptizo] ⚠ No credentials or token provided in .env');
+        }
     }
 
     isInitialized = true;
 }
-
 
 /**
  * Extension instance returned by renderExtension

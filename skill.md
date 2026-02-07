@@ -185,11 +185,17 @@ Generate a complete `manifest.json` with:
 Guide the user to create `.env` (never ask for passwords directly, prompt the user to fill in manually after creating the file):
 
 ```bash
+# ChurchTools Extension Development Environment
+# WICHTIG: Fülle diese Werte mit deinen ChurchTools-Zugangsdaten aus!
+
 VITE_BASE_URL=https://[their-churchtools-instance]
 VITE_USERNAME=[username]
 VITE_PASSWORD=[password]
 VITE_BUILD_MODE=simple
 ```
+
+> [!WARNING]
+> Variablen mit dem Präfix `VITE_` sind im Client-Bundle sichtbar. Verwende sie niemals für Geheimnisse oder Passwörter in Produktionsumgebungen. Für die lokale Entwicklung ist dies akzeptabel, solange die `.env` nicht eingecheckt wird.
 
 ### Step 5: Create Entry Points
 
