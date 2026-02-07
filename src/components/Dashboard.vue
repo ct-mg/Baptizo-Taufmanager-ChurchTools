@@ -13,7 +13,7 @@
           </button>
         </div>
       </header>
-      <Admin />
+      <Admin @close="showAdminView = false" />
     </div>
 
     <!-- DASHBOARD VIEW (normal view) -->
@@ -645,22 +645,8 @@ const props = defineProps<{
 console.log('[Baptizo] Current User:', props.user);
 
 function goToAdminEntryPoint() {
-  console.log('[Baptizo] Navigating to Admin Entry Point...');
-  // Find and click the admin menu item in the dev environment
-  const menuItems = document.querySelectorAll('.menu-item');
-  for (const item of menuItems) {
-    if (item.textContent?.includes('admin')) {
-      console.log('[Baptizo] Found admin menu item, clicking...');
-      (item as HTMLElement).click();
-      return;
-    }
-  }
-  // Fallback: use onNavigate if available
-  if (props.onNavigate) {
-    props.onNavigate('admin');
-  } else {
-    console.warn('[Baptizo] Could not find admin menu item');
-  }
+  console.log('[Baptizo] Switching to Admin View (Internal State)');
+  showAdminView.value = true;
 }
 
 const provider = new PersonService();
@@ -827,7 +813,7 @@ const refreshData = async () => {
 
 const updateSettings = async (newSettings: BaptizoSettings) => {
   try {
-    await provider.saveSettings(newSettings);
+    await provider.updateSettings(newSettings);
     settings.value = newSettings;
     await loadData();
   } catch (e) {

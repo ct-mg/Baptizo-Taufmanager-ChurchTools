@@ -11,9 +11,10 @@
 -   **Phase:** Feature Completion & Handoff (v1.1.0)
 -   **Deployment:** `deploy:legacy` für Produktion verifiziert.
 -   **Key:** `baptizotaufmanager` (konsistent).
--   **Nächster Task:** Fix Admin-Button Navigation in Produktion.
+-   **Nächster Task:** Monitoring & Multi-Site support (Vorbereitung).
 
 ## Recent Changes
+-   **Fix:** Admin-Button Navigation auf internen Vue-State umgestellt (Produktions-Ready).
 -   Fixed critical typo in field names (`taufmanager_onboaring` -> `taufmanager_onboarding`) in `personService.ts` and migration scripts.
 -   Consolidated environment variables: `.env` instead of `.env.development`.
 -   Implemented credential-based login for local development.
