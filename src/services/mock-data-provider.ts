@@ -183,7 +183,7 @@ export class MockDataProvider implements DataProvider {
                         urkunde_ueberreicht: null, // Will be set later if baptized
                         in_gemeinde_integriert: null, // Will be set later if baptized
                         // Onboarding 2-20 days BEFORE seminar (for chart separation)
-                        taufmanager_onboaring: seminarDate ? new Date(new Date(seminarDate).getTime() - (2 + (id % 19)) * 86400000).toISOString().split('T')[0] : entryDate.toISOString().split('T')[0],
+                        taufmanager_onboarding: seminarDate ? new Date(new Date(seminarDate).getTime() - (2 + (id % 19)) * 86400000).toISOString().split('T')[0] : entryDate.toISOString().split('T')[0],
                         taufmanager_offboarding: null // Will be set for 2 persons later
                     },
                     imageUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${id}`,
@@ -340,7 +340,7 @@ export class MockDataProvider implements DataProvider {
 
     async createEvent(event: Omit<BaptizoEvent, 'id'>): Promise<BaptizoEvent> {
         await new Promise((resolve) => setTimeout(resolve, 300));
-        const newEvent = { ...event, id: Math.max(0, ...this.events.map(e => e.id)) + 1 };
+        const newEvent = { ...event, id: Math.max(0, ...this.events.map(e => Number(e.id))) + 1 };
         this.events.push(newEvent);
         return newEvent;
     }

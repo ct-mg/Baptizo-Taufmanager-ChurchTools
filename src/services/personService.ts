@@ -67,7 +67,7 @@ export class PersonService implements DataProvider {
             // Map to BaptizoPerson - Sequential for stability
             const members: BaptizoPerson[] = [];
 
-            for (const [index, m] of ctPersons.entries()) {
+            for (const m of ctPersons) {
                 // Group member has personId but person object is just a summary
                 // Must fetch full person details to get custom fields!
                 let personDetail: any;
@@ -84,7 +84,7 @@ export class PersonService implements DataProvider {
                     getauft_am: personDetail.taufmanager_taufe || null,
                     urkunde_ueberreicht: personDetail.taufmanager_urkunde || null,
                     in_gemeinde_integriert: personDetail.taufmanager_integration || null,
-                    taufmanager_onboaring: personDetail.taufmanager_onboaring || null,
+                    taufmanager_onboarding: personDetail.taufmanager_onboarding || null,
                     taufmanager_offboarding: personDetail.taufmanager_offboarding || null
                 };
 
@@ -94,10 +94,10 @@ export class PersonService implements DataProvider {
                 }
 
                 // Entry date fallback logic:
-                // 1. taufmanager_onboaring (Explicit Date)
+                // 1. taufmanager_onboarding (Explicit Date)
                 // 2. group member "comment" (Legacy Taufmanager stores entry date there)
                 // 3. group member "memberStartDate" (CT System Date)
-                let entryDate = personDetail.taufmanager_onboaring; // Prio 1
+                let entryDate = personDetail.taufmanager_onboarding; // Prio 1
 
                 if (!entryDate && m.comment) {
                     // Start date is often in comment for legacy reasons
@@ -172,8 +172,8 @@ export class PersonService implements DataProvider {
             // Date string or null
             ctFields['taufmanager_integration'] = fields.in_gemeinde_integriert;
         }
-        if (fields.taufmanager_onboaring !== undefined) {
-            ctFields['taufmanager_onboaring'] = fields.taufmanager_onboaring;
+        if (fields.taufmanager_onboarding !== undefined) {
+            ctFields['taufmanager_onboarding'] = fields.taufmanager_onboarding;
         }
         if (fields.taufmanager_offboarding !== undefined) {
             ctFields['taufmanager_offboarding'] = fields.taufmanager_offboarding;
@@ -301,7 +301,7 @@ export class PersonService implements DataProvider {
                     getauft_am: null,
                     urkunde_ueberreicht: null,
                     in_gemeinde_integriert: null,
-                    taufmanager_onboaring: null,
+                    taufmanager_onboarding: null,
                     taufmanager_offboarding: null
                 },
                 imageUrl: p.imageUrl || `https://ui-avatars.com/api/?name=${p.firstName}+${p.lastName}&background=random`,
