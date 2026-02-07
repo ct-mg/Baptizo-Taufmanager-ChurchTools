@@ -14,7 +14,7 @@
 -   **Nächster Task:** Monitoring & Multi-Site support (Vorbereitung).
 
 ## Recent Changes
--   **Fix:** Admin-Button Navigation auf internen Vue-State umgestellt (Produktions-Ready).
+-  - **Feb 2026**: Admin Navigation Fix: Umstellung auf internen Vue-State (`showAdminView`). Double-Header entfernt. Integration von App-Settings in KV-Store. Legacy-Build (`build:legacy`) synchronisiert und aktualisiert.
 -   Fixed critical typo in field names (`taufmanager_onboaring` -> `taufmanager_onboarding`) in `personService.ts` and migration scripts.
 -   Consolidated environment variables: `.env` instead of `.env.development`.
 -   Implemented credential-based login for local development.

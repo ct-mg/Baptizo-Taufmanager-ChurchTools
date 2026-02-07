@@ -2,17 +2,6 @@
   <div class="baptizo-dashboard">
     <!-- ADMIN VIEW (full page replacement) -->
     <div v-if="showAdminView" class="admin-fullscreen">
-      <header class="dashboard-header">
-        <div class="logo-area">
-          <img src="/logo.png" alt="Baptizo Logo" class="logo-img" />
-          <h1 class="app-title">Baptizo Taufmanager</h1>
-        </div>
-        <div class="actions">
-          <button @click="showAdminView = false" class="ct-button">
-            <span class="icon">←</span> Zurück zum Dashboard
-          </button>
-        </div>
-      </header>
       <Admin @close="showAdminView = false" />
     </div>
 
