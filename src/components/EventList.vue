@@ -24,7 +24,6 @@
 
       <!-- Right: Action -->
       <div class="action-button">
-          <button @click="seedMockData" style="display: none;">💾 Mock Sync</button>
           <button class="ct-button ct-button--primary" @click="openCreateModal">
             <span class="icon">
               <!-- Plus SVG -->
@@ -117,11 +116,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { MockDataProvider } from '../services/mock-data-provider';
 import { EventService } from '../services/eventService';
 import type { BaptizoEvent } from '../types/baptizo-types';
 
-const dataProvider = new MockDataProvider();
 const eventService = new EventService();
 const events = ref<BaptizoEvent[]>([]);
 
@@ -281,10 +278,6 @@ const deleteEvent = async () => {
     }
 };
 
-const seedMockData = async () => {
-    await dataProvider.seedMockData();
-    await refresh();
-};
 
 onMounted(() => {
   refresh();
