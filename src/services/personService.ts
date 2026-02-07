@@ -27,13 +27,6 @@ export class PersonService implements DataProvider {
     private async fetchGroupInternal(groupId: number, title: string): Promise<BaptizoGroup> {
         console.log(`[Baptizo] Versuche Daten zu laden für Gruppe: ${groupId} (${title})`);
 
-        // Log masked token
-        const token = import.meta.env.VITE_LOGIN_TOKEN;
-        if (!token) {
-            console.error('[Baptizo] Umgebungsvariable VITE_LOGIN_TOKEN fehlt. Bitte Server neu starten.');
-        } else {
-            console.log(`[Baptizo] Verwendeter Token: ${token.substring(0, 5)}...`);
-        }
 
         try {
             // Fetch ALL group members with pagination
